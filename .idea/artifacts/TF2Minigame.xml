@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="TF2Minigame">
+    <output-path>E:/_Plugin Compile_</output-path>
+    <root id="archive" name="TF2Minigame.jar">
+      <element id="module-output" name="TF2Minigame" />
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>
