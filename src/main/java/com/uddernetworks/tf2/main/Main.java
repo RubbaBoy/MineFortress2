@@ -25,9 +25,11 @@ public class Main extends JavaPlugin {
             e.printStackTrace();
         }
 
+        int i = 0;
         for (Object gun_obj : GunList.getGunlist().values()) {
             GunObject gun = (GunObject) gun_obj;
-            gun.giveGun(Bukkit.getPlayer("RubbaBoy"));
+            gun.giveGun(Bukkit.getPlayer("RubbaBoy"), i);
+            i++;
         }
     }
 

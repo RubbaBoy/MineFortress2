@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.main.Main;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -48,16 +49,24 @@ public class Gun {
         String lore;
         Material item;
         Sound sound;
+        double power;
         double damage;
+        int KZR;
+        boolean scopeable;
+        boolean NVscope;
+        int clip;
+        int ammo;
+        int maxclip;
+        int maxammo;
 
         boolean error = false;
 
-        for(int r = 0; r < rows; r++) {
+        for(int r = 1; r < rows; r++) {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 5) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 5");
+                if (cols != 13) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 12");
                 } else {
 
                     cell = row.getCell((short) 0);
@@ -98,15 +107,101 @@ public class Gun {
 
                     cell = row.getCell((short) 4);
                     if (cell != null) {
-                        damage = Double.parseDouble(cell.toString());
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        power = cell.getNumericCellValue();
+                    } else {
+                        System.out.println("Power cell was null!");
+                        power = 0;
+                        error = true;
+                    }
+
+                    cell = row.getCell((short) 5);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        damage = cell.getNumericCellValue();
                     } else {
                         System.out.println("Damage cell was null!");
                         damage = 0;
                         error = true;
                     }
 
+                    cell = row.getCell((short) 6);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        KZR = foo.intValue();
+                    } else {
+                        System.out.println("KZR cell was null!");
+                        KZR = 0;
+                        error = true;
+                    }
+
+                    cell = row.getCell((short) 7);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        scopeable = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("KZR cell was null!");
+                        error = true;
+                        scopeable = false;
+                    }
+
+                    cell = row.getCell((short) 8);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        NVscope = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("NVScope cell was null!");
+                        error = true;
+                        NVscope = false;
+                    }
+
+                    cell = row.getCell((short) 9);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        clip = foo.intValue();
+                    } else {
+                        System.out.println("Clip cell was null!");
+                        error = true;
+                        clip = 0;
+                    }
+
+                    cell = row.getCell((short) 10);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        ammo = foo.intValue();
+                    } else {
+                        System.out.println("Ammo cell was null!");
+                        error = true;
+                        ammo = 0;
+                    }
+
+                    cell = row.getCell((short) 11);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        maxclip = foo.intValue();
+                    } else {
+                        System.out.println("Max clip cell was null!");
+                        error = true;
+                        maxclip = 0;
+                    }
+
+                    cell = row.getCell((short) 12);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        maxammo = foo.intValue();
+                    } else {
+                        System.out.println("Max ammo cell was null!");
+                        error = true;
+                        maxammo = 0;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(name, lore, item, sound, damage);
+                        gunObject = new GunObject(name, lore, item, sound, power, damage, KZR, scopeable, NVscope, clip, ammo, maxclip, maxammo);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {
