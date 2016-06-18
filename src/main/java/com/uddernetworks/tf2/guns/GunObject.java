@@ -50,6 +50,10 @@ public class GunObject {
         return name;
     }
 
+    public String getLore() {
+        return lore;
+    }
+
     public double getDamage() {
         return damage;
     }
