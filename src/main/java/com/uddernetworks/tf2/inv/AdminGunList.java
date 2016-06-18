@@ -43,17 +43,17 @@ public class AdminGunList implements Listener {
 
         if (gun_slot.size() <= 45) {
             for (int i = 0; i < gun_slot.size(); i++) {
-                createDisplay(Material.IRON_BARDING, inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i).getLore());
+                createDisplay(new ArrayList<GunObject>(gun_slot.values()).get(i).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i).getLore());
             }
         } else {
 
             if (pageId * 45 > gun_slot.size()) {
                 for (int i = 0; i < gun_slot.size() - (((pageId - 1) * 45)); i++) {
-                    createDisplay(Material.IRON_BARDING, inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getLore());
+                    createDisplay(new ArrayList<GunObject>(gun_slot.values()).get(i + ((pageId - 1) * 45)).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getLore());
                 }
             } else {
                 for (int i = 0; i < 45; i++) {
-                    createDisplay(Material.IRON_BARDING, inv, i, (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getName(), (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getLore());
+                    createDisplay(new ArrayList<GunObject>(gun_slot.values()).get((pageId - 1) * 45).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getName(), (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getLore());
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.utils.WeaponType;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -11,25 +12,29 @@ import java.util.ArrayList;
 
 public class GunObject {
 
+    private WeaponType type;
     private String name = null;
     private String lore = null;
     private Material item = null;
     private Sound sound = null;
     private double power = 0;
     private double damage = 0;
-    private int KZR = 0;
+    private int KZR;
     private boolean scopeable = false;
     private boolean NVscope = false;
-    private int clip = 100;
-    private int ammo = 10;
-    private int maxClip = 0;
-    private int maxAmmo = 0;
+    private int clip;
+    private int ammo;
+    private int maxClip;
+    private int maxAmmo;
+    private int cooldown;
+    private int cooldown_reload;
 
     private Player player = Bukkit.getPlayer("RubbaBoy");
 
     ItemStack gun;
 
-    public GunObject(String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int clip, int ammo, int maxClip, int maxAmmo) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int clip, int ammo, int maxClip, int maxAmmo, int cooldown, int cooldown_reload) {
+        this.type = type;
         this.name = name;
         this.lore = lore;
         this.item = item;
@@ -43,7 +48,13 @@ public class GunObject {
         this.ammo = ammo;
         this.maxClip = maxClip;
         this.maxAmmo = maxAmmo;
+        this.cooldown = cooldown;
+        this.cooldown_reload = cooldown_reload;
 
+    }
+
+    public WeaponType getType() {
+        return type;
     }
 
     public String getName() {
@@ -92,6 +103,14 @@ public class GunObject {
 
     public int getMaxAmmo() {
         return maxAmmo;
+    }
+
+    public int getCooldown() {
+        return cooldown;
+    }
+
+    public int getCooldownReload(){
+        return cooldown_reload;
     }
 
     public void setClip(int clip) {

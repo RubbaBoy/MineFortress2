@@ -2,12 +2,13 @@ package com.uddernetworks.tf2.main;
 
 import com.uddernetworks.tf2.command.CommandTF2;
 import com.uddernetworks.tf2.guns.Gun;
-import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunListener;
-import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.inv.AdminGunList;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class Main extends JavaPlugin {
 
@@ -28,13 +29,6 @@ public class Main extends JavaPlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-//        int i = 0;
-//        for (Object gun_obj : GunList.getGunlist().values()) {
-//            GunObject gun = (GunObject) gun_obj;
-//            gun.giveGun(Bukkit.getPlayer("RubbaBoy"), i);
-//            i++;
-//        }
     }
 
     @Override

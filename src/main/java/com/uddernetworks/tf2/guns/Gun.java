@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.utils.WeaponType;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -45,6 +46,7 @@ public class Gun {
             }
         }
 
+        WeaponType type;
         String name;
         String lore;
         Material item;
@@ -58,6 +60,8 @@ public class Gun {
         int ammo;
         int maxclip;
         int maxammo;
+        int cooldown;
+        int cooldown_reload;
 
         boolean error = false;
 
@@ -65,11 +69,20 @@ public class Gun {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 13) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 12");
+                if (cols != 16) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 15");
                 } else {
 
                     cell = row.getCell((short) 0);
+                    if (cell != null) {
+                        type = WeaponType.valueOf(cell.toString());
+                    } else {
+                        System.out.println("Weapon type cell was null!");
+                        type = null;
+                        error = true;
+                    }
+
+                    cell = row.getCell((short) 1);
                     if (cell != null) {
                         name = cell.toString();
                     } else {
@@ -78,7 +91,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 1);
+                    cell = row.getCell((short) 2);
                     if (cell != null) {
                         lore = cell.toString();
                     } else {
@@ -87,7 +100,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 2);
+                    cell = row.getCell((short) 3);
                     if (cell != null) {
                         item = Material.getMaterial(cell.toString());
                     } else {
@@ -96,7 +109,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 3);
+                    cell = row.getCell((short) 4);
                     if (cell != null) {
                         sound = Sound.valueOf(cell.toString());
                     } else {
@@ -105,7 +118,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 4);
+                    cell = row.getCell((short) 5);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         power = cell.getNumericCellValue();
@@ -115,7 +128,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 5);
+                    cell = row.getCell((short) 6);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         damage = cell.getNumericCellValue();
@@ -125,7 +138,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 6);
+                    cell = row.getCell((short) 7);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         Double foo = cell.getNumericCellValue();
@@ -136,7 +149,7 @@ public class Gun {
                         error = true;
                     }
 
-                    cell = row.getCell((short) 7);
+                    cell = row.getCell((short) 8);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                         scopeable = cell.getBooleanCellValue();
@@ -146,7 +159,7 @@ public class Gun {
                         scopeable = false;
                     }
 
-                    cell = row.getCell((short) 8);
+                    cell = row.getCell((short) 9);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                         NVscope = cell.getBooleanCellValue();
@@ -156,7 +169,7 @@ public class Gun {
                         NVscope = false;
                     }
 
-                    cell = row.getCell((short) 9);
+                    cell = row.getCell((short) 10);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         Double foo = cell.getNumericCellValue();
@@ -167,7 +180,7 @@ public class Gun {
                         clip = 0;
                     }
 
-                    cell = row.getCell((short) 10);
+                    cell = row.getCell((short) 11);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         Double foo = cell.getNumericCellValue();
@@ -178,7 +191,7 @@ public class Gun {
                         ammo = 0;
                     }
 
-                    cell = row.getCell((short) 11);
+                    cell = row.getCell((short) 12);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         Double foo = cell.getNumericCellValue();
@@ -189,7 +202,7 @@ public class Gun {
                         maxclip = 0;
                     }
 
-                    cell = row.getCell((short) 12);
+                    cell = row.getCell((short) 13);
                     if (cell != null) {
                         cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                         Double foo = cell.getNumericCellValue();
@@ -200,8 +213,30 @@ public class Gun {
                         maxammo = 0;
                     }
 
+                    cell = row.getCell((short) 14);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        cooldown = foo.intValue();
+                    } else {
+                        System.out.println("Cooldown cell was null!");
+                        error = true;
+                        cooldown = 0;
+                    }
+
+                    cell = row.getCell((short) 15);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        cooldown_reload = foo.intValue();
+                    } else {
+                        System.out.println("Reload cooldown cell was null!");
+                        error = true;
+                        cooldown_reload = 0;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(name, lore, item, sound, power, damage, KZR, scopeable, NVscope, clip, ammo, maxclip, maxammo);
+                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, clip, ammo, maxclip, maxammo, cooldown, cooldown_reload);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {
