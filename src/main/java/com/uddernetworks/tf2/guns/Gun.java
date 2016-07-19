@@ -62,6 +62,9 @@ public class Gun {
         int maxammo;
         int cooldown;
         int cooldown_reload;
+        boolean tracer;
+        boolean sniper;
+        int accuracy;
 
         boolean error = false;
 
@@ -69,8 +72,8 @@ public class Gun {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 16) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 15");
+                if (cols != 19) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 18");
                 } else {
 
                     cell = row.getCell((short) 0);
@@ -235,8 +238,39 @@ public class Gun {
                         cooldown_reload = 0;
                     }
 
+                    cell = row.getCell((short) 16);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        tracer = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Tracer cell was null!");
+                        error = true;
+                        tracer = false;
+                    }
+
+                    cell = row.getCell((short) 17);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        sniper = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Sniper cell was null!");
+                        error = true;
+                        sniper = false;
+                    }
+
+                    cell = row.getCell((short) 18);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        accuracy = foo.intValue();
+                    } else {
+                        System.out.println("Sniper cell was null!");
+                        error = true;
+                        accuracy = 0;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, clip, ammo, maxclip, maxammo, cooldown, cooldown_reload);
+                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, clip, ammo, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {

@@ -28,12 +28,15 @@ public class GunObject {
     private int maxAmmo;
     private int cooldown;
     private int cooldown_reload;
+    private boolean tracers = false;
+    private boolean sniper = false;
+    private int accuracy;
 
     private Player player = Bukkit.getPlayer("RubbaBoy");
 
     ItemStack gun;
 
-    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int clip, int ammo, int maxClip, int maxAmmo, int cooldown, int cooldown_reload) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int clip, int ammo, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy) {
         this.type = type;
         this.name = name;
         this.lore = lore;
@@ -50,6 +53,9 @@ public class GunObject {
         this.maxAmmo = maxAmmo;
         this.cooldown = cooldown;
         this.cooldown_reload = cooldown_reload;
+        this.tracers = tracers;
+        this.sniper = sniper;
+        this.accuracy = accuracy;
 
     }
 
@@ -111,6 +117,18 @@ public class GunObject {
 
     public int getCooldownReload(){
         return cooldown_reload;
+    }
+
+    public boolean getTracers() {
+        return tracers;
+    }
+
+    public boolean isSniper() {
+        return sniper;
+    }
+
+    public int getAccuracy() {
+        return accuracy;
     }
 
     public void setClip(int clip) {

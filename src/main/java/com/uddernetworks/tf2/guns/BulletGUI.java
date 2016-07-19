@@ -50,9 +50,7 @@ public class BulletGUI {
                     break;
             }
         } else {
-
-
-            switch (Character.getNumericValue(clip[1])) {
+            switch (Character.getNumericValue(clip[0])) {
                 case 0:
                     player.getInventory().setItem(2, new ItemStack(Material.WOOD_HOE, 1, Clip.first_ZERO.getValue()));
                     break;
@@ -89,7 +87,7 @@ public class BulletGUI {
 
             }
 
-            switch (Character.getNumericValue(clip[0])) {
+            switch (Character.getNumericValue(clip[1])) {
                 case 0:
                     player.getInventory().setItem(4, new ItemStack(Material.WOOD_HOE, 1, Clip.second_ZERO.getValue()));
                     break;
