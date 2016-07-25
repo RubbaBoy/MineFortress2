@@ -6,9 +6,11 @@ import org.bukkit.inventory.ItemStack;
 
 public class BulletGUI {
 
-    public BulletGUI(Player player, GunObject gun) {
+    private PlayerGuns playerGuns = new PlayerGuns();
 
-        char clip[] = (String.valueOf(gun.getClip()).toCharArray());
+    public BulletGUI(Player player) {
+
+        char clip[] = (String.valueOf(playerGuns.getClip(player)).toCharArray());
 
         if (clip.length == 1) {
 
@@ -124,7 +126,7 @@ public class BulletGUI {
             }
         }
 
-        char ammo[] = (String.valueOf(gun.getAmmo()).toCharArray());
+        char ammo[] = (String.valueOf(playerGuns.getAmmo(player)).toCharArray());
 
         if (ammo.length == 1) {
 

@@ -22,8 +22,6 @@ public class GunObject {
     private int KZR;
     private boolean scopeable = false;
     private boolean NVscope = false;
-    private int clip;
-    private int ammo;
     private int maxClip;
     private int maxAmmo;
     private int cooldown;
@@ -32,11 +30,9 @@ public class GunObject {
     private boolean sniper = false;
     private int accuracy;
 
-    private Player player = Bukkit.getPlayer("RubbaBoy");
-
     ItemStack gun;
 
-    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int clip, int ammo, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy) {
         this.type = type;
         this.name = name;
         this.lore = lore;
@@ -47,8 +43,6 @@ public class GunObject {
         this.KZR = KZR;
         this.scopeable = scopeable;
         this.NVscope = NVscope;
-        this.clip = clip;
-        this.ammo = ammo;
         this.maxClip = maxClip;
         this.maxAmmo = maxAmmo;
         this.cooldown = cooldown;
@@ -95,14 +89,6 @@ public class GunObject {
         return sound;
     }
 
-    public int getClip() {
-        return clip;
-    }
-
-    public int getAmmo() {
-        return ammo;
-    }
-
     public int getMaxClip() {
         return maxClip;
     }
@@ -131,32 +117,6 @@ public class GunObject {
         return accuracy;
     }
 
-    public void setClip(int clip) {
-        this.clip = clip;
-
-        new BulletGUI(player, this);
-
-    }
-
-    public void setAmmo(int ammo) {
-        this.ammo = ammo;
-
-        new BulletGUI(player, this);
-    }
-
-    public void reloadGun() {
-        if (getAmmo() - getClip() > 0) {
-            if (getClip() <= getAmmo()) {
-                setAmmo(getAmmo() - (getMaxClip() - getClip()));
-                setClip(getMaxClip() - getClip());
-            } else {
-                setClip(getAmmo());
-                setAmmo(0);
-            }
-            new BulletGUI(player, this);
-        }
-    }
-
     public ItemStack getItemStack() {
         ItemStack itemgun = new ItemStack(item);
         ItemMeta meta = itemgun.getItemMeta();
@@ -166,31 +126,6 @@ public class GunObject {
         meta.setLore(Lore);
         itemgun.setItemMeta(meta);
         return itemgun;
-    }
-
-    public void giveGun(Player player) {
-        ItemStack itemgun = new ItemStack(item);
-        ItemMeta meta = itemgun.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<String>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        itemgun.setItemMeta(meta);
-        player.getInventory().setItemInMainHand(itemgun);
-    }
-
-    public void giveGun(Player player, int slot) {
-        ItemStack itemgun = new ItemStack(item);
-        ItemMeta meta = itemgun.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<String>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        itemgun.setItemMeta(meta);
-        player.getInventory().setItem(slot, itemgun);
-
-
-        new BulletGUI(player, this);
     }
 
 }

@@ -3,6 +3,7 @@ package com.uddernetworks.tf2.inv;
 import com.uddernetworks.tf2.guns.Gun;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
+import com.uddernetworks.tf2.guns.PlayerGuns;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -20,11 +21,13 @@ import java.util.LinkedHashMap;
 
 public class AdminGunList implements Listener {
 
+    private PlayerGuns playerGuns = new PlayerGuns();
+
     private static int pageId = 1;
 
     private static int maxPage = 1;
 
-    private static LinkedHashMap<String, GunObject> gun_slot = new LinkedHashMap<String, GunObject>();
+    private static LinkedHashMap<String, GunObject> gun_slot = new LinkedHashMap<>();
 
     static private Inventory inv;
 
@@ -34,6 +37,7 @@ public class AdminGunList implements Listener {
         for (Object gun_obj : GunList.getGunlist().values()) {
             GunObject gun = (GunObject) gun_obj;
             gun_slot.put(gun.getItemStack().serialize().toString(), gun);
+            System.out.println("Putting in gun: " + gun.getItemStack().serialize().toString());
             i_++;
         }
 
@@ -103,7 +107,7 @@ public class AdminGunList implements Listener {
                     }
                 } else if (event.getSlot() <= 45) {
                     if (gun_slot.containsKey(clicked.serialize().toString())) {
-                        gun_slot.get(clicked.serialize().toString()).giveGun(player);
+                        playerGuns.addPlayerGun(player, gun_slot.get(clicked.serialize().toString()));
                     }
                 }
 

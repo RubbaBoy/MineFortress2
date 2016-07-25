@@ -35,11 +35,10 @@ import java.util.List;
 
 public class GunListener implements Listener {
 
-    private Block toExplode;
-    private int toExplosion = 40;
-
     public Main main;
     private GunThreadUtil thread;
+
+    private PlayerGuns playerGuns = new PlayerGuns();
 
     private enum State {
         NORMAL(true),
@@ -62,8 +61,6 @@ public class GunListener implements Listener {
     static HashMap3<Player, Long, State> secondary_cooldowns = new HashMap3<Player, Long, State>();
     static HashMap<Player, Long> melee_cooldowns = new HashMap<Player, Long>();
 
-    static HashMap<Player, GunObject> autoGunsShooting = new HashMap<Player, GunObject>();
-
     public GunListener(Main main, GunThreadUtil thread) {
         this.main = main;
         this.thread = thread;
@@ -83,27 +80,27 @@ public class GunListener implements Listener {
                             if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() <= 0) {
                                 primary_cooldowns.put(player, System.currentTimeMillis());
                                 primary_cooldowns.setT(player, State.NORMAL);
-                                if (gun.getClip() > 0) {
-                                    gun.setClip(gun.getClip() - 1);
+                                if (playerGuns.getClip(player) > 0) {
+                                    playerGuns.setClip(player, playerGuns.getClip(player) - 1);
                                     player.playSound(player.getLocation(), gun.getSound(), 1, 1);
                                     new Bullet(player, gun);
                                 } else {
                                     primary_cooldowns.put(player, System.currentTimeMillis());
                                     primary_cooldowns.setT(player, State.RELOADING);
-                                    gun.reloadGun();
+                                    playerGuns.reloadGun(player);
                                 }
                             }
                         } else if (!primary_cooldowns.containsKey(player)) {
                             primary_cooldowns.put(player, System.currentTimeMillis());
                             primary_cooldowns.setT(player, State.NORMAL);
-                            if (gun.getClip() > 0) {
-                                gun.setClip(gun.getClip() - 1);
+                            if (playerGuns.getClip(player) > 0) {
+                                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
                                 player.playSound(player.getLocation(), gun.getSound(), 1, 1);
                                 new Bullet(player, gun);
                             } else {
                                 primary_cooldowns.put(player, System.currentTimeMillis());
                                 primary_cooldowns.setT(player, State.RELOADING);
-                                gun.reloadGun();
+                                playerGuns.reloadGun(player);
                             }
                         } else if (primary_cooldowns.containsKey(player)) {
                             int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
@@ -151,22 +148,26 @@ public class GunListener implements Listener {
             Arrow bullet = (Arrow) event.getDamager();
             if (bullet.getShooter() instanceof Player) {
                 Player shooter = (Player) bullet.getShooter();
-                for (Object gun_obj : GunList.getGunlist().values()) {
-                    GunObject gun = (GunObject) gun_obj;
-                    if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                        if (shooter.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                            event.setDamage(gun.getDamage());
-                            List<Entity> near = shooter.getWorld().getEntities();
-                            for (Entity e : near) {
-                                if (e.getLocation().distance(bullet.getLocation()) <= gun.getKZR()) {
-                                    if (e instanceof Damageable) {
-//                                        ((Damageable) e).damage(gun.getDamage());
+                    for (Object gun_obj : GunList.getGunlist().values()) {
+                        GunObject gun = (GunObject) gun_obj;
+                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                            if (shooter.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                if (event.getEntityType() != EntityType.ARMOR_STAND) {
+                                    event.setDamage(gun.getDamage());
+                                    DamageIndicator.spawnIndicator(gun.getDamage(), event.getEntity().getWorld(), event.getEntity().getLocation().getX(), event.getEntity().getLocation().getY(), event.getEntity().getLocation().getZ());
+                                    List<Entity> near = shooter.getWorld().getEntities();
+                                    for (Entity e : near) {
+                                        if (e.getLocation().distance(bullet.getLocation()) <= gun.getKZR()) {
+                                            if (e instanceof Damageable) {
+                                                ((Damageable) e).damage(gun.getDamage());
+                                            }
+                                        }
                                     }
+                                    bullet.remove();
                                 }
                             }
                         }
                     }
-                }
             }
         } else if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
@@ -256,61 +257,59 @@ public class GunListener implements Listener {
                         if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() <= 0) {
                             primary_cooldowns.put(player, System.currentTimeMillis());
                             primary_cooldowns.setT(player, State.NORMAL);
-                            if (gun.getClip() > 0) {
+                            if (playerGuns.getClip(player) > 0) {
                                 if (!gun.isSniper()) {
-                                    if (!thread.clickPlayers.containsKey(event.getPlayer().getName())) {
-                                        if (thread.clickPlayers.isEmpty()) {
-                                            thread.clickPlayers.put(event.getPlayer().getName(), currTime);
-                                            thread.shot.put(player, gun);
-                                            thread.shot.setT(player, System.currentTimeMillis());
-                                            return;
-                                        }
+                                    if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName()) || GunThreadUtil.clickPlayers.get(event.getPlayer().getName()) == null) {
+                                        GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                        GunThreadUtil.shot.put(player, gun);
+                                        GunThreadUtil.shot.setT(player, System.currentTimeMillis());
+                                        return;
                                     }
 
-                                    long lastClick = thread.clickPlayers.get(event.getPlayer().getName());
+                                    long lastClick = GunThreadUtil.clickPlayers.get(event.getPlayer().getName());
                                     if (currTime - lastClick > 260) {
-                                        thread.clickPlayers.remove(event.getPlayer().getName());
-                                        thread.shot.remove(player);
+                                        GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                                        GunThreadUtil.shot.remove(player);
                                     } else {
-                                        thread.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                        GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
                                     }
                                 }
                             } else {
                                 primary_cooldowns.put(player, System.currentTimeMillis());
                                 primary_cooldowns.setT(player, State.RELOADING);
-                                thread.clickPlayers.remove(event.getPlayer().getName());
-                                thread.shot.remove(player);
-                                gun.reloadGun();
+                                GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                                GunThreadUtil.shot.remove(player);
+                                playerGuns.reloadGun(player);
                             }
                         }
                     } else if (!primary_cooldowns.containsKey(player)) {
                         primary_cooldowns.put(player, System.currentTimeMillis());
                         primary_cooldowns.setT(player, State.NORMAL);
-                        if (gun.getClip() > 0) {
+                        if (playerGuns.getClip(player) > 0) {
                             if (!gun.isSniper()) {
-                                if (!thread.clickPlayers.containsKey(event.getPlayer().getName())) {
-                                    if (thread.clickPlayers.isEmpty()) {
-                                        thread.clickPlayers.put(event.getPlayer().getName(), currTime);
-                                        thread.shot.put(player, gun);
-                                        thread.shot.setT(player, System.currentTimeMillis());
+                                if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName())) {
+                                    if (GunThreadUtil.clickPlayers.isEmpty()) {
+                                        GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                        GunThreadUtil.shot.put(player, gun);
+                                        GunThreadUtil.shot.setT(player, System.currentTimeMillis());
                                         return;
                                     }
                                 }
 
-                                long lastClick = thread.clickPlayers.get(event.getPlayer().getName());
+                                long lastClick = GunThreadUtil.clickPlayers.get(event.getPlayer().getName());
                                 if (currTime - lastClick > 260) {
-                                    thread.clickPlayers.remove(event.getPlayer().getName());
-                                    thread.shot.remove(player);
+                                    GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                                    GunThreadUtil.shot.remove(player);
                                 } else {
-                                    thread.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                    GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
                                 }
                             }
                         } else {
                             primary_cooldowns.put(player, System.currentTimeMillis());
                             primary_cooldowns.setT(player, State.RELOADING);
-                            thread.clickPlayers.remove(event.getPlayer().getName());
-                            thread.shot.remove(player);
-                            gun.reloadGun();
+                            GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                            GunThreadUtil.shot.remove(player);
+                            playerGuns.reloadGun(player);
                         }
                     } else if (primary_cooldowns.containsKey(player)) {
                         int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
@@ -335,33 +334,41 @@ public class GunListener implements Listener {
                 if (shooter.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     if (!gun.isSniper()) {
                         if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
-                            EntityArmorStand entity;
-                            entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                            ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                EntityArmorStand entity;
+                                entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
 
-                            PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                            ((CraftPlayer) shooter).getHandle().playerConnection.sendPacket(packet9);
+                                PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                            }
                         } else if (gun.getDamage() >= 5 && gun.getDamage() < 10) {
-                            EntityArmorStand entity;
-                            entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                            ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                EntityArmorStand entity;
+                                entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
 
-                            PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
-                            ((CraftPlayer) shooter).getHandle().playerConnection.sendPacket(packet9);
+                                PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
+                                ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                            }
                         } else if (gun.getDamage() >= 10 && gun.getDamage() < 20) {
-                            EntityArmorStand entity;
-                            entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                            ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                EntityArmorStand entity;
+                                entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
 
-                            PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
-                            ((CraftPlayer) shooter).getHandle().playerConnection.sendPacket(packet9);
+                                PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
+                                ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                            }
                         } else if (gun.getDamage() >= 20) {
-                            EntityArmorStand entity;
-                            entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                            ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                EntityArmorStand entity;
+                                entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
 
-                            PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                            ((CraftPlayer) shooter).getHandle().playerConnection.sendPacket(packet9);
+                                PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                            }
                         }
                         bullet.remove();
                     }

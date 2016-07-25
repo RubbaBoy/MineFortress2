@@ -1,10 +1,9 @@
 package com.uddernetworks.tf2.utils;
 
 import com.uddernetworks.tf2.guns.Bullet;
-import com.uddernetworks.tf2.guns.GunListener;
 import com.uddernetworks.tf2.guns.GunObject;
+import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.main.Main;
-import net.minecraft.server.v1_9_R1.ItemShield;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -18,19 +17,19 @@ public class GunThreadUtil extends Thread {
 
     private boolean stahp = false;
 
-    public HashMap<String, Long> clickPlayers = new HashMap<>();
+    public static HashMap<String, Long> clickPlayers = new HashMap<>();
+
+    private PlayerGuns playerGuns = new PlayerGuns();
 
     Main main;
 
-    public HashMap3<Player, GunObject, Long> shot = new HashMap3<>();
+    public static HashMap3<Player, GunObject, Long> shot = new HashMap3<>();
 
     public GunThreadUtil(Main main) {
         super();
         this.main = main;
         this.start();
     }
-
-    GunListener listener = new GunListener(main, this);
 
     public void stahp() {
         stahp = true;
@@ -58,7 +57,7 @@ public class GunThreadUtil extends Thread {
                                     @Override
                                     public void run() {
                                         new Bullet(player, shot.get(player));
-                                        shot.get(player).setClip(shot.get(player).getClip() - 1);
+                                        playerGuns.setClip(player, playerGuns.getClip(player) - 1);
                                     }
                                 });
                             }
@@ -66,7 +65,6 @@ public class GunThreadUtil extends Thread {
                         }
                     }
                 } else {
-                    Bukkit.getPlayer("RubbaBoy").sendMessage("Stopping bullet thread");
                     exec.shutdown();
                 }
             }, 0, 100, TimeUnit.MILLISECONDS);
