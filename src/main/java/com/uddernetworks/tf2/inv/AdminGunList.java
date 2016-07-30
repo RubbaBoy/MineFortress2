@@ -34,8 +34,8 @@ public class AdminGunList implements Listener {
     public void openGUI(Player p) {
 
         int i_ = 0;
-        for (Object gun_obj : GunList.getGunlist().values()) {
-            GunObject gun = (GunObject) gun_obj;
+        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+            GunObject gun = GunList.getGunAt(i);
             gun_slot.put(gun.getItemStack().serialize().toString(), gun);
             System.out.println("Putting in gun: " + gun.getItemStack().serialize().toString());
             i_++;

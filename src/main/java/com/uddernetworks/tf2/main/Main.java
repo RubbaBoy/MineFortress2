@@ -42,6 +42,7 @@ public class Main extends JavaPlugin implements Listener {
     private Location secondDoorLoc;
 
     private PlayerGuns playerGuns = new PlayerGuns();
+    private PlayerHealth playerHealth = new PlayerHealth();
 
     @Override
     public void onEnable() {
@@ -53,7 +54,6 @@ public class Main extends JavaPlugin implements Listener {
         thread = new GunThreadUtil(this);
         Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
         Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
-        Bukkit.getPluginManager().registerEvents(new Bullet(), this);
         Bukkit.getPluginManager().registerEvents(this, this);
         this.getCommand("tf2").setExecutor(new CommandTF2(this));
 
@@ -175,9 +175,9 @@ public class Main extends JavaPlugin implements Listener {
                     toggleDoorState(firstDoorLoc.getBlock());
                     toggleDoorState(secondDoorLoc.getBlock());
 
-                    event.getPlayer().setHealth(event.getPlayer().getMaxHealth());
-                    for (Object gun_obj : GunList.getGunlist().values()) {
-                        GunObject gun = (GunObject) gun_obj;
+                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                        GunObject gun = GunList.getGunAt(i);
                         if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
                             if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
                                 playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
@@ -194,9 +194,9 @@ public class Main extends JavaPlugin implements Listener {
                     toggleDoorState(firstDoorLoc.getBlock());
                     toggleDoorState(secondDoorLoc.getBlock());
 
-                    event.getPlayer().setHealth(event.getPlayer().getMaxHealth());
-                    for (Object gun_obj : GunList.getGunlist().values()) {
-                        GunObject gun = (GunObject) gun_obj;
+                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                        GunObject gun = GunList.getGunAt(i);
                         if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
                             if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
                                 playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
@@ -213,9 +213,9 @@ public class Main extends JavaPlugin implements Listener {
                     toggleDoorState(firstDoorLoc.getBlock());
                     toggleDoorState(secondDoorLoc.getBlock());
 
-                    event.getPlayer().setHealth(event.getPlayer().getMaxHealth());
-                    for (Object gun_obj : GunList.getGunlist().values()) {
-                        GunObject gun = (GunObject) gun_obj;
+                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                        GunObject gun = GunList.getGunAt(i);
                         if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
                             if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
                                 playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
@@ -232,9 +232,9 @@ public class Main extends JavaPlugin implements Listener {
                     toggleDoorState(firstDoorLoc.getBlock());
                     toggleDoorState(secondDoorLoc.getBlock());
 
-                    event.getPlayer().setHealth(event.getPlayer().getMaxHealth());
-                    for (Object gun_obj : GunList.getGunlist().values()) {
-                        GunObject gun = (GunObject) gun_obj;
+                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                        GunObject gun = GunList.getGunAt(i);
                         if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
                             if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
                                 playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
@@ -261,7 +261,7 @@ public class Main extends JavaPlugin implements Listener {
         if (event.getItem().getItemStack().getTypeId() == 284) {
             event.setCancelled(true);
             event.getItem().remove();
-            event.getPlayer().setHealth(event.getPlayer().getMaxHealth());
+            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
             event.getPlayer().setFoodLevel(20);
         } else if (event.getItem().getItemStack().getTypeId() == 256) {
             event.setCancelled(true);

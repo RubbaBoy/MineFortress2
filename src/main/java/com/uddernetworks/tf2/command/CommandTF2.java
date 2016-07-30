@@ -2,9 +2,14 @@ package com.uddernetworks.tf2.command;
 
 import com.uddernetworks.tf2.inv.AdminGunList;
 import com.uddernetworks.tf2.main.Main;
+import me.confuser.barapi.BarAPI;
+import net.minecraft.server.v1_9_R1.IChatBaseComponent;
+import net.minecraft.server.v1_9_R1.PacketPlayOutChat;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 public class CommandTF2 implements CommandExecutor {

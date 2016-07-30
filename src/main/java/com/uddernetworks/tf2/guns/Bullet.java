@@ -2,6 +2,7 @@ package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.utils.Hitbox;
 import net.minecraft.server.v1_9_R1.*;
+import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.*;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
@@ -14,11 +15,12 @@ import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class Bullet implements Listener {
 
-    static HashMap<Integer, Bullet> bullets = new HashMap<>();
+    public static Map<Integer, Bullet> bullets = new HashMap<>();
 
     private GunObject gun;
     private Player shooter;
@@ -162,7 +164,6 @@ public class Bullet implements Listener {
                 }
             } else {
                 Arrow bullet = shooter.getWorld().spawn(shooter.getEyeLocation(), Arrow.class);
-                bullets.put(bullet.getEntityId(), this);
                 bullet.setShooter(shooter);
                 Location loc = shooter.getLocation();
                 Vector direction = loc.getDirection().normalize();
@@ -171,14 +172,36 @@ public class Bullet implements Listener {
                     double x = direction.getX() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
                     double y = direction.getY() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
                     double z = direction.getZ() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
+                    bullet.setBounce(false);
                     bullet.setVelocity(new Vector(x, y, z).multiply(gunObject.getPower()));
+                    bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                    bullets.put(bullet.getEntityId(), this);
                 } else {
+                    bullet.setBounce(false);
                     bullet.setVelocity(direction.multiply(gunObject.getPower()));
+                    bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                    bullets.put(bullet.getEntityId(), this);
                 }
 
             }
         }
 
+    }
+
+//    public Bullet getBullet(int id) {
+//        return bullets.get(id);
+//    }
+//
+//    public void removeBullet(int id) {
+//        bullets.remove(id);
+//    }
+//
+    public boolean isBullet(String name) {
+        if (NumberUtils.isNumber(name)) {
+            return GunList.isGunId(Integer.parseInt(name));
+        } else {
+            return false;
+        }
     }
 
     public GunObject getGun() {

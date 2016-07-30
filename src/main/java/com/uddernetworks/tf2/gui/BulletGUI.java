@@ -1,5 +1,8 @@
-package com.uddernetworks.tf2.guns;
+package com.uddernetworks.tf2.gui;
 
+import com.uddernetworks.tf2.guns.Ammo;
+import com.uddernetworks.tf2.guns.Clip;
+import com.uddernetworks.tf2.guns.PlayerGuns;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

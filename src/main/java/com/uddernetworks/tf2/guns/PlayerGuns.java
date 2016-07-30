@@ -1,18 +1,22 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.gui.BulletGUI;
 import com.uddernetworks.tf2.utils.HashMap3;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PlayerGuns {
 
+    static int HEALTH_NEED_CHANGE = 100;
+
     static HashMap<Player, GunObject> guns = new HashMap<>();
     static HashMap3<Player, Integer, Integer> ammo = new HashMap3<>();
+
+    private PlayerHealth playerHealth = new PlayerHealth();
 
     public void addPlayerGun(Player player, GunObject gun) {
 
@@ -23,12 +27,11 @@ public class PlayerGuns {
             setClip(player, gun.getMaxClip());
             setAmmo(player, gun.getMaxAmmo());
 
+            playerHealth.addPlayer(player, HEALTH_NEED_CHANGE);
+
             ItemStack itemgun = new ItemStack(guns.get(player).getItemStack());
             ItemMeta meta = itemgun.getItemMeta();
             meta.setDisplayName(guns.get(player).getName());
-            ArrayList<String> Lore = new ArrayList<String>();
-            Lore.add(guns.get(player).getLore());
-            meta.setLore(Lore);
             itemgun.setItemMeta(meta);
             player.getInventory().setItem(0, itemgun);
         } catch (Exception e) {
@@ -59,8 +62,8 @@ public class PlayerGuns {
             return ammo.get(player);
         } else {
             int temp_return = 0;
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     addPlayerGun(player, gun);
                     temp_return = ammo.get(player);
@@ -75,8 +78,8 @@ public class PlayerGuns {
             return ammo.getT(player);
         } else {
             int temp_return = 0;
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     addPlayerGun(player, gun);
                     temp_return = ammo.getT(player);

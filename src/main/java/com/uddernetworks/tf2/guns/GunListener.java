@@ -1,10 +1,7 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.main.Main;
-import com.uddernetworks.tf2.utils.ArrowHitBlockEvent;
-import com.uddernetworks.tf2.utils.GunThreadUtil;
-import com.uddernetworks.tf2.utils.HashMap3;
-import com.uddernetworks.tf2.utils.WeaponType;
+import com.uddernetworks.tf2.utils.*;
 import net.minecraft.server.v1_9_R1.BlockPosition;
 import net.minecraft.server.v1_9_R1.EntityArmorStand;
 import net.minecraft.server.v1_9_R1.ItemShield;
@@ -39,6 +36,7 @@ public class GunListener implements Listener {
     private GunThreadUtil thread;
 
     private PlayerGuns playerGuns = new PlayerGuns();
+    private PlayerHealth playerHealth = new PlayerHealth();
 
     private enum State {
         NORMAL(true),
@@ -70,8 +68,8 @@ public class GunListener implements Listener {
     public void onPlayerClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     event.setCancelled(true);
                     if (gun.isSniper()) {
@@ -113,8 +111,8 @@ public class GunListener implements Listener {
                 }
             }
         } else if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     if (gun.getScopeable()) {
                         if (!zoom.contains(player)) {
@@ -148,43 +146,33 @@ public class GunListener implements Listener {
             Arrow bullet = (Arrow) event.getDamager();
             if (bullet.getShooter() instanceof Player) {
                 Player shooter = (Player) bullet.getShooter();
-                    for (Object gun_obj : GunList.getGunlist().values()) {
-                        GunObject gun = (GunObject) gun_obj;
+                Bullet bullet1 = new Bullet();
+                if (bullet1.isBullet(bullet.getCustomName())) {
+                    GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
                         if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            if (shooter.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                if (event.getEntityType() != EntityType.ARMOR_STAND) {
-                                    event.setDamage(gun.getDamage());
-                                    DamageIndicator.spawnIndicator(gun.getDamage(), event.getEntity().getWorld(), event.getEntity().getLocation().getX(), event.getEntity().getLocation().getY(), event.getEntity().getLocation().getZ());
-                                    List<Entity> near = shooter.getWorld().getEntities();
-                                    for (Entity e : near) {
-                                        if (e.getLocation().distance(bullet.getLocation()) <= gun.getKZR()) {
-                                            if (e instanceof Damageable) {
-                                                ((Damageable) e).damage(gun.getDamage());
-                                            }
-                                        }
-                                    }
-                                    bullet.remove();
-                                }
-                            }
+                            event.setCancelled(true);
+                            bullet.remove();
+                            HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
+                            Bukkit.getPluginManager().callEvent(event2);
                         }
                     }
             }
         } else if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
             Entity victim = event.getEntity();
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (gun.getType() == WeaponType.MELEE) {
                     if (player.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
 
                         event.setCancelled(true);
                         if (melee_cooldowns.containsKey(player) && (melee_cooldowns.get(player) + gun.getCooldown()) - System.currentTimeMillis() <= 0) {
-                            event.setDamage(gun.getDamage());
+                            playerHealth.addHealth((Player) victim, playerHealth.getHealth((Player) victim) - gun.getDamage());
                             List<Entity> near = victim.getWorld().getEntities();
                             for (Entity e : near) {
                                 if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
-                                    if (e instanceof Damageable) {
-                                        ((Damageable) e).damage(gun.getDamage());
+                                    if (e instanceof Player) {
+                                        playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
                                     }
                                 }
                             }
@@ -192,12 +180,14 @@ public class GunListener implements Listener {
                             melee_cooldowns.put(player, System.currentTimeMillis());
 
                         } else if (!melee_cooldowns.containsKey(player)) {
-                            event.setDamage(gun.getDamage());
-                            List<Entity> near = victim.getWorld().getEntities();
-                            for (Entity e : near) {
-                                if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
-                                    if (e instanceof Damageable) {
-                                        ((Damageable) e).damage(gun.getDamage());
+                            if (victim instanceof Player) {
+                                playerHealth.addHealth((Player) victim, playerHealth.getHealth((Player) victim) - gun.getDamage());
+                                List<Entity> near = victim.getWorld().getEntities();
+                                for (Entity e : near) {
+                                    if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
+                                        if (e instanceof Player) {
+                                            playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                                        }
                                     }
                                 }
                             }
@@ -219,18 +209,31 @@ public class GunListener implements Listener {
             Arrow bullet = (Arrow) event.getEntity();
             Entity entity = event.getEntity();
             if (bullet.getShooter() instanceof Player) {
-                Player shooter = (Player) bullet.getShooter();
-                for (Object gun_obj : GunList.getGunlist().values()) {
-                    GunObject gun = (GunObject) gun_obj;
-                    if (shooter.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
+                Bullet bullet1 = new Bullet();
+                if (bullet1.isBullet(bullet.getCustomName())) {
+                    GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
+                    HitByBulletEvent event2 = new HitByBulletEvent(entity, gun);
+                    Bukkit.getPluginManager().callEvent(event2);
+                    bullet.remove();
+                }
+            }
+        }
+    }
 
-                        List<Entity> near = entity.getWorld().getEntities();
-                        for (Entity e : near) {
-                            if (e.getLocation().distance(entity.getLocation()) <= gun.getKZR()) {
-                                if (e instanceof Damageable) {
-                                    ((Damageable) e).damage(gun.getDamage());
-                                }
-                            }
+    @EventHandler
+    public void onBulletHitEntity(HitByBulletEvent event) {
+        Entity target = event.getEntity();
+        if (target instanceof Player) {
+            Player player = (Player) target;
+            GunObject gun = event.getGun();
+            player.setHealth(player.getMaxHealth());
+            playerHealth.addHealth(player, playerHealth.getHealth(player) - gun.getDamage());
+            List<Entity> near = player.getWorld().getEntities();
+            for (Entity e : near) {
+                if (e.getLocation().distance(player.getLocation()) <= gun.getKZR()) {
+                    if (e instanceof Player) {
+                        if (e != target) {
+                            playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
                         }
                     }
                 }
@@ -238,18 +241,14 @@ public class GunListener implements Listener {
         }
     }
 
-    public void foop(Player player, GunObject gun) {
-        new Bullet(player, gun);
-    }
-
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) throws InterruptedException {
         Player player = event.getPlayer();
         long currTime = System.currentTimeMillis();
         if(event.getAction() == Action.RIGHT_CLICK_AIR) {
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
-                if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
+                if (player.getInventory().getItemInMainHand().serialize().equals(gun.getItemStack().serialize())) {
 
                     event.setCancelled(true);
                     if (primary_cooldowns.containsKey(player)) {
@@ -329,8 +328,8 @@ public class GunListener implements Listener {
 
         if (bullet.getShooter() instanceof Player) {
             Player shooter = (Player) bullet.getShooter();
-            for (Object gun_obj : GunList.getGunlist().values()) {
-                GunObject gun = (GunObject) gun_obj;
+            for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                GunObject gun = GunList.getGunAt(i);
                 if (shooter.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     if (!gun.isSniper()) {
                         if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
