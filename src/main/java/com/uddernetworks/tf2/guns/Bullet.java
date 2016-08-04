@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.guns.sentry.Sentry;
 import com.uddernetworks.tf2.utils.Hitbox;
 import net.minecraft.server.v1_9_R1.*;
 import org.apache.commons.lang.math.NumberUtils;
@@ -22,7 +23,8 @@ public class Bullet implements Listener {
 
     public static Map<Integer, Bullet> bullets = new HashMap<>();
 
-    private GunObject gun;
+    private GunObject gun = null;
+    private Sentry sentry = null;
     private Player shooter;
 
     public Bullet() {
@@ -30,63 +32,15 @@ public class Bullet implements Listener {
     }
 
     public Bullet(Player shooter, GunObject gunObject) {
-        Location loc = shooter.getLocation();
         gun = gunObject;
         this.shooter = shooter;
 
-        if (loc.getBlock().getType() == Material.STEP) {
-
-            if (loc.getBlock().getData() <= 7) {
-                if (loc.getY() <= loc.getBlockY() + 0.5) {
-                    shoot(shooter, gunObject);
-                }
-            } else if (loc.getBlock().getData() >= 8) {
-                if (loc.getY() >= loc.getBlockY() + 0.5) {
-                    shoot(shooter, gunObject);
-                }
-            }
-
-        } else if (loc.getBlock().getType().isSolid()) {
-            if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    EntityArmorStand entity;
-                    entity = new EntityArmorStand(((CraftWorld) loc.getWorld()).getHandle());
-                    ((CraftWorld) loc.getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-
-                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), (byte) 2);
-                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                }
-            } else if (gun.getDamage() >= 5 && gun.getDamage() < 10) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    EntityArmorStand entity;
-                    entity = new EntityArmorStand(((CraftWorld) loc.getWorld()).getHandle());
-                    ((CraftWorld) loc.getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-
-                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), (byte) 5);
-                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                }
-            } else if (gun.getDamage() >= 10 && gun.getDamage() < 20) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    EntityArmorStand entity;
-                    entity = new EntityArmorStand(((CraftWorld) loc.getWorld()).getHandle());
-                    ((CraftWorld) loc.getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-
-                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), (byte) 7);
-                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                }
-            } else if (gun.getDamage() >= 20) {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    EntityArmorStand entity;
-                    entity = new EntityArmorStand(((CraftWorld) loc.getWorld()).getHandle());
-                    ((CraftWorld) loc.getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-
-                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), (byte) 9);
-                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                }
-            }
-        } else {
             shoot(shooter, gunObject);
-        }
+    }
+
+    public Bullet(Sentry sentry) {
+        this.sentry = sentry;
+        shoot(sentry);
     }
 
     private void shoot(Player shooter, GunObject gunObject) {
@@ -104,7 +58,9 @@ public class Bullet implements Listener {
 
                     if (gunObject.getTracers()) {
                         PacketPlayOutWorldParticles packet = new PacketPlayOutWorldParticles(EnumParticle.CRIT, true, (float) loc.getX(), (float) loc.getY(), (float) loc.getZ(), 0, 0, 0, 0, 1, null);
-                        ((CraftPlayer) shooter).getHandle().playerConnection.sendPacket(packet);
+                        for (Player player : Bukkit.getOnlinePlayers()) {
+                            ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
+                        }
                     }
 
                     if (loc.getBlock().getType() == Material.STEP) {
@@ -188,20 +144,47 @@ public class Bullet implements Listener {
 
     }
 
-//    public Bullet getBullet(int id) {
-//        return bullets.get(id);
-//    }
-//
-//    public void removeBullet(int id) {
-//        bullets.remove(id);
-//    }
-//
-    public boolean isBullet(String name) {
-        if (NumberUtils.isNumber(name)) {
-            return GunList.isGunId(Integer.parseInt(name));
-        } else {
-            return false;
+    private void shoot(Sentry sentry) {
+        boolean inBlock = false;
+
+        if (sentry != null) {
+            Arrow bullet = sentry.getObj().getWorld().spawn(sentry.getObj().getEyeLocation(), Arrow.class);
+            bullet.setShooter(sentry.getObj());
+            Location loc = sentry.getObj().getLocation();
+            Vector direction2 = new Vector(sentry.getObj().getLocation().getX() - sentry.getTarget().getLocation().getX(), sentry.getObj().getLocation().getY() - sentry.getTarget().getLocation().getY(), sentry.getObj().getLocation().getZ() - sentry.getTarget().getLocation().getZ()).normalize();
+            Vector direction = direction2.clone().subtract(direction2.clone().multiply(3));
+            Random random = new Random();
+            if (sentry.getAccuracy() < 10) {
+                double x = direction.getX() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
+                double y = direction.getY() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
+                double z = direction.getZ() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
+                bullet.setBounce(false);
+                bullet.setVelocity(new Vector(x, y, z));
+
+//                bullet.setVelocity(direction);
+                bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                bullets.put(bullet.getEntityId(), this);
+            } else {
+                bullet.setBounce(false);
+                bullet.setVelocity(direction);
+                bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                bullets.put(bullet.getEntityId(), this);
+            }
+
         }
+
+    }
+
+    public boolean isBulletFromSentry(String name) {
+        return gun == null && sentry != null && (name.startsWith("Sentry-"));
+    }
+
+    public boolean isBullet(String name) {
+        return NumberUtils.isNumber(name) && GunList.isGunId(Integer.parseInt(name));
+    }
+
+    public Sentry getSentry() {
+        return this.sentry;
     }
 
     public GunObject getGun() {

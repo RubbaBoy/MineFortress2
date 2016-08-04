@@ -3,9 +3,11 @@ package com.uddernetworks.tf2.main;
 import com.uddernetworks.tf2.command.CommandTF2;
 import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.inv.AdminGunList;
+import com.uddernetworks.tf2.inv.ClassChooser;
 import com.uddernetworks.tf2.utils.ArrowHitBlockEvent;
-import com.uddernetworks.tf2.utils.GunThreadUtil;
+import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
 import com.uddernetworks.tf2.utils.WeaponType;
+import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
 import net.minecraft.server.v1_9_R1.EntityArrow;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -19,20 +21,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Door;
-import org.bukkit.material.MaterialData;
-import org.bukkit.material.Openable;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class Main extends JavaPlugin implements Listener {
 
     GunThreadUtil thread;
+    SentryThreadUtil sentry_thread;
 
     public static Main plugin;
 
@@ -52,8 +51,10 @@ public class Main extends JavaPlugin implements Listener {
         saveConfig();
 
         thread = new GunThreadUtil(this);
+        sentry_thread = new SentryThreadUtil(this);
         Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
         Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
+        Bukkit.getPluginManager().registerEvents(new ClassChooser(), this);
         Bukkit.getPluginManager().registerEvents(this, this);
         this.getCommand("tf2").setExecutor(new CommandTF2(this));
 
@@ -67,6 +68,7 @@ public class Main extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         thread.stahp();
+        sentry_thread.stahp();
         plugin = null;
     }
 
@@ -290,8 +292,8 @@ public class Main extends JavaPlugin implements Listener {
                         Block block = e.getEntity().getWorld().getBlockAt(x, y, z);
                         Bukkit.getServer().getPluginManager().callEvent(new ArrowHitBlockEvent((Arrow)e.getEntity(), block));
                     }
-                } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException var9) {
-                    var9.printStackTrace();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
                 }
 
             });

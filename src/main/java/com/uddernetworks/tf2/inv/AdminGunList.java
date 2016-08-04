@@ -4,6 +4,8 @@ import com.uddernetworks.tf2.guns.Gun;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
+import com.uddernetworks.tf2.playerclass.PlayerClasses;
+import com.uddernetworks.tf2.utils.ClassEnum;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -34,10 +36,9 @@ public class AdminGunList implements Listener {
     public void openGUI(Player p) {
 
         int i_ = 0;
-        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-            GunObject gun = GunList.getGunAt(i);
+        for (int i = 0; i < GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).size(); i++) {
+            GunObject gun = GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).get(i);
             gun_slot.put(gun.getItemStack().serialize().toString(), gun);
-            System.out.println("Putting in gun: " + gun.getItemStack().serialize().toString());
             i_++;
         }
 

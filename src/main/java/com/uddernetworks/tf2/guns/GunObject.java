@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.WeaponType;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -29,10 +30,11 @@ public class GunObject {
     private boolean tracers = false;
     private boolean sniper = false;
     private int accuracy;
+    private ClassEnum classtype;
 
     ItemStack gun;
 
-    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy, ClassEnum classtype) {
         this.type = type;
         this.name = name;
         this.lore = lore;
@@ -50,6 +52,7 @@ public class GunObject {
         this.tracers = tracers;
         this.sniper = sniper;
         this.accuracy = accuracy;
+        this.classtype = classtype;
 
     }
 
@@ -115,6 +118,10 @@ public class GunObject {
 
     public int getAccuracy() {
         return accuracy;
+    }
+
+    public ClassEnum getClassType() {
+        return classtype;
     }
 
     public ItemStack getItemStack() {

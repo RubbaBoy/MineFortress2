@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.WeaponType;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -63,6 +64,7 @@ public class Gun {
         boolean tracer;
         boolean sniper;
         int accuracy;
+        ClassEnum classtype;
 
         boolean error = false;
 
@@ -70,8 +72,8 @@ public class Gun {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 17) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 16");
+                if (cols != 18) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 17");
                 } else {
 
                     cell = row.getCell((short) 0);
@@ -245,12 +247,24 @@ public class Gun {
                         accuracy = 0;
                     }
 
+                    cell = row.getCell((short) 17);
+                    if (cell != null) {
+                        classtype = ClassEnum.valueOf(cell.getStringCellValue());
+                    } else {
+                        System.out.println("Class type cell was null!");
+                        error = true;
+                        classtype = null;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy);
+                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, classtype);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {
                         System.out.println("Stuff happened. The gun couldn't be created.");
+
+
+
                     }
                 }
             }

@@ -1,9 +1,13 @@
-package com.uddernetworks.tf2.utils;
+package com.uddernetworks.tf2.utils.threads;
 
 import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
+import com.uddernetworks.tf2.guns.sentry.Sentry;
 import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.utils.ClassEnum;
+import com.uddernetworks.tf2.utils.HashMap3;
+import com.uddernetworks.tf2.utils.particles.Particles;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -13,19 +17,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class GunThreadUtil extends Thread {
+public class SentryThreadUtil extends Thread {
 
     private boolean stahp = false;
 
-    public static HashMap<String, Long> clickPlayers = new HashMap<>();
-
-    private PlayerGuns playerGuns = new PlayerGuns();
+    public static HashMap3<Sentry, Boolean, Long> sentries = new HashMap3<>();
 
     Main main;
 
-    public static HashMap3<Player, GunObject, Long> shot = new HashMap3<>();
-
-    public GunThreadUtil(Main main) {
+    public SentryThreadUtil(Main main) {
         super();
         this.main = main;
         this.start();
@@ -45,29 +45,26 @@ public class GunThreadUtil extends Thread {
             exec.scheduleAtFixedRate((Runnable) () -> {
                 if (!stahp) {
 
-                    for (String player_str : clickPlayers.keySet()) {
-                        Player player = Bukkit.getPlayer(player_str);
-                        if (System.currentTimeMillis() - clickPlayers.get(player_str) > 260) {
-                            clickPlayers.remove(player_str);
-                            shot.remove(player);
-                        } else {
-                            if (shot.getT(player) <= System.currentTimeMillis()) {
-                                shot.setT(player, System.currentTimeMillis() + shot.get(player).getCooldown());
+                    for (Sentry sentry : sentries.keySet()) {
+                        if (sentries.get(sentry)) {
+                            if (sentries.getT(sentry) <= System.currentTimeMillis()) {
+                                sentries.setT(sentry, System.currentTimeMillis() + sentry.getCooldown());
                                 Bukkit.getScheduler().runTask(main, new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        new Bullet(player, shot.get(player));
-                                        playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+                                        new Bullet(sentry);
+//                                        Bukkit.getPlayer("RubbaBoy").sendMessage("Spawned bullet");
                                     }
                                 });
+                            } else {
+//                                Bukkit.getPlayer("RubbaBoy").sendMessage(sentries.getT(sentry) + " ISNT <= " + System.currentTimeMillis());
                             }
-
                         }
                     }
                 } else {
                     exec.shutdown();
                 }
-            }, 0, 100, TimeUnit.MILLISECONDS);
+            }, 0, 10, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             e.printStackTrace();
         }
