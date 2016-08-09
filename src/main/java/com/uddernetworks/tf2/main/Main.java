@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.main;
 
+import com.uddernetworks.tf2.arena.TeamChooser;
 import com.uddernetworks.tf2.command.CommandTF2;
 import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.inv.AdminGunList;
@@ -43,6 +44,14 @@ public class Main extends JavaPlugin implements Listener {
     private PlayerGuns playerGuns = new PlayerGuns();
     private PlayerHealth playerHealth = new PlayerHealth();
 
+    public Location randomDoor;
+    public Location blueDoor;
+    public Location redDoor;
+    public Location spectateDoor;
+    public Location teamChooseSpawn;
+    public Location blueSign;
+    public Location redSign;
+
     @Override
     public void onEnable() {
         plugin = this;
@@ -50,8 +59,17 @@ public class Main extends JavaPlugin implements Listener {
         getConfig().options().copyDefaults(true);
         saveConfig();
 
+        randomDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("random-door-X"), getConfig().getInt("random-door-Y"), getConfig().getInt("random-door-Z"));
+        blueDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("blue-door-X"), getConfig().getInt("blue-door-Y"), getConfig().getInt("blue-door-Z"));
+        redDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("red-door-X"), getConfig().getInt("red-door-Y"), getConfig().getInt("red-door-Z"));
+        spectateDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("spectate-door-X"), getConfig().getInt("spectate-door-Y"), getConfig().getInt("spectate-door-Z"));
+        teamChooseSpawn = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("team-choose-spawn-X"), getConfig().getInt("team-choose-spawn-Y"), getConfig().getInt("team-choose-spawn-Z"));
+        blueSign = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("blue-sign-X"), getConfig().getInt("blue-sign-Y"), getConfig().getInt("blue-sign-Z"));
+        redSign = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("red-sign-X"), getConfig().getInt("red-sign-Y"), getConfig().getInt("red-sign-Z"));
+
         thread = new GunThreadUtil(this);
         sentry_thread = new SentryThreadUtil(this);
+        Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
         Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
         Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
         Bukkit.getPluginManager().registerEvents(new ClassChooser(), this);

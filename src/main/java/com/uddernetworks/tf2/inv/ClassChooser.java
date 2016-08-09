@@ -103,9 +103,7 @@ public class ClassChooser implements Listener {
                 }
 
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 
 }
