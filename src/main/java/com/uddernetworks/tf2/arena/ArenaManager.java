@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.arena;
 
+import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.main.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -15,11 +16,11 @@ public class ArenaManager {
 
     private static ArenaManager am;
 
-    private final Map<UUID, Location> locs = new HashMap<UUID, Location>();
-    private final Map<UUID, ItemStack[]> inv = new HashMap<UUID, ItemStack[]>();
-    private final Map<UUID, ItemStack[]> armor = new HashMap<UUID, ItemStack[]>();
+    private final Map<UUID, Location> locs = new HashMap<>();
+    private final Map<UUID, ItemStack[]> inv = new HashMap<>();
+    private final Map<UUID, ItemStack[]> armor = new HashMap<>();
 
-    private final List<Arena> arenas = new ArrayList<Arena>();
+    private final List<Arena> arenas = new ArrayList<>();
     private int arenaSize = 0;
 
     public ArenaManager(Main main) {
@@ -77,8 +78,23 @@ public class ArenaManager {
         }
 
         Random random = new Random();
+        Game game = new Game(plugin);
 
-//        p.teleport(plugin.getSpawnBlocks().get(random.nextInt(plugin.getSpawnBlocks().size())));
+        if (plugin == null) {
+            p.sendMessage("1 is null");
+        } else {
+            p.sendMessage("1 is NOT null");
+        }
+        if (plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)) == null) {
+            p.sendMessage("2 is null");
+        } else {
+            p.sendMessage("2 is NOT null");
+        }
+        try {
+            p.teleport(plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(plugin.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
     }
 
     public void removePlayer(Player p) {
@@ -115,10 +131,10 @@ public class ArenaManager {
         } catch (NullPointerException ignored) {}
     }
 
-    public Arena createArena(Location l) {
+    public Arena createArena() {
         this.arenaSize++;
 
-        Arena a = new Arena(l, this.arenaSize);
+        Arena a = new Arena(this.arenaSize);
         this.arenas.add(a);
 
         return a;

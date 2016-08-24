@@ -2,10 +2,8 @@ package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.WeaponType;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -30,11 +28,14 @@ public class GunObject {
     private boolean tracers = false;
     private boolean sniper = false;
     private int accuracy;
+    private boolean shotgun = false;
+    private int shotgun_bullet = 0;
     private ClassEnum classtype;
+    private boolean classDefault = false;
 
     ItemStack gun;
 
-    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy, ClassEnum classtype) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy, boolean shotgun, int shotgun_bullet, ClassEnum classtype, boolean classDefault) {
         this.type = type;
         this.name = name;
         this.lore = lore;
@@ -52,7 +53,10 @@ public class GunObject {
         this.tracers = tracers;
         this.sniper = sniper;
         this.accuracy = accuracy;
+        this.shotgun = shotgun;
+        this.shotgun_bullet = shotgun_bullet;
         this.classtype = classtype;
+        this.classDefault = classDefault;
 
     }
 
@@ -122,6 +126,18 @@ public class GunObject {
 
     public ClassEnum getClassType() {
         return classtype;
+    }
+
+    public boolean isShotgun() {
+        return shotgun;
+    }
+
+    public int getShotgun_bullet() {
+        return shotgun_bullet;
+    }
+
+    public boolean isClassDefault() {
+        return classDefault;
     }
 
     public ItemStack getItemStack() {

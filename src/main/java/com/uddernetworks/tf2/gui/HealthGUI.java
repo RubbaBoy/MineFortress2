@@ -1,19 +1,17 @@
 package com.uddernetworks.tf2.gui;
 
 import com.uddernetworks.tf2.guns.PlayerHealth;
+import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class HealthGUI {
 
-    static int HEALTH_NEED_CHANGE = 100;
-
-    private PlayerHealth health = new PlayerHealth();
-
     public HealthGUI(Player player) {
-        int percentage = (int) Math.round((health.getHealth(player) / HEALTH_NEED_CHANGE) * 100);
-
+        PlayerHealth health = new PlayerHealth();
+        int percentage = Math.round((int) health.getHealth(player) / (PlayerClasses.getPlayerClass(player).getHealth() / 100));
+        if (percentage < 0 || percentage > 100) return;
         player.getInventory().setItemInOffHand(new ItemStack(Material.DIAMOND_HOE, 1, (short) (percentage + 1)));
     }
 

@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
@@ -64,7 +65,10 @@ public class Gun {
         boolean tracer;
         boolean sniper;
         int accuracy;
+        boolean shotgun;
+        int shotgun_bullet;
         ClassEnum classtype;
+        boolean classDefault;
 
         boolean error = false;
 
@@ -72,8 +76,8 @@ public class Gun {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 18) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 17");
+                if (cols != 21) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 20, it is: " + cols);
                 } else {
 
                     cell = row.getCell((short) 0);
@@ -87,7 +91,17 @@ public class Gun {
 
                     cell = row.getCell((short) 1);
                     if (cell != null) {
-                        name = cell.toString();
+                        for (GunObject gun : GunList.getGunlist()) {
+                            if (cell.toString().equalsIgnoreCase(gun.getName())) {
+                                System.out.println("The name of the gun was the same as another!");
+                                error = true;
+                            }
+                        }
+                        if (!error) {
+                            name = cell.toString();
+                        } else {
+                            name = null;
+                        }
                     } else {
                         System.out.println("Name cell was null!");
                         name = null;
@@ -114,7 +128,11 @@ public class Gun {
 
                     cell = row.getCell((short) 4);
                     if (cell != null) {
-                        sound = Sound.valueOf(cell.toString());
+                        if (cell.toString().equalsIgnoreCase("NULL")) {
+                            sound = null;
+                        } else {
+                            sound = Sound.valueOf(cell.toString());
+                        }
                     } else {
                         System.out.println("Sound cell was null!");
                         sound = null;
@@ -157,7 +175,7 @@ public class Gun {
                         cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                         scopeable = cell.getBooleanCellValue();
                     } else {
-                        System.out.println("KZR cell was null!");
+                        System.out.println("Scopeable cell was null!");
                         error = true;
                         scopeable = false;
                     }
@@ -249,6 +267,27 @@ public class Gun {
 
                     cell = row.getCell((short) 17);
                     if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        shotgun = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Shotgun cell was null!");
+                        error = true;
+                        shotgun = false;
+                    }
+
+                    cell = row.getCell((short) 18);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                        Double foo = cell.getNumericCellValue();
+                        shotgun_bullet = foo.intValue();
+                    } else {
+                        System.out.println("Shotgun bullet cell was null!");
+                        error = true;
+                        shotgun_bullet = 0;
+                    }
+
+                    cell = row.getCell((short) 19);
+                    if (cell != null) {
                         classtype = ClassEnum.valueOf(cell.getStringCellValue());
                     } else {
                         System.out.println("Class type cell was null!");
@@ -256,15 +295,22 @@ public class Gun {
                         classtype = null;
                     }
 
+                    cell = row.getCell((short) 20);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        classDefault = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Class default type cell was null!");
+                        error = true;
+                        classDefault = false;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, classtype);
+                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, shotgun, shotgun_bullet, classtype, classDefault);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {
                         System.out.println("Stuff happened. The gun couldn't be created.");
-
-
-
                     }
                 }
             }

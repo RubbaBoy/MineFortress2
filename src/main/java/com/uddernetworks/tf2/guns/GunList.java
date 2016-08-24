@@ -51,6 +51,20 @@ public class GunList {
         return null;
     }
 
+    public static GunObject getGunByName(String name) {
+        for (GunObject gun : guns) {
+            if (name.equalsIgnoreCase(gun.getName())) {
+                return gun;
+            }
+        }
+        System.out.println("Tried to get unregistered gun by name: " + name);
+        return null;
+    }
+
+    public static ArrayList<GunObject> getDefaultGuns(ClassEnum classEnum) {
+        return GunList.guns.stream().filter(gun -> gun.isClassDefault() && gun.getClassType() == classEnum).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     public static void deleteGunItem(int id) {
         gun_ids.remove(id);
     }

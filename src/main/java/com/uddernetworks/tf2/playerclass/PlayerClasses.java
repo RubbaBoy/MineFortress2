@@ -19,6 +19,10 @@ public class PlayerClasses {
         return PlayerClasses.classes.keySet().stream().filter(player -> PlayerClasses.classes.get(player) == classtype).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    public static boolean isSet(Player player) {
+        return PlayerClasses.classes.containsKey(player);
+    }
+
     public static ClassEnum getPlayerClass(Player player) {
         return classes.get(player);
     }

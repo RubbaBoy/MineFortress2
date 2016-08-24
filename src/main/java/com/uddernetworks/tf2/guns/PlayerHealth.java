@@ -18,7 +18,7 @@ public class PlayerHealth {
     }
 
     public void addHealth(Player player, double health) {
-        player.sendMessage("Trying to add you!");
+//        player.sendMessage("Trying to add you!");
         if (PlayerHealth.health.containsKey(player)) {
             PlayerHealth.health.put(player, health);
 

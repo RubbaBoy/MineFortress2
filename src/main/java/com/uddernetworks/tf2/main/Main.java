@@ -1,22 +1,33 @@
 package com.uddernetworks.tf2.main;
 
+import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.TeamChooser;
-import com.uddernetworks.tf2.command.CommandTF2;
+import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.game.GameState;
 import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.inv.AdminGunList;
 import com.uddernetworks.tf2.inv.ClassChooser;
-import com.uddernetworks.tf2.utils.ArrowHitBlockEvent;
+import com.uddernetworks.tf2.inv.EditLoadout;
+import com.uddernetworks.tf2.inv.Loadout;
+import com.uddernetworks.tf2.utils.*;
+import com.uddernetworks.tf2.utils.data.Locations;
 import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
-import com.uddernetworks.tf2.utils.WeaponType;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
-import net.minecraft.server.v1_9_R1.EntityArrow;
+import net.minecraft.server.v1_10_R1.EntityArrow;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftArrow;
-import org.bukkit.entity.*;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArrow;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -28,8 +39,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
-public class Main extends JavaPlugin implements Listener {
+public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     GunThreadUtil thread;
     SentryThreadUtil sentry_thread;
@@ -38,19 +51,14 @@ public class Main extends JavaPlugin implements Listener {
 
     Gun gun = new Gun(this);
 
-    private Location firstDoorLoc;
-    private Location secondDoorLoc;
+    private static PlayerGuns playerGuns = new PlayerGuns();
+    private static PlayerHealth playerHealth = new PlayerHealth();
 
-    private PlayerGuns playerGuns = new PlayerGuns();
-    private PlayerHealth playerHealth = new PlayerHealth();
+    private Game game = new Game(this);
 
-    public Location randomDoor;
-    public Location blueDoor;
-    public Location redDoor;
-    public Location spectateDoor;
-    public Location teamChooseSpawn;
-    public Location blueSign;
-    public Location redSign;
+    private ArrayList<Location> blue_barriers = new ArrayList<>();
+    private ArrayList<Location> red_barriers = new ArrayList<>();
+    public ArrayList<String> worlds = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -59,117 +67,181 @@ public class Main extends JavaPlugin implements Listener {
         getConfig().options().copyDefaults(true);
         saveConfig();
 
-        randomDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("random-door-X"), getConfig().getInt("random-door-Y"), getConfig().getInt("random-door-Z"));
-        blueDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("blue-door-X"), getConfig().getInt("blue-door-Y"), getConfig().getInt("blue-door-Z"));
-        redDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("red-door-X"), getConfig().getInt("red-door-Y"), getConfig().getInt("red-door-Z"));
-        spectateDoor = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("spectate-door-X"), getConfig().getInt("spectate-door-Y"), getConfig().getInt("spectate-door-Z"));
-        teamChooseSpawn = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("team-choose-spawn-X"), getConfig().getInt("team-choose-spawn-Y"), getConfig().getInt("team-choose-spawn-Z"));
-        blueSign = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("blue-sign-X"), getConfig().getInt("blue-sign-Y"), getConfig().getInt("blue-sign-Z"));
-        redSign = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("red-sign-X"), getConfig().getInt("red-sign-Y"), getConfig().getInt("red-sign-Z"));
+        new ArenaManager(this);
+        new Locations(this);
 
-        thread = new GunThreadUtil(this);
-        sentry_thread = new SentryThreadUtil(this);
         Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
         Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
         Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
-        Bukkit.getPluginManager().registerEvents(new ClassChooser(), this);
+        Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
+        Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
+        Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        this.getCommand("tf2").setExecutor(new CommandTF2(this));
+
+        MySQL mySQL = new MySQL(this);
+
+        System.out.println("Creating the Loadouts table if it doesn't exist...");
+        mySQL.query("CREATE TABLE IF NOT EXISTS 'Loadouts'(UUID TEXT NOT NULL, CLASS TEXT NOT NULL, TYPE TEXT NOT NULL, ID int(0) NOT NULL, NAME TEXT NOT NULL);");
+
+        worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
+        for (int i2 = 0; i2 < worlds.size(); i2++) {
+            World world = Bukkit.getWorld(worlds.get(i2));
+            ArrayList<String> numbs = new ArrayList<>();
+            if (world == null) {
+                Bukkit.getPlayer("RubbaBoy").sendMessage("World is null");
+            }
+            if (this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers") == null) {
+                Bukkit.getPlayer("RubbaBoy").sendMessage("Config section is null");
+            }
+            numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i = 0; i < numbs.size(); i++) {
+                for (int x = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-X"); x++) {
+                    for (int y = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Y"); y++) {
+                        for (int z = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Z"); z++) {
+                            red_barriers.add(new Location(world, x, y, z));
+                        }
+                    }
+                }
+            }
+            numbs.clear();
+            numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".blue.barriers").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i = 0; i < numbs.size(); i++) {
+                for (int x = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-X"); x++) {
+                    for (int y = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Y"); y++) {
+                        for (int z = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Z"); z++) {
+                            blue_barriers.add(new Location(world, x, y, z));
+                        }
+                    }
+                }
+            }
+        }
+
+        thread = new GunThreadUtil(this);
+        sentry_thread = new SentryThreadUtil(this);
 
         try {
             gun.loadGuns();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        SQLLoadout sqlLoadout = new SQLLoadout(plugin);
+        sqlLoadout.reload();
     }
 
     @Override
     public void onDisable() {
         thread.stahp();
         sentry_thread.stahp();
+
+        for (Player player2 : Bukkit.getOnlinePlayers()) {
+            ArenaManager.getManager().removePlayer(player2);
+        }
+        ArenaManager.getManager().clearArenas();
+
         plugin = null;
     }
 
 
-    public ArrayList<Location> getRefillDoorBlocks() throws Exception {
-        ArrayList<Location> list = new ArrayList<>();
-        reloadConfig();
-        Location temp = new Location(Bukkit.getWorld(getConfig().getString("world")), getConfig().getInt("door-X"), getConfig().getInt("door-Y"), getConfig().getInt("door-Z"));
-        Location second_door = null;
-        if (temp.clone().getBlock().getType() == Material.BIRCH_DOOR || temp.clone().getBlock().getType() == Material.ACACIA_DOOR) {
-            if (temp.clone().getBlock().getType() == Material.BIRCH_DOOR) {
-
-                for (int i = 0; i < getSurroundingHorizontalBlocks(temp.clone()).size(); i++) {
-                    if (getSurroundingHorizontalBlocks(temp.clone()).get(i).getType() == Material.ACACIA_DOOR) {
-                        second_door = getSurroundingHorizontalBlocks(temp.clone()).get(i).getLocation();
-                    }
-                }
-                if (second_door == null) {
-                    throw new Exception("Coordinate given is not a refill door.");
+    public ArrayList<Location> getRefillDoorBlocks(TeamEnum team, World world) {
+        try {
+            ArrayList<Location> list = new ArrayList<>();
+            reloadConfig();
+            Location temp;
+            if (world != null) {
+                if (team == TeamEnum.BLUE) {
+                    temp = new Location(world, getConfig().getInt("playworlds." + world.getName() + ".blue.refill-door-X"), getConfig().getInt("playworlds." + world.getName() + ".blue.refill-door-Y"), getConfig().getInt("playworlds." + world.getName() + ".blue.refill-door-Z"));
                 } else {
-                    if (temp.clone().getBlockX() == second_door.clone().getBlockX()) {
-                        if (temp.clone().getBlockZ() - 1 == second_door.clone().getBlockZ()) {
-                            if (temp.clone().add(-1, 0, 0).getBlock().getType() == Material.DISPENSER
-                                    && temp.clone().add(-1, 1, 0).getBlock().getType() == Material.PISTON_STICKY_BASE
-                                    && temp.clone().add(-1, 0, -1).getBlock().getType() == Material.DROPPER
-                                    && temp.clone().add(-1, 1, -1).getBlock().getType() == Material.PISTON_BASE) {
-                                firstDoorLoc = temp;
-                                secondDoorLoc = second_door;
-                                list.add(temp.clone().add(-1, 0, 0));
-                                list.add(second_door.clone().add(-1, 0, 0));
-                            } else {
-                                throw new Exception("Coordinate given is not a refill door.");
+                    temp = new Location(world, getConfig().getInt("playworlds." + world.getName() + ".red.refill-door-X"), getConfig().getInt("playworlds." + world.getName() + ".red.refill-door-Y"), getConfig().getInt("playworlds." + world.getName() + ".red.refill-door-Z"));
+                }
+                Location second_door = null;
+                if (temp.clone().getBlock().getType() == Material.BIRCH_DOOR || temp.clone().getBlock().getType() == Material.ACACIA_DOOR) {
+                    Door door = (Door) temp.clone().getBlock().getState().getData();
+                    Block block = temp.getBlock();
+                    if (door.isTopHalf()) {
+                        block = temp.clone().getBlock().getRelative(BlockFace.DOWN);
+                        temp = temp.clone().getBlock().getRelative(BlockFace.DOWN).getLocation();
+                    }
+                    if (block.getType() == Material.BIRCH_DOOR) {
+
+                        for (int i = 0; i < getSurroundingHorizontalBlocks(temp.clone()).size(); i++) {
+                            if (getSurroundingHorizontalBlocks(temp.clone()).get(i).getType() == Material.ACACIA_DOOR) {
+                                second_door = getSurroundingHorizontalBlocks(temp.clone()).get(i).getLocation();
                             }
-                        } if (temp.clone().getBlockZ() + 1 == second_door.clone().getBlockZ()) {
-                            if (temp.clone().add(1, 0, 0).getBlock().getType() == Material.DISPENSER
-                                    && temp.clone().add(1, 1, 0).getBlock().getType() == Material.PISTON_STICKY_BASE
-                                    && temp.clone().add(1, 0, 1).getBlock().getType() == Material.DROPPER
-                                    && temp.clone().add(1, 1, 1).getBlock().getType() == Material.PISTON_BASE) {
-                                firstDoorLoc = temp;
-                                secondDoorLoc = second_door;
-                                list.add(temp.clone().add(1, 0, 0));
-                                list.add(second_door.clone().add(1, 0, 0));
-                            } else {
-                                throw new Exception("Coordinate given is not a refill door.");
-                            }
-                        } else {
-                            throw new Exception("Coordinate given is not a refill door.");
                         }
-                    } else if (temp.clone().getBlockZ() == second_door.clone().getBlockZ()) {
-                        if (temp.clone().getBlockX() + 1 == second_door.clone().getBlockX()) {
-                            if (temp.clone().add(0, 0, -1).getBlock().getType() == Material.DISPENSER
-                                    && temp.clone().add(0, 1, -1).getBlock().getType() == Material.PISTON_STICKY_BASE
-                                    && temp.clone().add(1, 0, -1).getBlock().getType() == Material.DROPPER
-                                    && temp.clone().add(1, 1, -1).getBlock().getType() == Material.PISTON_BASE) {
-                                firstDoorLoc = temp;
-                                secondDoorLoc = second_door;
-                                list.add(temp.clone().add(0, 0, -1));
-                                list.add(second_door.clone().add(0, 0, -1));
-                            } else {
-                                throw new Exception("Coordinate given is not a refill door.");
-                            }
-                        } if (temp.clone().getBlockX() - 1 == second_door.clone().getBlockX()) {
-                            if (temp.clone().add(0, 0, 1).getBlock().getType() == Material.DISPENSER
-                                    && temp.clone().add(0, 1, 1).getBlock().getType() == Material.PISTON_STICKY_BASE
-                                    && temp.clone().add(-1, 0, 1).getBlock().getType() == Material.DROPPER
-                                    && temp.clone().add(-1, 1, 1).getBlock().getType() == Material.PISTON_BASE) {
-                                firstDoorLoc = temp;
-                                secondDoorLoc = second_door;
-                                list.add(temp.clone().add(0, 0, -1));
-                                list.add(second_door.clone().add(0, 0, -1));
-                            } else {
-                                throw new Exception("Coordinate given is not a refill door.");
-                            }
-                        } else {
+                        if (second_door == null) {
                             throw new Exception("Coordinate given is not a refill door.");
+                        } else {
+                            if (temp.clone().getBlockX() == second_door.clone().getBlockX()) {
+                                if (temp.clone().getBlockZ() - 1 == second_door.clone().getBlockZ()) {
+                                    if (temp.clone().add(-1, 0, 0).getBlock().getType() == Material.DISPENSER
+                                            && temp.clone().add(-1, 1, 0).getBlock().getType() == Material.PISTON_STICKY_BASE
+                                            && temp.clone().add(-1, 0, -1).getBlock().getType() == Material.DROPPER
+                                            && temp.clone().add(-1, 1, -1).getBlock().getType() == Material.PISTON_BASE) {
+                                        Locations.firstDoorLoc = temp;
+                                        Locations.secondDoorLoc = second_door;
+                                        list.add(temp.clone().add(-1, 0, 0));
+                                        list.add(second_door.clone().add(-1, 0, 0));
+                                    } else {
+                                        throw new Exception("Coordinate given is not a refill door.");
+                                    }
+                                } else if (temp.clone().getBlockZ() + 1 == second_door.clone().getBlockZ()) {
+                                    if (temp.clone().add(1, 0, 0).getBlock().getType() == Material.DISPENSER
+                                            && temp.clone().add(1, 1, 0).getBlock().getType() == Material.PISTON_STICKY_BASE
+                                            && temp.clone().add(1, 0, 1).getBlock().getType() == Material.DROPPER
+                                            && temp.clone().add(1, 1, 1).getBlock().getType() == Material.PISTON_BASE) {
+                                        Locations.firstDoorLoc = temp;
+                                        Locations.secondDoorLoc = second_door;
+                                        list.add(temp.clone().add(1, 0, 0));
+                                        list.add(second_door.clone().add(1, 0, 0));
+                                    } else {
+                                        throw new Exception("Coordinate given is not a refill door.");
+                                    }
+                                } else {
+                                    throw new Exception("Coordinate given is not a refill door.");
+                                }
+                            } else if (temp.clone().getBlockZ() == second_door.clone().getBlockZ()) {
+                                if (temp.clone().getBlockX() + 1 == second_door.clone().getBlockX()) {
+                                    if (temp.clone().add(0, 0, -1).getBlock().getType() == Material.DISPENSER
+                                            && temp.clone().add(0, 1, -1).getBlock().getType() == Material.PISTON_STICKY_BASE
+                                            && temp.clone().add(1, 0, -1).getBlock().getType() == Material.DROPPER
+                                            && temp.clone().add(1, 1, -1).getBlock().getType() == Material.PISTON_BASE) {
+                                        Locations.firstDoorLoc = temp;
+                                        Locations.secondDoorLoc = second_door;
+                                        list.add(temp.clone().add(0, 0, -1));
+                                        list.add(second_door.clone().add(0, 0, -1));
+                                    } else {
+                                        throw new Exception("Coordinate given is not a refill door.");
+                                    }
+                                } else if (temp.clone().getBlockX() - 1 == second_door.clone().getBlockX()) {
+                                    if (temp.clone().add(0, 0, 1).getBlock().getType() == Material.DISPENSER
+                                            && temp.clone().add(0, 1, 1).getBlock().getType() == Material.PISTON_STICKY_BASE
+                                            && temp.clone().add(-1, 0, 1).getBlock().getType() == Material.DROPPER
+                                            && temp.clone().add(-1, 1, 1).getBlock().getType() == Material.PISTON_BASE) {
+                                        Locations.firstDoorLoc = temp;
+                                        Locations.secondDoorLoc = second_door;
+                                        list.add(temp.clone().add(0, 0, -1));
+                                        list.add(second_door.clone().add(0, 0, -1));
+                                    } else {
+                                        throw new Exception("Coordinate given is not a refill door.");
+                                    }
+                                } else {
+                                    throw new Exception("Coordinate given is not a refill door.");
+                                }
+                            }
                         }
                     }
+                } else {
+                    throw new Exception("Coordinate given is not a refill door.");
                 }
+                return list;
+            } else {
+                return null;
             }
-        } else {
-            throw new Exception("Coordinate given is not a refill door.888");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        return list;
     }
 
     public ArrayList<Block> getSurroundingHorizontalBlocks(Location location) {
@@ -181,6 +253,18 @@ public class Main extends JavaPlugin implements Listener {
         return blocks;
     }
 
+    public Location getSpectateLocation(World world) {
+        return new Location(world, getConfig().getInt("playworlds." + world.getName() + ".spectate-X"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Y"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Z"));
+    }
+
+    public boolean isInBarrier(Location location, TeamEnum teamOfPlayer) {
+        if (teamOfPlayer == TeamEnum.BLUE) {
+            return red_barriers.contains(location);
+        } else {
+            return blue_barriers.contains(location);
+        }
+    }
+
     HashMap<Player, Boolean> players = new HashMap<>();
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
@@ -188,87 +272,102 @@ public class Main extends JavaPlugin implements Listener {
             players.put(event.getPlayer(), false);
         }
         try {
-            if (getRefillDoorBlocks().get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                    && getRefillDoorBlocks().get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                    && getRefillDoorBlocks().get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                if (!players.get(event.getPlayer())) {
-                    toggleDoorState(firstDoorLoc.getBlock());
-                    toggleDoorState(secondDoorLoc.getBlock());
+            if (Game.getGameState() == GameState.INGAME) {
+                if (game.getGameType() != null) {
+                    if (game.getWorld() != null) {
+                        World world = game.getWorld();
+                        for (int i2 = 0; i2 < 2; i2++) {
+                            TeamEnum team = TeamEnum.BLUE;
+                            if (i2 == 0) {
+                                team = TeamEnum.BLUE;
+                            } else if (i2 == 1){
+                                team = TeamEnum.RED;
+                            }
+                            if (getRefillDoorBlocks(team, world).get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                    && getRefillDoorBlocks(team, world).get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                    && getRefillDoorBlocks(team, world).get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                if (!players.get(event.getPlayer())) {
+                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
 
-                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                        GunObject gun = GunList.getGunAt(i);
-                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
+                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                        GunObject gun = GunList.getGunAt(i);
+                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
+                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
+                                            }
+                                        }
+                                    }
+                                    players.put(event.getPlayer(), true);
+                                }
+                            } else if (getRefillDoorBlocks(team, world).get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                    && getRefillDoorBlocks(team, world).get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                    && getRefillDoorBlocks(team, world).get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                if (!players.get(event.getPlayer())) {
+                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                        GunObject gun = GunList.getGunAt(i);
+                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
+                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
+                                            }
+                                        }
+                                    }
+                                    players.put(event.getPlayer(), true);
+                                }
+                            } else if (Locations.firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                    && Locations.firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                    && Locations.firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                if (!players.get(event.getPlayer())) {
+                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                        GunObject gun = GunList.getGunAt(i);
+                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
+                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
+                                            }
+                                        }
+                                    }
+                                    players.put(event.getPlayer(), true);
+                                }
+                            } else if (Locations.secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                    && Locations.secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                    && Locations.secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                if (!players.get(event.getPlayer())) {
+                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                        GunObject gun = GunList.getGunAt(i);
+                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
+                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
+                                            }
+                                        }
+                                    }
+                                    players.put(event.getPlayer(), true);
+                                }
+                            } else {
+                                if (players.get(event.getPlayer())) {
+                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                    players.put(event.getPlayer(), false);
+                                }
                             }
                         }
                     }
-                    players.put(event.getPlayer(), true);
-                }
-            } else if (getRefillDoorBlocks().get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                    && getRefillDoorBlocks().get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                    && getRefillDoorBlocks().get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                if (!players.get(event.getPlayer())) {
-                    toggleDoorState(firstDoorLoc.getBlock());
-                    toggleDoorState(secondDoorLoc.getBlock());
-
-                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                        GunObject gun = GunList.getGunAt(i);
-                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                            }
-                        }
-                    }
-                    players.put(event.getPlayer(), true);
-                }
-            } else if (firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                    && firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                    && firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                if (!players.get(event.getPlayer())) {
-                    toggleDoorState(firstDoorLoc.getBlock());
-                    toggleDoorState(secondDoorLoc.getBlock());
-
-                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                        GunObject gun = GunList.getGunAt(i);
-                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                            }
-                        }
-                    }
-                    players.put(event.getPlayer(), true);
-                }
-            } else if (secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                    && secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                    && secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                if (!players.get(event.getPlayer())) {
-                    toggleDoorState(firstDoorLoc.getBlock());
-                    toggleDoorState(secondDoorLoc.getBlock());
-
-                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                        GunObject gun = GunList.getGunAt(i);
-                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                            }
-                        }
-                    }
-                    players.put(event.getPlayer(), true);
-                }
-            } else {
-                if (players.get(event.getPlayer())) {
-                    toggleDoorState(firstDoorLoc.getBlock());
-                    toggleDoorState(secondDoorLoc.getBlock());
-                    players.put(event.getPlayer(), false);
                 }
             }
         } catch (Exception e) {
@@ -298,8 +397,8 @@ public class Main extends JavaPlugin implements Listener {
                 try {
                     EntityArrow e1 = ((CraftArrow)e.getEntity()).getHandle();
                     Field fieldX = EntityArrow.class.getDeclaredField("h");
-                    Field fieldY = EntityArrow.class.getDeclaredField("as");
-                    Field fieldZ = EntityArrow.class.getDeclaredField("at");
+                    Field fieldY = EntityArrow.class.getDeclaredField("au");
+                    Field fieldZ = EntityArrow.class.getDeclaredField("av");
                     fieldX.setAccessible(true);
                     fieldY.setAccessible(true);
                     fieldZ.setAccessible(true);
@@ -331,6 +430,79 @@ public class Main extends JavaPlugin implements Listener {
             }
             state.update();
         }
+    }
+
+    public ArrayList<Location> getSpawnBlocks(World world, TeamEnum team) {
+        try {
+            int spawn1_x;
+            int spawn1_y;
+            int spawn1_z;
+            int spawn2_x;
+            int spawn2_y;
+            int spawn2_z;
+            if (team == TeamEnum.BLUE) {
+                reloadConfig();
+                spawn1_x = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn1-X");
+                spawn1_y = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn1-Y");
+                spawn1_z = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn1-Z");
+
+                spawn2_x = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn2-X");
+                spawn2_y = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn2-Y");
+                spawn2_z = getConfig().getInt("playworlds." + world.getName() + ".blue.spawn2-Z");
+            } else {
+                reloadConfig();
+                spawn1_x = getConfig().getInt("playworlds." + world.getName() + ".red.spawn1-X");
+                spawn1_y = getConfig().getInt("playworlds." + world.getName() + ".red.spawn1-Y");
+                spawn1_z = getConfig().getInt("playworlds." + world.getName() + ".red.spawn1-Z");
+
+                spawn2_x = getConfig().getInt("playworlds." + world.getName() + ".red.spawn2-X");
+                spawn2_y = getConfig().getInt("playworlds." + world.getName() + ".red.spawn2-Y");
+                spawn2_z = getConfig().getInt("playworlds." + world.getName() + ".red.spawn2-Z");
+            }
+
+            HashSet<Location> locs = new HashSet<>();
+
+            int topBlockX = (spawn1_x < spawn2_x ? spawn2_x : spawn1_x);
+            int bottomBlockX = (spawn1_x > spawn2_x ? spawn2_x : spawn1_x);
+
+            int topBlockY = (spawn1_y < spawn2_y ? spawn2_y : spawn1_y);
+            int bottomBlockY = (spawn1_y > spawn2_y ? spawn2_y : spawn1_y);
+
+            int topBlockZ = (spawn1_z < spawn2_z ? spawn2_z : spawn1_z);
+            int bottomBlockZ = (spawn1_z > spawn2_z ? spawn2_z : spawn1_z);
+
+            for(int x = bottomBlockX; x <= topBlockX; x++) {
+                for(int y = bottomBlockY; y <= topBlockY; y++) {
+                    for(int z = bottomBlockZ; z <= topBlockZ; z++) {
+                        locs.add(new Location(world, x, y, z));
+                    }
+                }
+            }
+
+            return new ArrayList<>(locs);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("tf2")) {
+            sender.sendMessage("Sending you to pick a team...");
+            TeamChooser chooser = new TeamChooser(plugin);
+            if (Locations.teamChooseSpawn == null) {
+                Bukkit.getPlayer("CrustyDolphin").sendMessage("It is null!2");
+            }
+            try {
+                chooser.sendPlayers();
+                ArenaManager.getManager().createArena();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean isValidBlock(int x, int y, int z) {

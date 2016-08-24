@@ -1,14 +1,16 @@
 package com.uddernetworks.tf2.arena;
 
+import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.TeamEnum;
-import net.minecraft.server.v1_9_R1.Entity;
+import com.uddernetworks.tf2.utils.data.Locations;
+import net.minecraft.server.v1_10_R1.Entity;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -36,91 +38,134 @@ public class TeamChooser implements Listener {
     }
 
     public void sendPlayers() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        try {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                locs.put(player, player.getLocation());
+                Entity en = ((CraftPlayer) player).getHandle();
+                en.setInvisible(true);
+                player.teleport(Locations.teamChooseSpawn);
+                players.add(player);
+            }
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendPlayer(Player player) {
+        if (!players.contains(player)) {
             locs.put(player, player.getLocation());
-            Entity en = ((CraftPlayer)player).getHandle();
+            Entity en = ((CraftPlayer) player).getHandle();
             en.setInvisible(true);
-            player.teleport(main.teamChooseSpawn);
+            player.teleport(Locations.teamChooseSpawn);
             players.add(player);
         }
     }
 
     @EventHandler
     public void onDoorClick(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            Player player = event.getPlayer();
-            Block block = event.getClickedBlock();
-            if (block.getLocation().equals(main.blueDoor) || block.getLocation().equals(main.redDoor) || block.getLocation().equals(main.randomDoor)) {
-                String doorName = event.getClickedBlock().getType().getData().getName();
-                if (block.getType() == Material.DARK_OAK_DOOR || block.getType() == Material.SPRUCE_DOOR) {
-                    player.sendMessage("You're clicking a door!! Tell rubba");
-                    Door door = (Door) block.getState().getData();
-                    if (door.isTopHalf()) {
-                        block = block.getRelative(BlockFace.DOWN);
+        try {
+            if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                Player player = event.getPlayer();
+                Block block = event.getClickedBlock();
+                if (block.getLocation().equals(Locations.blueDoor) || block.getLocation().equals(Locations.redDoor) || block.getLocation().equals(Locations.randomDoor)) {
+                    if (block.getType() == Material.DARK_OAK_DOOR || block.getType() == Material.SPRUCE_DOOR || block.getType() == Material.WOODEN_DOOR) {
+                        Door door = (Door) block.getState().getData();
+                        if (door.isTopHalf()) {
+                            block = block.getRelative(BlockFace.DOWN);
+                        }
                     }
-                }
-                    if (!PlayerTeams.isSet(player)) {
+                    if (!PlayerTeams.isSet(player) || PlayerTeams.getPlayer(player) == TeamEnum.BLUE || PlayerTeams.getPlayer(player) == TeamEnum.RED) {
                         event.setCancelled(true);
-                        if (block.getLocation().serialize().equals(main.blueDoor.serialize())) {
+                        if (block.getLocation().serialize().equals(Locations.blueDoor.serialize())) {
                             if (blueDoor) {
                                 player.sendMessage("blue door YEA red door is " + redDoor + " blue door is " + blueDoor);
                                 PlayerTeams.addPlayer(player, TeamEnum.BLUE);
+                                reloadAbleDoors();
+                                Entity en = ((CraftPlayer) player).getHandle();
+                                en.setInvisible(false);
+                                Game game = new Game(main);
+                                game.sendPlayer(player);
+                                changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                             } else {
                                 player.sendMessage(ChatColor.BLUE + "Joining this team would cause team unbalances");
                             }
-                            reloadAbleDoors();
-                        } else if (block.getLocation().serialize().equals(main.redDoor.serialize())) {
+                        } else if (block.getLocation().serialize().equals(Locations.redDoor.serialize())) {
                             if (redDoor && !blueDoor) {
                                 player.sendMessage("red door YEA red door is " + redDoor + " blue door is " + blueDoor);
                                 PlayerTeams.addPlayer(player, TeamEnum.RED);
+                                reloadAbleDoors();
+                                Entity en = ((CraftPlayer) player).getHandle();
+                                en.setInvisible(false);
+                                Game game = new Game(main);
+                                game.sendPlayer(player);
+                                changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                             } else {
                                 player.sendMessage(ChatColor.RED + "Joining this team would cause team unbalances");
                             }
-                            reloadAbleDoors();
-                        } else if (block.getLocation().serialize().equals(main.randomDoor.serialize())) {
+                        } else if (block.getLocation().serialize().equals(Locations.randomDoor.serialize())) {
                             Random random = new Random();
                             if (blueDoor && redDoor) {
                                 if (random.nextBoolean()) {
                                     PlayerTeams.addPlayer(player, TeamEnum.BLUE);
+                                    reloadAbleDoors();
+                                    Entity en = ((CraftPlayer) player).getHandle();
+                                    en.setInvisible(false);
+                                    Game game = new Game(main);
+                                    game.sendPlayer(player);
+                                    changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                    changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                                 } else {
                                     PlayerTeams.addPlayer(player, TeamEnum.RED);
+                                    reloadAbleDoors();
+                                    Entity en = ((CraftPlayer) player).getHandle();
+                                    en.setInvisible(false);
+                                    Game game = new Game(main);
+                                    game.sendPlayer(player);
+                                    changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                    changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                                 }
                             } else if (blueDoor && !redDoor) {
                                 PlayerTeams.addPlayer(player, TeamEnum.BLUE);
+                                reloadAbleDoors();
+                                Entity en = ((CraftPlayer) player).getHandle();
+                                en.setInvisible(false);
+                                Game game = new Game(main);
+                                game.sendPlayer(player);
+                                changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                             } else if (!blueDoor && redDoor) {
                                 PlayerTeams.addPlayer(player, TeamEnum.RED);
+                                reloadAbleDoors();
+                                Entity en = ((CraftPlayer) player).getHandle();
+                                en.setInvisible(false);
+                                Game game = new Game(main);
+                                game.sendPlayer(player);
+                                changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                                changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                             }
-                            reloadAbleDoors();
-                        } else {
-                            player.sendMessage("You didnt click a door");
                         }
-
-                        Entity en = ((CraftPlayer) player).getHandle();
-                        en.setInvisible(false);
-                        player.teleport(locs.get(player));
-                        changeSignText(main.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
-                        changeSignText(main.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                     } else {
                         player.sendMessage("You already are set in the team list!");
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
     public void reloadAbleDoors() {
-        Bukkit.getPlayer("RubbaBoy").sendMessage("reloadAbleDoors");
         if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() > PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
             blueDoor = false;
             redDoor = true;
-            Bukkit.getPlayer("RubbaBoy").sendMessage("2blue door: " + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + " red door: " + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size());
-            changeSignText(main.blueSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+            changeSignText(Locations.blueSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
         } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() < PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
             blueDoor = true;
             redDoor = false;
-            Bukkit.getPlayer("RubbaBoy").sendMessage("blue door: " + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + " red door: " + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size());
-            changeSignText(main.redSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+            changeSignText(Locations.redSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
         } else {
-            Bukkit.getPlayer("RubbaBoy").sendMessage("nahp");
             blueDoor = true;
             redDoor = true;
         }

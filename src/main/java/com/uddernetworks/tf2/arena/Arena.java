@@ -9,11 +9,9 @@ import java.util.UUID;
 public class Arena {
 
     private final int id;
-    final Location spawn;
     private final List<UUID> players = new ArrayList<UUID>();
 
-    public Arena(Location spawn, int id) {
-        this.spawn = spawn;
+    public Arena(int id) {
         this.id = id;
     }
 

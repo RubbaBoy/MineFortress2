@@ -3,7 +3,7 @@ package com.uddernetworks.tf2.utils;
 public enum GameEnum {
 
     ARENA(),
-    MVM();
+    CONTROL_POINTS();
 
     GameEnum(){}
 

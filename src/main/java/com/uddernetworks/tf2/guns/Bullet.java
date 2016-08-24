@@ -2,12 +2,12 @@ package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.guns.sentry.Sentry;
 import com.uddernetworks.tf2.utils.Hitbox;
-import net.minecraft.server.v1_9_R1.*;
+import net.minecraft.server.v1_10_R1.*;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.*;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Listener;
@@ -161,7 +161,6 @@ public class Bullet implements Listener {
                 bullet.setBounce(false);
                 bullet.setVelocity(new Vector(x, y, z));
 
-//                bullet.setVelocity(direction);
                 bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
                 bullets.put(bullet.getEntityId(), this);
             } else {

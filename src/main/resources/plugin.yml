@@ -1,7 +1,7 @@
 name: TF2
 author: RubbaBoy
 main: com.uddernetworks.tf2.main.Main
-version: 0.5b
+version: 0.12b
 description: A port of the game Team Fortress 2 in minecraft for Uddernetworks!
 commands:
    tf2:

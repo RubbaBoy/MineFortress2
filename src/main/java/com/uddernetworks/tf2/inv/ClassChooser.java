@@ -4,6 +4,7 @@ import com.uddernetworks.tf2.guns.Gun;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
+import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import com.uddernetworks.tf2.utils.ClassEnum;
 import org.bukkit.Bukkit;
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -24,6 +26,12 @@ import java.util.LinkedHashMap;
 public class ClassChooser implements Listener {
 
     static private Inventory inv;
+
+    private static Main main;
+
+    public ClassChooser(Main main) {
+        ClassChooser.main = main;
+    }
 
     public void openGUI(Player p) {
 
@@ -46,7 +54,7 @@ public class ClassChooser implements Listener {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<String>();
+        ArrayList<String> Lore = new ArrayList<>();
         Lore.add(lore);
         meta.setLore(Lore);
         item.setItemMeta(meta);
@@ -61,47 +69,60 @@ public class ClassChooser implements Listener {
         try {
             if (inventory.getName().equals(inv.getName())) {
                 event.setCancelled(true);
-                AdminGunList gunlist = new AdminGunList();
+                Loadout loadout = new Loadout(main);
 
                 switch (event.getSlot()) {
                     case 9:
                         PlayerClasses.setPlayerClass(player, ClassEnum.SCOUT);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 10:
                         PlayerClasses.setPlayerClass(player, ClassEnum.SOLDIER);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 11:
                         PlayerClasses.setPlayerClass(player, ClassEnum.PYRO);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 12:
                         PlayerClasses.setPlayerClass(player, ClassEnum.DEMOMAN);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 13:
                         PlayerClasses.setPlayerClass(player, ClassEnum.HEAVY);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 14:
                         PlayerClasses.setPlayerClass(player, ClassEnum.ENGINEER);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 15:
                         PlayerClasses.setPlayerClass(player, ClassEnum.MEDIC);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 16:
                         PlayerClasses.setPlayerClass(player, ClassEnum.SNIPER);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                     case 17:
                         PlayerClasses.setPlayerClass(player, ClassEnum.SPY);
-                        gunlist.openGUI(player);
+                        loadout.openGUI(player);
                         break;
                 }
 
+            }
+        } catch (Exception ignored) {}
+    }
+
+    @EventHandler
+    public void onWindowClose(InventoryCloseEvent event) {
+        Player player = (Player) event.getPlayer();
+        Inventory inventory = event.getInventory();
+        try {
+            if (inventory.getName().equals(inv.getName())) {
+                if (!PlayerClasses.isSet(player)) {
+                    main.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> openGUI(player), 1L);
+                }
             }
         } catch (Exception ignored) {}
     }

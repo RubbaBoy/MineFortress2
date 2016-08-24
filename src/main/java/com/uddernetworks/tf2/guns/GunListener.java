@@ -2,18 +2,20 @@ package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.sentry.Sentry;
+import com.uddernetworks.tf2.inv.Loadout;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.*;
+import com.uddernetworks.tf2.utils.data.PlayerSlots;
 import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
-import net.minecraft.server.v1_9_R1.BlockPosition;
-import net.minecraft.server.v1_9_R1.EntityArmorStand;
-import net.minecraft.server.v1_9_R1.PacketPlayOutBlockBreakAnimation;
+import net.minecraft.server.v1_10_R1.BlockPosition;
+import net.minecraft.server.v1_10_R1.EntityArmorStand;
+import net.minecraft.server.v1_10_R1.PacketPlayOutBlockBreakAnimation;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,6 +24,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -53,7 +57,8 @@ public class GunListener implements Listener {
         }
     }
 
-    static HashSet<Player> zoom = new HashSet<Player>();
+    static HashSet<Player> zoom = new HashSet<>();
+    static HashMap<Player, Boolean> zoom_second = new HashMap<>();
 
     static HashMap3<Player, Long, State> primary_cooldowns = new HashMap3<Player, Long, State>();
     static HashMap3<Player, Long, State> secondary_cooldowns = new HashMap3<Player, Long, State>();
@@ -80,7 +85,9 @@ public class GunListener implements Listener {
                                 primary_cooldowns.setT(player, State.NORMAL);
                                 if (playerGuns.getClip(player) > 0) {
                                     playerGuns.setClip(player, playerGuns.getClip(player) - 1);
-                                    player.playSound(player.getLocation(), gun.getSound(), 1, 1);
+                                    if (gun.getSound() != null) {
+                                        player.playSound(player.getLocation(), gun.getSound(), 1, 1);
+                                    }
                                     new Bullet(player, gun);
                                 } else {
                                     primary_cooldowns.put(player, System.currentTimeMillis());
@@ -116,22 +123,37 @@ public class GunListener implements Listener {
                 if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                     if (gun.getScopeable()) {
                         if (!zoom.contains(player)) {
-                            zoom.add(player);
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 90000000, 255, true, false));
+                            if (!zoom_second.containsKey(player)) {
+                                zoom_second.put(player, false);
+                            }
+                            i = GunList.getGunlist().size();
+                            if (zoom_second.containsKey(player) && zoom_second.get(player)) {
+                                zoom_second.put(player, false);
+                                zoom.add(player);
+                                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 90000000, 255, true, false));
 
-                            player.getInventory().setHelmet(new ItemStack(Material.PUMPKIN));
+                                player.getInventory().setHelmet(new ItemStack(Material.PUMPKIN));
 
-                            if (gun.getNVscope()) {
-                                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 90000000, 1, true, false));
+                                if (gun.getNVscope()) {
+                                    player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 90000000, 1, true, false));
+                                }
+                            } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
+                                zoom_second.put(player, true);
                             }
                         } else {
-                            zoom.remove(player);
-                            player.removePotionEffect(PotionEffectType.SLOW);
+                            i = GunList.getGunlist().size();
+                            if (zoom_second.containsKey(player) && zoom_second.get(player)) {
+                                zoom_second.put(player, false);
+                                zoom.remove(player);
+                                player.removePotionEffect(PotionEffectType.SLOW);
 
-                            player.getInventory().setHelmet(new ItemStack(Material.AIR));
+                                player.getInventory().setHelmet(new ItemStack(Material.AIR));
 
-                            if (gun.getNVscope()) {
-                                player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                                if (gun.getNVscope()) {
+                                    player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                                }
+                            } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
+                                zoom_second.put(player, true);
                             }
                         }
                     }
@@ -450,6 +472,22 @@ public class GunListener implements Listener {
                         }
                     }
                     bullet.remove();
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerSlotSwitch(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+            GunObject gun = GunList.getGunAt(i);
+            if (player.getInventory().getItemInMainHand().serialize().equals(gun.getItemStack().serialize())) {
+                if (!event.isCancelled()) {
+                    event.setCancelled(true);
+                    int newslot = event.getNewSlot();
+                    PlayerSlots playerSlots = new PlayerSlots(main);
+                    playerSlots.addPlayer(player, newslot);
                 }
             }
         }

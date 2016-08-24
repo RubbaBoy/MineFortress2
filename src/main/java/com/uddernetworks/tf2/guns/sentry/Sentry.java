@@ -2,7 +2,7 @@ package com.uddernetworks.tf2.guns.sentry;
 
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
-import net.minecraft.server.v1_9_R1.EntityItem;
+import net.minecraft.server.v1_10_R1.EntityItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;

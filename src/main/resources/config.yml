@@ -1,3 +1,8 @@
+MySql:
+  Host: sql9.freemysqlhosting.net
+  User: sql9132376
+  Password: T6-zFMh~2/rC
+  Database: sql9132376
 world: world
 door-X: -247
 door-Y: 70
@@ -23,3 +28,93 @@ blue-sign-Z: -147
 red-sign-X: -282
 red-sign-Y: 72
 red-sign-Z: -147
+playworlds:
+  tf2_game:
+    spectate-X: -59
+    spectate-Y: 80
+    spectate-Z: 40
+    red:
+      spawn1-X: -116
+      spawn1-Y: 65
+      spawn1-Z: 5
+      spawn2-X: -112
+      spawn2-Y: 65
+      spawn2-Z: 7
+      refill-door-X: -115
+      refill-door-Y: 65
+      refill-door-Z: 3
+      barriers:
+        1:
+          1-X: -101
+          1-Y: 67
+          1-Z: 6
+          2-X: -191
+          2-Y: 65
+          2-Z: 4
+        2:
+          1-X: -115
+          1-Y: 67
+          1-Z: 21
+          2-X: -113
+          2-Y: 65
+          2-Z: 21
+        3:
+          1-X: -116
+          1-Y: 71
+          1-Z: 22
+          2-X: -114
+          2-Y: 69
+          2-Z: 22
+        4:
+          1-X: -108
+          1-Y: 83
+          1-Z: 7
+          2-X: -108
+          2-Y: 80
+          2-Z: 4
+    blue:
+      spawn1-X: -8
+      spawn1-Y: 65
+      spawn1-Z: 65
+      spawn2-X: -4
+      spawn2-Y: 65
+      spawn2-Z: 56
+      refill-door-X: -12
+      refill-door-Y: 65
+      refill-door-Z: 65
+      barriers:
+        1:
+          1-X: -24
+          1-Y: 67
+          1-Z: 73
+          2-X: -24
+          2-Y: 65
+          2-Z: 75
+        2:
+          1-X: -14
+          1-Y: 67
+          1-Z: 51
+          2-X: -14
+          2-Y: 66
+          2-Z: 53
+        3:
+          1-X: -23
+          1-Y: 74
+          1-Z: 69
+          2-X: -21
+          2-Y: 72
+          2-Z: 69
+        4:
+          1-X: -25
+          1-Y: 74
+          1-Z: 73
+          2-X: -25
+          2-Y: 73
+          2-Z: 75
+        5:
+          1-X: -1
+          1-Y: 74
+          1-Z: 75
+          2-X: -1
+          2-Y: 73
+          2-Z: 73
