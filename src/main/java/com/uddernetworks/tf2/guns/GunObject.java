@@ -32,10 +32,12 @@ public class GunObject {
     private int shotgun_bullet = 0;
     private ClassEnum classtype;
     private boolean classDefault = false;
+    private String custom;
+    private boolean showGUI = false;
 
-    ItemStack gun;
+    private boolean leftclick = false;
 
-    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy, boolean shotgun, int shotgun_bullet, ClassEnum classtype, boolean classDefault) {
+    public GunObject(WeaponType type, String name, String lore, Material item, Sound sound, double power, double damage, int KZR, boolean scopeable, boolean NVscope, int maxClip, int maxAmmo, int cooldown, int cooldown_reload, boolean tracers, boolean sniper, int accuracy, boolean shotgun, int shotgun_bullet, ClassEnum classtype, boolean classDefault, String custom, boolean showGUI, boolean leftclick) {
         this.type = type;
         this.name = name;
         this.lore = lore;
@@ -57,7 +59,9 @@ public class GunObject {
         this.shotgun_bullet = shotgun_bullet;
         this.classtype = classtype;
         this.classDefault = classDefault;
-
+        this.custom = custom;
+        this.showGUI = showGUI;
+        this.leftclick = leftclick;
     }
 
     public WeaponType getType() {
@@ -140,13 +144,27 @@ public class GunObject {
         return classDefault;
     }
 
+    public String getCustom() {
+        return custom;
+    }
+
+    public boolean showGUI() {
+        return showGUI;
+    }
+
+    public boolean leftClick() {
+        return leftclick;
+    }
+
     public ItemStack getItemStack() {
         ItemStack itemgun = new ItemStack(item);
         ItemMeta meta = itemgun.getItemMeta();
         meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<String>();
-        Lore.add(lore);
-        meta.setLore(Lore);
+        if (getLore() != null) {
+            ArrayList<String> Lore = new ArrayList<>();
+            Lore.add(lore);
+            meta.setLore(Lore);
+        }
         itemgun.setItemMeta(meta);
         return itemgun;
     }

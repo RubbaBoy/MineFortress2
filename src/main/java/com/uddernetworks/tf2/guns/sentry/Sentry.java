@@ -10,6 +10,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.EulerAngle;
@@ -18,7 +19,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Sentry {
+public class Sentry implements Listener {
 
     private int range;
 
@@ -28,34 +29,36 @@ public class Sentry {
     private double power_1 = 10;
     private long cooldown_1 = 250;
     private double accuracy_1 = 7;
+    private int health_1 = 150;
 
     private double damage_2 = 16;
     private double power_2 = 10;
     private long cooldown_2 = 125;
     private double accuracy_2 = 4;
+    private int health_2 = 180;
 
-//    private double damage_3 = 16;
-//    private double power_3 = 10;
-//    private long cooldown_3 = 60;
-//    private double accuracy_3 = 2;
-
-    private double damage_3 = 1600;
-    private double power_3 = 20;
-    private long cooldown_3 = 10;
-    private double accuracy_3 = 0;
+    private double damage_3 = 16;
+    private double power_3 = 10;
+    private long cooldown_3 = 60;
+    private double accuracy_3 = 2;
+    private int health_3 = 216;
 
     private double damage = damage_1;
     private double power = power_1;
     private long cooldown = cooldown_1;
     private double accuracy = accuracy_1;
+    private int health = health_1;
 
     private Location location;
     private ArmorStand sentry_obj;
     private Entity target;
 
-    public Sentry(Location location, int range) {
+    private Player owner;
+
+    public Sentry(Location location, Player owner, int range) {
         this.location = location;
         this.range = range;
+        this.owner = owner;
 
         Sentries.addSentry(this);
     }
@@ -108,30 +111,30 @@ public class Sentry {
         if (tier == 0) {
             Bukkit.getPlayer("RubbaBoy").sendMessage("Upgrading sentry from level " + tier);
             tier = 1;
-            sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
-            damage = damage_1;
-            power = power_1;
-            cooldown = cooldown_1;
-            accuracy = accuracy_1;
-        } else if (tier == 1) {
-            Bukkit.getPlayer("RubbaBoy").sendMessage("Upgrading sentry from level " + tier);
-            tier = 2;
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 8));
             damage = damage_2;
             power = power_2;
             cooldown = cooldown_2;
             accuracy = accuracy_2;
-        } else if (tier == 2) {
+            health = health_2;
+        } else if (tier == 1) {
             Bukkit.getPlayer("RubbaBoy").sendMessage("Upgrading sentry from level " + tier);
-            tier = 3;
+            tier = 2;
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 7));
             damage = damage_3;
             power = power_3;
             cooldown = cooldown_3;
             accuracy = accuracy_3;
+            health = health_3;
         } else {
             Bukkit.getPlayer("RubbaBoy").sendMessage("Sentries cant be upgraded past tier 3!");
         }
+    }
+
+    public void remove() {
+        Sentries.removeSentry(Sentries.getSentryId(this));
+        SentryThreadUtil.sentries.remove(this);
+        sentry_obj.remove();
     }
 
     public int getTier() {
@@ -160,5 +163,21 @@ public class Sentry {
 
     public Entity getTarget() {
         return target;
+    }
+
+    public Player getPlayer() {
+        return owner;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void setHealth(int health) {
+        if (health < 0) {
+            remove();
+        } else {
+            this.health = health;
+        }
     }
 }

@@ -14,6 +14,8 @@ import org.bukkit.Sound;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Gun {
 
@@ -69,15 +71,20 @@ public class Gun {
         int shotgun_bullet;
         ClassEnum classtype;
         boolean classDefault;
+        String custom;
+        boolean showGUI;
+        boolean leftclick;
 
         boolean error = false;
+
+        HashMap<Boolean, Integer> finished = new HashMap<>();
 
         for(int r = 1; r < rows; r++) {
             row = sheet.getRow(r);
             if(row != null) {
                 GunObject gunObject;
-                if (cols != 21) {
-                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 20, it is: " + cols);
+                if (cols != 24) {
+                     throw new Exception("The amount of column is wrong in the spreadsheet. Must be 23, it is: " + cols);
                 } else {
 
                     cell = row.getCell((short) 0);
@@ -112,14 +119,18 @@ public class Gun {
                     if (cell != null) {
                         lore = cell.toString();
                     } else {
-                        System.out.println("Lore cell was null!");
-                        lore = null;
-                        error = true;
+                        lore = "";
                     }
 
                     cell = row.getCell((short) 3);
                     if (cell != null) {
-                        item = Material.getMaterial(cell.toString());
+                        if (isInEnum(cell.toString(), Material.class)) {
+                            item = Material.getMaterial(cell.toString());
+                        } else {
+                            System.out.println("Invalid material: " + cell.toString());
+                            item = null;
+                            error = true;
+                        }
                     } else {
                         System.out.println("Material cell was null!");
                         item = null;
@@ -305,19 +316,77 @@ public class Gun {
                         classDefault = false;
                     }
 
+                    cell = row.getCell((short) 21);
+                    if (cell != null) {
+                        if (cell.toString().equalsIgnoreCase("NULL")) {
+                            custom = null;
+                        } else {
+                            custom = cell.toString();
+                        }
+                    } else {
+                        System.out.println("Custom identifier cell was null!");
+                        custom = null;
+                        error = true;
+                    }
+
+                    cell = row.getCell((short) 22);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        showGUI = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Show GUI cell was null!");
+                        showGUI = false;
+                        error = true;
+                    }
+
+                    cell = row.getCell((short) 23);
+                    if (cell != null) {
+                        cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
+                        leftclick = cell.getBooleanCellValue();
+                    } else {
+                        System.out.println("Left click cell was null!");
+                        leftclick = false;
+                        error = true;
+                    }
+
                     if (!error) {
-                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, shotgun, shotgun_bullet, classtype, classDefault);
+                        if (finished.containsKey(true)) {
+                            finished.put(true, finished.get(true) + 1);
+                        } else {
+                            finished.put(true, 1);
+                        }
+                        gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, shotgun, shotgun_bullet, classtype, classDefault, custom, showGUI, leftclick);
                         GunList.registerGun(gunObject);
                         System.out.println("The gun has been created and registered!");
                     } else {
-                        System.out.println("Stuff happened. The gun couldn't be created.");
+                        if (finished.containsKey(false)) {
+                            finished.put(false, finished.get(false) + 1);
+                        } else {
+                            finished.put(false, 1);
+                        }
+                        System.out.println("The gun couldn't be created.");
                     }
                 }
             }
         }
 
-        System.out.println("All guns have been registered! Number: " + GunList.getGunlist().size());
+        if (finished.containsKey(false)) {
+            if (finished.containsKey(true)) {
+                System.out.println(finished.get(true) + "/" + (finished.get(true) + finished.get(false)) + " Guns have been registered!");
+            }
+        } else {
+            if (finished.containsKey(true)) {
+                System.out.println(finished.get(true) + "/" + finished.get(true) + " Guns have been registered!");
+            }
+        }
 
+    }
+
+    public <E extends Enum<E>> boolean isInEnum(String value, Class<E> enumClass) {
+        for (E e : enumClass.getEnumConstants()) {
+            if(e.name().equals(value)) { return true; }
+        }
+        return false;
     }
 
 }

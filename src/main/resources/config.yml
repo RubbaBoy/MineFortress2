@@ -81,7 +81,7 @@ playworlds:
       spawn2-Z: 56
       refill-door-X: -12
       refill-door-Y: 65
-      refill-door-Z: 65
+      refill-door-Z: 71
       barriers:
         1:
           1-X: -24

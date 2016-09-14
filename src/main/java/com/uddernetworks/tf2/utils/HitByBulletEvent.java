@@ -2,7 +2,14 @@ package com.uddernetworks.tf2.utils;
 
 import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
+import com.uddernetworks.tf2.guns.dispenser.Dispenser;
+import com.uddernetworks.tf2.guns.dispenser.Dispensers;
 import com.uddernetworks.tf2.guns.sentry.Sentry;
+import com.uddernetworks.tf2.guns.teleporter.TeleporterEntrance;
+import com.uddernetworks.tf2.guns.teleporter.TeleporterExit;
+import com.uddernetworks.tf2.guns.teleporter.Teleporters;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -10,30 +17,82 @@ import org.bukkit.event.HandlerList;
 
 public class HitByBulletEvent extends Event {
 
-    Entity entity;
+    Object damaged;
     GunObject gun;
     Sentry sentry;
 
-    public HitByBulletEvent(Entity entity, GunObject gun) {
-        this.entity = entity;
+    public HitByBulletEvent(Object object, GunObject gun) {
+        this.damaged = object;
         this.gun = gun;
     }
 
-    public HitByBulletEvent(Entity entity, Sentry sentry) {
-        this.entity = entity;
+    public HitByBulletEvent(Object object, Sentry sentry) {
+        damaged = object;
         this.sentry = sentry;
     }
 
+    public boolean isEntity() {
+        return damaged instanceof Entity;
+    }
+
+    public boolean isSentry() {
+        return damaged instanceof Sentry;
+    }
+
+    public boolean isDispenser() {
+        return damaged instanceof Location && Dispensers.isObjectDispenser(((Location) damaged).getBlock());
+    }
+
+    public boolean isTeleporterEntrance() {
+        return damaged instanceof Location && Teleporters.isEntrance(((Location) damaged));
+    }
+
+    public boolean isTeleporterExit() {
+        return damaged instanceof Location && Teleporters.isExit(((Location) damaged));
+    }
+
     public Entity getEntity() {
-        return entity;
+        if (isEntity()) {
+            return (Entity) damaged;
+        } else {
+            return null;
+        }
+    }
+
+    public Sentry getSentry() {
+        if (isSentry()) {
+            return (Sentry) damaged;
+        } else {
+            return null;
+        }
+    }
+
+    public Dispenser getDispenser() {
+        if (isDispenser()) {
+            return (Dispenser) damaged;
+        } else {
+            return null;
+        }
+    }
+
+    public TeleporterEntrance getTeleporterEntrance() {
+        if (isTeleporterEntrance()) {
+            return (TeleporterEntrance) damaged;
+        } else {
+            return null;
+        }
+    }
+
+    public TeleporterExit getTeleporterExit() {
+        if (isTeleporterExit()) {
+            return (TeleporterExit) damaged;
+        } else {
+            return null;
+        }
     }
 
     public GunObject getGun() {
         return gun;
-    }
-
-    public Sentry getSentry() {
-        return sentry;
     }
 
     public boolean usesGun() {

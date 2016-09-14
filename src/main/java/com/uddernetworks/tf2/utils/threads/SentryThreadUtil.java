@@ -44,23 +44,15 @@ public class SentryThreadUtil extends Thread {
             ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
             exec.scheduleAtFixedRate((Runnable) () -> {
                 if (!stahp) {
-
-                    for (Sentry sentry : sentries.keySet()) {
-                        if (sentries.get(sentry)) {
-                            if (sentries.getT(sentry) <= System.currentTimeMillis()) {
-                                sentries.setT(sentry, System.currentTimeMillis() + sentry.getCooldown());
-                                Bukkit.getScheduler().runTask(main, new BukkitRunnable() {
-                                    @Override
-                                    public void run() {
-                                        new Bullet(sentry);
-//                                        Bukkit.getPlayer("RubbaBoy").sendMessage("Spawned bullet");
-                                    }
-                                });
-                            } else {
-//                                Bukkit.getPlayer("RubbaBoy").sendMessage(sentries.getT(sentry) + " ISNT <= " + System.currentTimeMillis());
+                    sentries.keySet().stream().filter(sentry -> sentries.get(sentry)).filter(sentry -> sentries.getT(sentry) <= System.currentTimeMillis()).forEach(sentry -> {
+                        sentries.setT(sentry, System.currentTimeMillis() + sentry.getCooldown());
+                        Bukkit.getScheduler().runTask(main, new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                new Bullet(sentry);
                             }
-                        }
-                    }
+                        });
+                    });
                 } else {
                     exec.shutdown();
                 }

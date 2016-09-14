@@ -46,9 +46,7 @@ public class TeamChooser implements Listener {
                 player.teleport(Locations.teamChooseSpawn);
                 players.add(player);
             }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
+        } catch (NullPointerException ignored) {}
     }
 
     public void sendPlayer(Player player) {
@@ -59,6 +57,10 @@ public class TeamChooser implements Listener {
             player.teleport(Locations.teamChooseSpawn);
             players.add(player);
         }
+    }
+
+    public void sendBack(Player player) {
+        player.teleport(locs.get(player));
     }
 
     @EventHandler
@@ -91,7 +93,7 @@ public class TeamChooser implements Listener {
                                 player.sendMessage(ChatColor.BLUE + "Joining this team would cause team unbalances");
                             }
                         } else if (block.getLocation().serialize().equals(Locations.redDoor.serialize())) {
-                            if (redDoor && !blueDoor) {
+                            if (redDoor) {
                                 player.sendMessage("red door YEA red door is " + redDoor + " blue door is " + blueDoor);
                                 PlayerTeams.addPlayer(player, TeamEnum.RED);
                                 reloadAbleDoors();
@@ -126,7 +128,7 @@ public class TeamChooser implements Listener {
                                     changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                                     changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                                 }
-                            } else if (blueDoor && !redDoor) {
+                            } else if (blueDoor) {
                                 PlayerTeams.addPlayer(player, TeamEnum.BLUE);
                                 reloadAbleDoors();
                                 Entity en = ((CraftPlayer) player).getHandle();
@@ -135,7 +137,7 @@ public class TeamChooser implements Listener {
                                 game.sendPlayer(player);
                                 changeSignText(Locations.blueSign, "", ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
                                 changeSignText(Locations.redSign, "", ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
-                            } else if (!blueDoor && redDoor) {
+                            } else if (redDoor) {
                                 PlayerTeams.addPlayer(player, TeamEnum.RED);
                                 reloadAbleDoors();
                                 Entity en = ((CraftPlayer) player).getHandle();
@@ -165,7 +167,7 @@ public class TeamChooser implements Listener {
             blueDoor = true;
             redDoor = false;
             changeSignText(Locations.redSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
-        } else {
+        } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() == PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()){
             blueDoor = true;
             redDoor = true;
         }

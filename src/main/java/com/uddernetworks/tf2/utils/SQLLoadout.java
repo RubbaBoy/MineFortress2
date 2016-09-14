@@ -26,7 +26,6 @@ public class SQLLoadout {
     public void reload() {
         System.out.println("Reloading internal data set of loadouts");
         try {
-//            loadouts.clear();
             QueryResults results = mySQL.queryReturnable("SELECT * FROM 'Loadouts' ORDER BY ID DESC");
 
             for (QueryResult result : results.getList()) {
@@ -72,16 +71,13 @@ public class SQLLoadout {
                         return loadouts.get((player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString()));
                     }
                 } else {
-                    System.out.println("Null1");
                     return null;
                 }
             } catch (NullPointerException e) {
                 e.printStackTrace();
-                System.out.println("Null2");
                 return null;
             }
         } else {
-            System.out.println("Null3");
             return null;
         }
     }

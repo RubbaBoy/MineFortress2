@@ -6,6 +6,7 @@ import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.guns.PlayerHealth;
+import com.uddernetworks.tf2.guns.custom.Controller;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.HashMap3;
@@ -73,36 +74,27 @@ public class GunThreadUtil extends Thread {
                                 Bukkit.getScheduler().runTask(main, new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        //                                            Particles.spawnHealthParticles(Bukkit.getPlayer("CrustyDolphin").getLocation(), player.getLocation());
-                                        if (shot.get(player).getClassType() == ClassEnum.MEDIC && shot.get(player).getPower() <= 0) {
-                                            game.getWorld().getEntities().stream().filter(entity -> player.hasLineOfSight(entity) && entity.getLocation().distance(player.getLocation()) <= 5 && entity instanceof Player).forEach(entity -> {
-                                                if (GunThreadUtil.player == null) {
-                                                    GunThreadUtil.player = (Player) entity;
-                                                } else if (entity.getLocation().distance(player.getLocation()) < GunThreadUtil.player.getLocation().distance(player.getLocation())) {
-                                                    GunThreadUtil.player = (Player) entity;
+                                        if (shot.containsKey(player) && shot.get(player) != null) {
+                                            if (shot.get(player).getCustom() != null) {
+                                                Controller controller = new Controller(shot.get(player), player, true);
+                                                try {
+                                                    if (controller.canProceed()) {
+                                                        controller.run();
+                                                    }
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
                                                 }
-                                            });
-                                            Particles.spawnHealthParticles(GunThreadUtil.player.getLocation().add(0, GunThreadUtil.player.getEyeHeight()/2, 0), player.getLocation().add(0, player.getEyeHeight()/2, 0), PlayerTeams.getPlayer(GunThreadUtil.player));
-                                            if (playerHealth.getHealth(GunThreadUtil.player) + 6 > playerHealth.getMaxHealth(GunThreadUtil.player)) {
-                                                playerHealth.addHealth(GunThreadUtil.player, playerHealth.getMaxHealth(GunThreadUtil.player));
                                             } else {
-                                                playerHealth.addHealth(GunThreadUtil.player, playerHealth.getHealth(GunThreadUtil.player) + 6);
-                                            }
-                                            playerGuns.setClip(player, playerGuns.getClip(player) - 1);
-                                        } else {
-                                            if (shot.get(player).isShotgun()) {
-                                                for (int i = 0; i < shot.get(player).getShotgun_bullet(); i++) {
+                                                if (shot.get(player).isShotgun()) {
+                                                    for (int i = 0; i < shot.get(player).getShotgun_bullet(); i++) {
+                                                        new Bullet(player, shot.get(player));
+                                                    }
+                                                } else {
                                                     new Bullet(player, shot.get(player));
                                                 }
-                                            } else {
-                                                new Bullet(player, shot.get(player));
+                                                nope = true;
                                             }
-                                            nope = false;
                                         }
-                                        if (!nope) {
-                                            playerGuns.setClip(player, playerGuns.getClip(player) - 1);
-                                        }
-                                        nope = true;
                                     }
                                 });
                             }
@@ -118,5 +110,3 @@ public class GunThreadUtil extends Thread {
         }
     }
 }
-
-/**/

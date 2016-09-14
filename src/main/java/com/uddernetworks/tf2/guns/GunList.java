@@ -1,12 +1,9 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.utils.ClassEnum;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 public class GunList {
@@ -39,16 +36,6 @@ public class GunList {
         if (guns.contains(gun)) {
             guns.remove(gun);
         }
-    }
-
-    public static GunObject getWrench() {
-        for (GunObject gun : guns) {
-            if (gun.getName().equals(ChatColor.GRAY + "" + ChatColor.BOLD + "Wrench")) {
-                return gun;
-            }
-        }
-        System.out.println("The wrench object was not found in the gun list, expect errors");
-        return null;
     }
 
     public static GunObject getGunByName(String name) {

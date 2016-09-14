@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns.sentry;
 
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,6 +52,15 @@ public class Sentries {
         return null;
     }
 
+    public static Sentry getSentry(Player player) {
+        for (Sentry sentry : sentry_id.values()) {
+            if (sentry.getPlayer() == player) {
+                return sentry;
+            }
+        }
+        return null;
+    }
+
     public static boolean isObjectSentry(ArmorStand object) {
         for (Sentry sentry : sentry_id.values()) {
             if (sentry.getObj() == object) {
@@ -58,6 +68,19 @@ public class Sentries {
             }
         }
         return false;
+    }
+
+    public static boolean hasSentry(Player player) {
+        for (Sentry sentry : sentry_id.values()) {
+            if (sentry.getPlayer() == player) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void removeAll() {
+        sentry_id.values().forEach(Sentry::remove);
     }
 
 }

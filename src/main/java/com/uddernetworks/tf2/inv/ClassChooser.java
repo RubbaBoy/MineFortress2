@@ -1,9 +1,6 @@
 package com.uddernetworks.tf2.inv;
 
-import com.uddernetworks.tf2.guns.Gun;
-import com.uddernetworks.tf2.guns.GunList;
-import com.uddernetworks.tf2.guns.GunObject;
-import com.uddernetworks.tf2.guns.PlayerGuns;
+import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import com.uddernetworks.tf2.utils.ClassEnum;
@@ -94,6 +91,7 @@ public class ClassChooser implements Listener {
                         break;
                     case 14:
                         PlayerClasses.setPlayerClass(player, ClassEnum.ENGINEER);
+                        PlayerMetal.addPlayer(player, 200);
                         loadout.openGUI(player);
                         break;
                     case 15:

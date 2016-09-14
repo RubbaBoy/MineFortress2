@@ -1,6 +1,9 @@
 package com.uddernetworks.tf2.arena;
 
 import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.sentry.Sentries;
+import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -15,6 +18,7 @@ public class ArenaManager {
     static Main plugin;
 
     private static ArenaManager am;
+    private TeamChooser teamChooser = new TeamChooser(plugin);
 
     private final Map<UUID, Location> locs = new HashMap<>();
     private final Map<UUID, ItemStack[]> inv = new HashMap<>();
@@ -68,6 +72,8 @@ public class ArenaManager {
 
         locs.put(p.getUniqueId(), p.getLocation());
 
+        p.setSaturation(Integer.MAX_VALUE);
+
 
         p.setFlying(false);
         p.setFoodLevel(20);
@@ -80,16 +86,6 @@ public class ArenaManager {
         Random random = new Random();
         Game game = new Game(plugin);
 
-        if (plugin == null) {
-            p.sendMessage("1 is null");
-        } else {
-            p.sendMessage("1 is NOT null");
-        }
-        if (plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)) == null) {
-            p.sendMessage("2 is null");
-        } else {
-            p.sendMessage("2 is NOT null");
-        }
         try {
             p.teleport(plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(plugin.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
         } catch (NullPointerException e) {
@@ -114,6 +110,7 @@ public class ArenaManager {
             a.getPlayers().remove(p.getUniqueId());
 
             p.getActivePotionEffects().clear();
+            p.setSaturation(5);
 
             p.getInventory().clear();
             p.getInventory().setArmorContents(null);
@@ -124,10 +121,10 @@ public class ArenaManager {
             inv.remove(p.getUniqueId());
             armor.remove(p.getUniqueId());
 
-            p.teleport(locs.get(p.getUniqueId()));
+            teamChooser.sendBack(p);
             locs.remove(p.getUniqueId());
 
-            p.setGameMode(GameMode.ADVENTURE);
+            p.setGameMode(GameMode.SURVIVAL);
         } catch (NullPointerException ignored) {}
     }
 
@@ -147,6 +144,10 @@ public class ArenaManager {
         this.locs.clear();
         this.inv.clear();
         this.armor.clear();
+
+        Sentries.removeAll();
+        Dispensers.removeAll();
+        Teleporters.removeAll();
     }
 
     public boolean isInGame(Player p) {

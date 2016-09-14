@@ -53,6 +53,9 @@ public class Loadout implements Listener {
                 case 3:
                     slot = 37;
                     break;
+                case 4:
+                    slot = 46;
+                    break;
                 default:
                     slot = 0;
                     break;

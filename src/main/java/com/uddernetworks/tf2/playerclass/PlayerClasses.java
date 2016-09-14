@@ -1,5 +1,7 @@
 package com.uddernetworks.tf2.playerclass;
 
+import com.uddernetworks.tf2.gui.MetalGUI;
+import com.uddernetworks.tf2.guns.PlayerMetal;
 import com.uddernetworks.tf2.utils.ClassEnum;
 import org.bukkit.entity.Player;
 
@@ -12,6 +14,12 @@ public class PlayerClasses {
     static HashMap<Player, ClassEnum> classes = new HashMap<>();
 
     public static void setPlayerClass(Player player, ClassEnum classtype) {
+        if (classtype == ClassEnum.ENGINEER) {
+            PlayerMetal.addPlayer(player, 0);
+        } else {
+            PlayerMetal.addPlayer(player, -1);
+        }
+        new MetalGUI(player);
         classes.put(player, classtype);
     }
 

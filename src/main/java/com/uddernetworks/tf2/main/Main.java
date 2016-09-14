@@ -1,19 +1,22 @@
 package com.uddernetworks.tf2.main;
 
 import com.uddernetworks.tf2.arena.ArenaManager;
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.arena.TeamChooser;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.game.GameState;
 import com.uddernetworks.tf2.guns.*;
-import com.uddernetworks.tf2.inv.AdminGunList;
-import com.uddernetworks.tf2.inv.ClassChooser;
-import com.uddernetworks.tf2.inv.EditLoadout;
-import com.uddernetworks.tf2.inv.Loadout;
+import com.uddernetworks.tf2.guns.dispenser.Dispenser;
+import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.teleporter.Teleporters;
+import com.uddernetworks.tf2.inv.*;
+import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import com.uddernetworks.tf2.utils.*;
 import com.uddernetworks.tf2.utils.data.Locations;
 import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
 import net.minecraft.server.v1_10_R1.EntityArrow;
+import net.minecraft.server.v1_10_R1.EntityPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,6 +28,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArrow;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -35,11 +39,14 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.material.Door;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.stream.Collectors;
 
 public class Main extends JavaPlugin implements Listener, CommandExecutor {
@@ -48,6 +55,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     SentryThreadUtil sentry_thread;
 
     public static Main plugin;
+    boolean running = false;
 
     Gun gun = new Gun(this);
 
@@ -56,6 +64,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     private Game game = new Game(this);
 
+    private static ArrayList<Player> dispenser_players = new ArrayList<>();
     private ArrayList<Location> blue_barriers = new ArrayList<>();
     private ArrayList<Location> red_barriers = new ArrayList<>();
     public ArrayList<String> worlds = new ArrayList<>();
@@ -76,6 +85,8 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
         Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
         Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
+        Bukkit.getPluginManager().registerEvents(new ConstructionChooser(this), this);
+        Bukkit.getPluginManager().registerEvents(new DestructionChooser(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
 
         MySQL mySQL = new MySQL(this);
@@ -125,6 +136,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             e.printStackTrace();
         }
 
+        doPlayerEffects();
+        running = true;
+
         SQLLoadout sqlLoadout = new SQLLoadout(plugin);
         sqlLoadout.reload();
     }
@@ -133,6 +147,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     public void onDisable() {
         thread.stahp();
         sentry_thread.stahp();
+        running = false;
 
         for (Player player2 : Bukkit.getOnlinePlayers()) {
             ArenaManager.getManager().removePlayer(player2);
@@ -268,125 +283,271 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     HashMap<Player, Boolean> players = new HashMap<>();
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (!players.containsKey(event.getPlayer())) {
-            players.put(event.getPlayer(), false);
-        }
-        try {
-            if (Game.getGameState() == GameState.INGAME) {
-                if (game.getGameType() != null) {
-                    if (game.getWorld() != null) {
-                        World world = game.getWorld();
-                        for (int i2 = 0; i2 < 2; i2++) {
-                            TeamEnum team = TeamEnum.BLUE;
-                            if (i2 == 0) {
-                                team = TeamEnum.BLUE;
-                            } else if (i2 == 1){
-                                team = TeamEnum.RED;
+        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+            if (!players.containsKey(event.getPlayer())) {
+                players.put(event.getPlayer(), false);
+            }
+            try {
+                if (Game.getGameState() == GameState.INGAME) {
+                    if (game.getGameType() != null) {
+                        if (game.getWorld() != null) {
+                            World world = game.getWorld();
+                            for (int i2 = 0; i2 < 2; i2++) {
+                                TeamEnum team = TeamEnum.BLUE;
+                                if (i2 == 0) {
+                                    team = TeamEnum.BLUE;
+                                } else if (i2 == 1) {
+                                    team = TeamEnum.RED;
+                                }
+                                if (getRefillDoorBlocks(team, world).get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                        && getRefillDoorBlocks(team, world).get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                        && getRefillDoorBlocks(team, world).get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                    if (!players.get(event.getPlayer())) {
+                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                            GunObject gun = GunList.getGunAt(i);
+                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                    playerGuns.fillAll(event.getPlayer());
+                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        players.put(event.getPlayer(), true);
+                                    }
+                                } else if (getRefillDoorBlocks(team, world).get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                        && getRefillDoorBlocks(team, world).get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                        && getRefillDoorBlocks(team, world).get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                    if (!players.get(event.getPlayer())) {
+                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                            GunObject gun = GunList.getGunAt(i);
+                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                    playerGuns.fillAll(event.getPlayer());
+                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        players.put(event.getPlayer(), true);
+                                    }
+                                } else if (Locations.firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                        && Locations.firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                        && Locations.firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                    if (!players.get(event.getPlayer())) {
+                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                            GunObject gun = GunList.getGunAt(i);
+                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                    playerGuns.fillAll(event.getPlayer());
+                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        players.put(event.getPlayer(), true);
+                                    }
+                                } else if (Locations.secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                        && Locations.secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                        && Locations.secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                    if (!players.get(event.getPlayer())) {
+                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
+
+                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                                            GunObject gun = GunList.getGunAt(i);
+                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                                                    playerGuns.fillAll(event.getPlayer());
+                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        players.put(event.getPlayer(), true);
+                                    }
+                                } else {
+                                    if (players.get(event.getPlayer())) {
+                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                        players.put(event.getPlayer(), false);
+                                    }
+                                }
                             }
-                            if (getRefillDoorBlocks(team, world).get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                    && getRefillDoorBlocks(team, world).get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                    && getRefillDoorBlocks(team, world).get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                if (!players.get(event.getPlayer())) {
-                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
 
-                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                        GunObject gun = GunList.getGunAt(i);
-                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                                            }
-                                        }
-                                    }
-                                    players.put(event.getPlayer(), true);
-                                }
-                            } else if (getRefillDoorBlocks(team, world).get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                    && getRefillDoorBlocks(team, world).get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                    && getRefillDoorBlocks(team, world).get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                if (!players.get(event.getPlayer())) {
-                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
+                            if (Teleporters.isEntrance(event.getTo())) {
+                                Teleporters.getEntrance(event.getTo()).teleport(event.getPlayer());
+                            }
 
-                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                        GunObject gun = GunList.getGunAt(i);
-                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                                            }
-                                        }
-                                    }
-                                    players.put(event.getPlayer(), true);
-                                }
-                            } else if (Locations.firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                    && Locations.firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                    && Locations.firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                if (!players.get(event.getPlayer())) {
-                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
-
-                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                        GunObject gun = GunList.getGunAt(i);
-                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                                            }
-                                        }
-                                    }
-                                    players.put(event.getPlayer(), true);
-                                }
-                            } else if (Locations.secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                    && Locations.secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                    && Locations.secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                if (!players.get(event.getPlayer())) {
-                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
-
-                                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                        GunObject gun = GunList.getGunAt(i);
-                                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                            if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                playerGuns.setClip(event.getPlayer(), gun.getMaxClip());
-                                                playerGuns.setAmmo(event.getPlayer(), gun.getMaxAmmo());
-                                            }
-                                        }
-                                    }
-                                    players.put(event.getPlayer(), true);
-                                }
-                            } else {
-                                if (players.get(event.getPlayer())) {
-                                    toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                    toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                    players.put(event.getPlayer(), false);
-                                }
+                            if (Dispensers.isInRange(event.getPlayer()) && !dispenser_players.contains(event.getPlayer())) {
+                                dispenser_players.add(event.getPlayer());
                             }
                         }
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    }
+
+    static ArrayList<Player> tochange = new ArrayList<>();
+    private int counter = 0;
+    public void doPlayerEffects() {
+        new BukkitRunnable() {
+            public void run() {
+                counter++;
+                if (!running) {
+                    cancel();
+                }
+                tochange = (ArrayList<Player>) dispenser_players.clone();
+                for (Player player : dispenser_players) {
+                    if (Dispensers.isInRange(player)) {
+                        Dispenser dispenser = Dispensers.getNearestDispenser(player);
+                        assert dispenser != null;
+                        if (dispenser.getLevel() == 1) {
+                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                if (playerHealth.getHealth(player) + 10 > playerHealth.getMaxHealth(player)) {
+                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                } else {
+                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 10);
+                                }
+                            }
+                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2 > playerGuns.getMaxAmmo(player)) {
+                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                } else {
+                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2));
+                                }
+                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2 > playerGuns.getMaxClip(player)) {
+                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                } else {
+                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2));
+                                }
+                            }
+                            if (counter % 2 == 0) {
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (dispenser.getLevel() == 2) {
+                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                if (playerHealth.getHealth(player) + 15 > playerHealth.getMaxHealth(player)) {
+                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                } else {
+                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 15);
+                                }
+                            }
+                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3 > playerGuns.getMaxAmmo(player)) {
+                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                } else {
+                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3));
+                                }
+                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3 > playerGuns.getMaxClip(player)) {
+                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                } else {
+                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3));
+                                }
+                            }
+                            if (counter % 2 == 0) {
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (dispenser.getLevel() == 3) {
+                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                if (playerHealth.getHealth(player) + 20 > playerHealth.getMaxHealth(player)) {
+                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                } else {
+                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 20);
+                                }
+                            }
+                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4 > playerGuns.getMaxAmmo(player)) {
+                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                } else {
+                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4));
+                                }
+                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4 > playerGuns.getMaxClip(player)) {
+                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                } else {
+                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4));
+                                }
+                            }
+                            if (counter % 2 == 0) {
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 50 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 50);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        tochange.remove(player);
+                    }
+                }
+                dispenser_players = tochange;
+                tochange.clear();
+            }
+        }.runTaskTimer(Main.getPlugin(), 0, 20);
     }
 
     @EventHandler
     public void onItemPickup(PlayerPickupItemEvent event) {
-        if (event.getItem().getItemStack().getTypeId() == 284) {
-            event.setCancelled(true);
-            event.getItem().remove();
-            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-            event.getPlayer().setFoodLevel(20);
-        } else if (event.getItem().getItemStack().getTypeId() == 256) {
-            event.setCancelled(true);
-            event.getItem().remove();
-            playerGuns.setClip(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxClip());
-            playerGuns.setAmmo(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxAmmo());
+        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+            if (event.getItem().getItemStack().getTypeId() == 284) {
+                event.setCancelled(true);
+                event.getItem().remove();
+                playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                event.getPlayer().setFoodLevel(20);
+            } else if (event.getItem().getItemStack().getTypeId() == 256) {
+                event.setCancelled(true);
+                event.getItem().remove();
+                playerGuns.setClip(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxClip());
+                playerGuns.setAmmo(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxAmmo());
+            } else if (event.getItem().getCustomName().equals("GrenadeLauncher")) {
+                event.setCancelled(true);
+                event.getItem().remove();
+            } else if (event.getItem().getCustomName().equals("StickyBomb")) {
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -491,9 +652,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         if (cmd.getName().equalsIgnoreCase("tf2")) {
             sender.sendMessage("Sending you to pick a team...");
             TeamChooser chooser = new TeamChooser(plugin);
-            if (Locations.teamChooseSpawn == null) {
-                Bukkit.getPlayer("CrustyDolphin").sendMessage("It is null!2");
-            }
             try {
                 chooser.sendPlayers();
                 ArenaManager.getManager().createArena();
