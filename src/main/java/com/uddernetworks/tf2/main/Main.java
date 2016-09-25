@@ -29,6 +29,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArrow;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftSnowball;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -98,12 +99,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         for (int i2 = 0; i2 < worlds.size(); i2++) {
             World world = Bukkit.getWorld(worlds.get(i2));
             ArrayList<String> numbs = new ArrayList<>();
-            if (world == null) {
-                Bukkit.getPlayer("RubbaBoy").sendMessage("World is null");
-            }
-            if (this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers") == null) {
-                Bukkit.getPlayer("RubbaBoy").sendMessage("Config section is null");
-            }
             numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers").getKeys(false).stream().collect(Collectors.toList()));
             for (int i = 0; i < numbs.size(); i++) {
                 for (int x = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-X"); x++) {
@@ -307,16 +302,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
 
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                            GunObject gun = GunList.getGunAt(i);
-                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                    playerGuns.fillAll(event.getPlayer());
-                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
-                                                    }
-                                                }
-                                            }
+                                        playerGuns.fillAll(event.getPlayer());
+                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
                                         }
                                         players.put(event.getPlayer(), true);
                                     }
@@ -328,16 +316,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
 
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                            GunObject gun = GunList.getGunAt(i);
-                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                    playerGuns.fillAll(event.getPlayer());
-                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
-                                                    }
-                                                }
-                                            }
+                                        playerGuns.fillAll(event.getPlayer());
+                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
                                         }
                                         players.put(event.getPlayer(), true);
                                     }
@@ -349,16 +330,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
 
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                            GunObject gun = GunList.getGunAt(i);
-                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                    playerGuns.fillAll(event.getPlayer());
-                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
-                                                    }
-                                                }
-                                            }
+                                        playerGuns.fillAll(event.getPlayer());
+                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
                                         }
                                         players.put(event.getPlayer(), true);
                                     }
@@ -370,16 +344,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
 
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                                            GunObject gun = GunList.getGunAt(i);
-                                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                                                if (event.getPlayer().getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
-                                                    playerGuns.fillAll(event.getPlayer());
-                                                    if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                                        PlayerMetal.addPlayer(event.getPlayer(), 200);
-                                                    }
-                                                }
-                                            }
+                                        playerGuns.fillAll(event.getPlayer());
+                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
                                         }
                                         players.put(event.getPlayer(), true);
                                     }
@@ -409,11 +376,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     static ArrayList<Player> tochange = new ArrayList<>();
-    private int counter = 0;
     public void doPlayerEffects() {
         new BukkitRunnable() {
             public void run() {
-                counter++;
                 if (!running) {
                     cancel();
                 }
@@ -443,14 +408,12 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2));
                                 }
                             }
-                            if (counter % 2 == 0) {
-                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                    if (PlayerMetal.getPlayer(player) != 200) {
-                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
-                                            PlayerMetal.addPlayer(player, 200);
-                                        } else {
-                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
-                                        }
+                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                if (PlayerMetal.getPlayer(player) != 200) {
+                                    if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                        PlayerMetal.addPlayer(player, 200);
+                                    } else {
+                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
                                     }
                                 }
                             }
@@ -475,14 +438,12 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3));
                                 }
                             }
-                            if (counter % 2 == 0) {
-                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                    if (PlayerMetal.getPlayer(player) != 200) {
-                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
-                                            PlayerMetal.addPlayer(player, 200);
-                                        } else {
-                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
-                                        }
+                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                if (PlayerMetal.getPlayer(player) != 200) {
+                                    if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                        PlayerMetal.addPlayer(player, 200);
+                                    } else {
+                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
                                     }
                                 }
                             }
@@ -507,14 +468,12 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4));
                                 }
                             }
-                            if (counter % 2 == 0) {
-                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                    if (PlayerMetal.getPlayer(player) != 200) {
-                                        if (PlayerMetal.getPlayer(player) + 50 > 200) {
-                                            PlayerMetal.addPlayer(player, 200);
-                                        } else {
-                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 50);
-                                        }
+                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                if (PlayerMetal.getPlayer(player) != 200) {
+                                    if (PlayerMetal.getPlayer(player) + 50 > 200) {
+                                        PlayerMetal.addPlayer(player, 200);
+                                    } else {
+                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 50);
                                     }
                                 }
                             }
@@ -526,7 +485,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 dispenser_players = tochange;
                 tochange.clear();
             }
-        }.runTaskTimer(Main.getPlugin(), 0, 20);
+        }.runTaskTimer(Main.getPlugin(), 0, 40);
     }
 
     @EventHandler
@@ -649,8 +608,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("tf2")) {
-            sender.sendMessage("Sending you to pick a team...");
+        if (cmd.getName().equalsIgnoreCase("mf2")) {
             TeamChooser chooser = new TeamChooser(plugin);
             try {
                 chooser.sendPlayers();

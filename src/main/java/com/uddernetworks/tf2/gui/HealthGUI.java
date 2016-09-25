@@ -10,7 +10,7 @@ public class HealthGUI {
 
     public HealthGUI(Player player) {
         PlayerHealth health = new PlayerHealth();
-        int percentage = Math.round((int) health.getHealth(player) / (PlayerClasses.getPlayerClass(player).getHealth() / 100));
+        int percentage = Math.toIntExact(Math.round(health.getHealth(player) / ((double) (PlayerClasses.getPlayerClass(player).getHealth()) / (double) 100)));
         if (percentage < 0 || percentage > 100) return;
         player.getInventory().setItemInOffHand(new ItemStack(Material.DIAMOND_HOE, 1, (short) (percentage + 1)));
     }

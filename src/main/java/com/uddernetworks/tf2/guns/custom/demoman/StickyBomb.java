@@ -25,7 +25,7 @@ public class StickyBomb extends Demoman {
                 itemdrop.setCustomName("StickyBomb");
                 itemdrop.setCustomNameVisible(false);
                 itemdrop.setVelocity(player.getLocation().getDirection().normalize().multiply(gun.getPower()));
-                players.setPlayer(getPlayer(), this);
+                players.setPlayer(getPlayer(), this, System.currentTimeMillis());
 
                 new BukkitRunnable() {
                     @Override

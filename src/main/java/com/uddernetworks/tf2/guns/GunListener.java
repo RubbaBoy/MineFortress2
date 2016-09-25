@@ -11,10 +11,7 @@ import com.uddernetworks.tf2.guns.teleporter.TeleporterEntrance;
 import com.uddernetworks.tf2.guns.teleporter.TeleporterExit;
 import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
-import com.uddernetworks.tf2.utils.ArrowHitBlockEvent;
-import com.uddernetworks.tf2.utils.HashMap3;
-import com.uddernetworks.tf2.utils.HitByBulletEvent;
-import com.uddernetworks.tf2.utils.WeaponType;
+import com.uddernetworks.tf2.utils.*;
 import com.uddernetworks.tf2.utils.data.PlayerSlots;
 import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
 import net.minecraft.server.v1_10_R1.BlockPosition;
@@ -25,18 +22,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArmorStand;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -86,21 +84,26 @@ public class GunListener implements Listener {
     public void onPlayerClick(PlayerInteractEvent event) {
         if (ArenaManager.getManager().isInGame(event.getPlayer())) {
             Player player = event.getPlayer();
-            try {
                 if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_AIR) {
                     for (int i = 0; i < GunList.getGunlist().size(); i++) {
                         GunObject gun = GunList.getGunAt(i);
                         if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
                             event.setCancelled(true);
 
-                            if (gun.getCustom() != null) {
-                                if (gun.getCustom().equalsIgnoreCase("engineer.wrench")) {
-                                    if (Dispensers.isObjectDispenser(event.getClickedBlock())) {
-                                        Dispensers.getDispenser(event.getClickedBlock()).upgrade();
+                            if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
+                                if (gun.getCustom() != null) {
+                                    if (gun.getCustom().equalsIgnoreCase("engineer.wrench")) {
+                                        if (Dispensers.isObjectDispenser(event.getClickedBlock())) {
+                                            if (PlayerMetal.getPlayer(player) >= 200) {
+                                                PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) - 200);
+                                                Dispensers.getDispenser(event.getClickedBlock()).upgrade();
+                                            }
+                                        }
+                                        return;
                                     }
-                                    return;
                                 }
                             }
+
                             if (gun.leftClick()) {
                                 if (primary_cooldowns.containsKey(player)) {
                                     int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
@@ -236,7 +239,6 @@ public class GunListener implements Listener {
                         e.printStackTrace();
                     }
                 }
-            } catch (Exception ignored) {}
         }
     }
 
@@ -257,9 +259,12 @@ public class GunListener implements Listener {
             if (bullet.getShooter() instanceof Player) {
                 Bullet bullet1 = new Bullet();
                 if (event.getEntity() instanceof ArmorStand) {
-                    if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
-                        event.setCancelled(true);
-                    }
+                    GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
+                    ((ArmorStand) event.getEntity()).setHealth(((ArmorStand) event.getEntity()).getMaxHealth());
+                    HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
+                    Bukkit.getPluginManager().callEvent(event2);
+                    event.getDamager().remove();
+                    event.setCancelled(true);
                 } else {
                     Player shooter = (Player) bullet.getShooter();
                     if (bullet1.isBullet(bullet.getCustomName())) {
@@ -293,9 +298,12 @@ public class GunListener implements Listener {
                             if (gun.getCustom() != null) {
                                 if (gun.getCustom().equalsIgnoreCase("engineer.wrench")) {
                                     if (Sentries.isObjectSentry((ArmorStand) event.getEntity())) {
-                                        Sentry sentry = Sentries.getSentry((ArmorStand) event.getEntity());
-                                        sentry.upgrade();
-                                        event.setCancelled(true);
+                                        if (PlayerMetal.getPlayer(player) >= 200) {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) - 200);
+                                            Sentry sentry = Sentries.getSentry((ArmorStand) event.getEntity());
+                                            sentry.upgrade();
+                                            event.setCancelled(true);
+                                        }
                                     }
                                 }
                             }
@@ -313,6 +321,7 @@ public class GunListener implements Listener {
                                     if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
                                         if (e instanceof Player) {
                                             playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                                            DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
                                         }
                                     }
                                 }
@@ -327,6 +336,7 @@ public class GunListener implements Listener {
                                         if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
                                             if (e instanceof Player) {
                                                 playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                                                DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
                                             }
                                         }
                                     }
@@ -345,30 +355,22 @@ public class GunListener implements Listener {
     }
 
     @EventHandler
-    public void onProjectileHit(ProjectileHitEvent event) {
-        if (event.getEntity() instanceof Player) {
-            if (!ArenaManager.getManager().isInGame((Player) event.getEntity())) {
-                return;
-            }
-        }
-        if (event.getEntity() instanceof Arrow) {
-            Arrow bullet = (Arrow) event.getEntity();
-            Entity entity = event.getEntity();
-            if (bullet.getShooter() instanceof Player) {
-                Bullet bullet1 = new Bullet();
-                if (bullet1.isBullet(bullet.getCustomName())) {
-                    GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
-                    HitByBulletEvent event2 = new HitByBulletEvent(entity, gun);
-                    Bukkit.getPluginManager().callEvent(event2);
-                    bullet.remove();
-                } else if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
-                    if (NumberUtils.isNumber(bullet.getCustomName().substring(6, bullet.getCustomName().length()))) {
-                        int id = Integer.parseInt(bullet.getCustomName().substring(6, bullet.getCustomName().length()));
-                        Sentry sentry = Sentries.getSentry(id);
-
-                        HitByBulletEvent event2 = new HitByBulletEvent(entity, sentry);
-                        Bukkit.getPluginManager().callEvent(event2);
-                        bullet.remove();
+    public void onFireballExplode(EntityExplodeEvent event) {
+        if (event.getEntity() instanceof Fireball) {
+            if (ArenaManager.getManager().getArena() != null) {
+                Fireball fireball = (Fireball) event.getEntity();
+                if (fireball.getShooter() instanceof Player) {
+                    Player shooter = (Player) fireball.getShooter();
+                    if (fireball.getCustomName().contains("fireball_")) {
+                        event.setCancelled(true);
+                        if (GunList.isGunId(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")))) {
+                            GunObject gun = GunList.getGunAt(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")));
+                            List<Entity> near = shooter.getWorld().getEntities();
+                            near.stream().filter(e -> !e.equals(shooter)).filter(e -> e instanceof LivingEntity).forEach(e -> {
+                                ((Damageable) e).damage(gun.getDamage());
+                                DamageIndicator.spawnIndicator(gun.getDamage(), fireball.getWorld(), fireball.getLocation().getX(), fireball.getLocation().getY(), fireball.getLocation().getZ());
+                            });
+                        }
                     }
                 }
             }
@@ -384,50 +386,62 @@ public class GunListener implements Listener {
                 }
             }
         }
-        if (event.isEntity() && event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-            if (event.usesGun()) {
-                GunObject gun = event.getGun();
-                player.setHealth(player.getMaxHealth());
-                playerHealth.addHealth(player, playerHealth.getHealth(player) - gun.getDamage());
-                List<Entity> near = player.getWorld().getEntities();
-                near.stream().filter(e -> e.getLocation().distance(player.getLocation()) <= gun.getKZR()).filter(e -> e instanceof Player).filter(e -> e != player).forEach(e -> {
-                    playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
-                });
-            } else {
+        try {
+            if (event.isEntity() && event.getEntity() instanceof Player) {
+                Player player = (Player) event.getEntity();
+                if (event.usesGun()) {
+                    GunObject gun = event.getGun();
+                    player.setHealth(player.getMaxHealth());
+                    playerHealth.addHealth(player, playerHealth.getHealth(player) - gun.getDamage());
+                    List<Entity> near = player.getWorld().getEntities();
+                    near.stream().filter(e -> e.getLocation().distance(player.getLocation()) <= gun.getKZR()).filter(e -> e instanceof Player).filter(e -> e != player).forEach(e -> {
+                        playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                        DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+                    });
+                } else {
+                    Sentry sentry = event.getSentry();
+                    player.setHealth(player.getMaxHealth());
+                    playerHealth.addHealth(player, playerHealth.getHealth(player) - sentry.getDamage());
+                }
+            } else if (event.isSentry()) {
                 Sentry sentry = event.getSentry();
-                player.setHealth(player.getMaxHealth());
-                playerHealth.addHealth(player, playerHealth.getHealth(player) - sentry.getDamage());
+                sentry.getObj().setHealth(20F);
+                if (event.usesGun()) {
+                    sentry.setHealth(sentry.getHealth() - (int) event.getGun().getDamage());
+                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
+                } else {
+                    sentry.setHealth(sentry.getHealth() - (int) event.getSentry().getDamage());
+                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
+                }
+            } else if (event.isDispenser()) {
+                Dispenser dispenser = event.getDispenser();
+                if (event.usesGun()) {
+                    dispenser.setHealth(dispenser.getHealth() - (int) event.getGun().getDamage());
+                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
+                } else {
+                    dispenser.setHealth(dispenser.getHealth() - (int) event.getSentry().getDamage());
+                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
+                }
+            } else if (event.isTeleporterEntrance()) {
+                TeleporterEntrance teleporterEntrance = event.getTeleporterEntrance();
+                if (event.usesGun()) {
+                    teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getGun().getDamage());
+                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
+                } else {
+                    teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getSentry().getDamage());
+                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
+                }
+            } else if (event.isTeleporterExit()) {
+                TeleporterExit teleporterExit = event.getTeleporterExit();
+                if (event.usesGun()) {
+                    teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getGun().getDamage());
+                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
+                } else {
+                    teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getSentry().getDamage());
+                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
+                }
             }
-        } else if (event.isSentry()) {
-            Sentry sentry = event.getSentry();
-            if (event.usesGun()) {
-                sentry.setHealth(sentry.getHealth() - (int) event.getGun().getDamage());
-            } else {
-                sentry.setHealth(sentry.getHealth() - (int) event.getSentry().getDamage());
-            }
-        } else if (event.isDispenser()) {
-            Dispenser dispenser = event.getDispenser();
-            if (event.usesGun()) {
-                dispenser.setHealth(dispenser.getHealth() - (int) event.getGun().getDamage());
-            } else {
-                dispenser.setHealth(dispenser.getHealth() - (int) event.getSentry().getDamage());
-            }
-        } else if (event.isTeleporterEntrance()) {
-            TeleporterEntrance teleporterEntrance = event.getTeleporterEntrance();
-            if (event.usesGun()) {
-                teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getGun().getDamage());
-            } else {
-                teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getSentry().getDamage());
-            }
-        } else if (event.isTeleporterEntrance()) {
-            TeleporterExit teleporterExit = event.getTeleporterExit();
-            if (event.usesGun()) {
-                teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getGun().getDamage());
-            } else {
-                teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getSentry().getDamage());
-            }
-        }
+        } catch (NullPointerException ignored) {}
     }
 
     @EventHandler
@@ -447,18 +461,49 @@ public class GunListener implements Listener {
                                         return;
                                     }
                                     event.setCancelled(true);
-                                    if (primary_cooldowns.containsKey(player)) {
-                                        int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
-                                        if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() <= 0) {
+                                    if (gun.getType() != WeaponType.MELEE) {
+                                        if (primary_cooldowns.containsKey(player)) {
+                                            int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
+                                            if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() <= 0) {
+                                                primary_cooldowns.put(player, System.currentTimeMillis());
+                                                primary_cooldowns.setT(player, State.NORMAL);
+                                                if (playerGuns.getClip(player) > 0 || (gun.getMaxClip() == 0 && gun.getMaxAmmo() == 0)) {
+                                                    if (!gun.leftClick()) {
+                                                        if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName()) || GunThreadUtil.clickPlayers.get(event.getPlayer().getName()) == null) {
+                                                            GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                                            GunThreadUtil.shot.put(player, gun);
+                                                            GunThreadUtil.shot.setT(player, System.currentTimeMillis());
+                                                            return;
+                                                        }
+
+                                                        long lastClick = GunThreadUtil.clickPlayers.get(event.getPlayer().getName());
+                                                        if (currTime - lastClick > 260) {
+                                                            GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                                                            GunThreadUtil.shot.remove(player);
+                                                        } else {
+                                                            GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                                        }
+                                                    }
+                                                } else {
+                                                    primary_cooldowns.put(player, System.currentTimeMillis());
+                                                    primary_cooldowns.setT(player, State.RELOADING);
+                                                    GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
+                                                    GunThreadUtil.shot.remove(player);
+                                                    playerGuns.reloadGun(player);
+                                                }
+                                            }
+                                        } else if (!primary_cooldowns.containsKey(player)) {
                                             primary_cooldowns.put(player, System.currentTimeMillis());
                                             primary_cooldowns.setT(player, State.NORMAL);
                                             if (playerGuns.getClip(player) > 0 || (gun.getMaxClip() == 0 && gun.getMaxAmmo() == 0)) {
                                                 if (!gun.leftClick()) {
-                                                    if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName()) || GunThreadUtil.clickPlayers.get(event.getPlayer().getName()) == null) {
-                                                        GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
-                                                        GunThreadUtil.shot.put(player, gun);
-                                                        GunThreadUtil.shot.setT(player, System.currentTimeMillis());
-                                                        return;
+                                                    if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName())) {
+                                                        if (GunThreadUtil.clickPlayers.isEmpty()) {
+                                                            GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
+                                                            GunThreadUtil.shot.put(player, gun);
+                                                            GunThreadUtil.shot.setT(player, System.currentTimeMillis());
+                                                            return;
+                                                        }
                                                     }
 
                                                     long lastClick = GunThreadUtil.clickPlayers.get(event.getPlayer().getName());
@@ -476,40 +521,11 @@ public class GunListener implements Listener {
                                                 GunThreadUtil.shot.remove(player);
                                                 playerGuns.reloadGun(player);
                                             }
-                                        }
-                                    } else if (!primary_cooldowns.containsKey(player)) {
-                                        primary_cooldowns.put(player, System.currentTimeMillis());
-                                        primary_cooldowns.setT(player, State.NORMAL);
-                                        if (playerGuns.getClip(player) > 0 || (gun.getMaxClip() == 0 && gun.getMaxAmmo() == 0)) {
-                                            if (!gun.leftClick()) {
-                                                if (!GunThreadUtil.clickPlayers.containsKey(event.getPlayer().getName())) {
-                                                    if (GunThreadUtil.clickPlayers.isEmpty()) {
-                                                        GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
-                                                        GunThreadUtil.shot.put(player, gun);
-                                                        GunThreadUtil.shot.setT(player, System.currentTimeMillis());
-                                                        return;
-                                                    }
-                                                }
-
-                                                long lastClick = GunThreadUtil.clickPlayers.get(event.getPlayer().getName());
-                                                if (currTime - lastClick > 260) {
-                                                    GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
-                                                    GunThreadUtil.shot.remove(player);
-                                                } else {
-                                                    GunThreadUtil.clickPlayers.put(event.getPlayer().getName(), currTime);
-                                                }
+                                        } else if (primary_cooldowns.containsKey(player)) {
+                                            int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
+                                            if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() > 0) {
+                                                event.setCancelled(true);
                                             }
-                                        } else {
-                                            primary_cooldowns.put(player, System.currentTimeMillis());
-                                            primary_cooldowns.setT(player, State.RELOADING);
-                                            GunThreadUtil.clickPlayers.remove(event.getPlayer().getName());
-                                            GunThreadUtil.shot.remove(player);
-                                            playerGuns.reloadGun(player);
-                                        }
-                                    } else if (primary_cooldowns.containsKey(player)) {
-                                        int cooldown = primary_cooldowns.getT(player).getValue() ? gun.getCooldown() : gun.getCooldownReload();
-                                        if ((primary_cooldowns.get(player) + cooldown) - System.currentTimeMillis() > 0) {
-                                            event.setCancelled(true);
                                         }
                                     }
                                 }
@@ -534,7 +550,7 @@ public class GunListener implements Listener {
                     Bullet bullet1 = new Bullet();
                     if (bullet1.isBullet(bullet.getCustomName())) {
                         GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
-                        HitByBulletEvent event2 = new HitByBulletEvent(block, gun);
+                        HitByBulletEvent event2 = new HitByBulletEvent(block.getLocation(), gun);
                         Bukkit.getPluginManager().callEvent(event2);
                         if (!gun.isSniper()) {
                             if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
@@ -619,8 +635,15 @@ public class GunListener implements Listener {
     }
 
     @EventHandler
+    public void ArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
+        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onPlayerSlotSwitch(PlayerItemHeldEvent event) {
-        if (ArenaManager.getManager().isInGame( event.getPlayer())) {
+        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
             try {
                 Player player = event.getPlayer();
                 for (int i = 0; i < GunList.getGunlist().size(); i++) {

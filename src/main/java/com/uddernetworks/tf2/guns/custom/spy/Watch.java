@@ -26,7 +26,6 @@ public class Watch extends Spy {
 
     public Watch(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
-        player.sendMessage("Turning you invisible!!");
         if (held) {
             if (!invis_players.containsKey(player)) {
                 invis_players.put(player, false);

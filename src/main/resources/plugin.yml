@@ -1,9 +1,10 @@
-name: TF2
+name: MF2
 author: RubbaBoy
 main: com.uddernetworks.tf2.main.Main
-version: 0.13b
+version: 0.14b
+website: http://www.uddernetworks.com/minefortress-2
 description: A port of the game Team Fortress 2 in minecraft for Uddernetworks!
 commands:
    tf2:
-      description: Runs the TF2 command.
-      usage: /tf2
+      description: Runs the MF2 command.
+      usage: /mf2

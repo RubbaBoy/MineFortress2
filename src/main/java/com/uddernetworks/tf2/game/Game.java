@@ -51,12 +51,6 @@ public class Game implements Listener {
 //            world = Bukkit.getWorld(main.worlds.get(random.nextInt(main.worlds.size())));
             if (world == null) {
                 try {
-                    if (main == null) {
-                        System.out.println("Main null");
-                    }
-                    if (main.worlds == null) {
-                        System.out.println("Worlds null");
-                    }
                     world = Bukkit.getWorld(main.worlds.get(0));
                 } catch (NullPointerException e) {
                     e.printStackTrace();

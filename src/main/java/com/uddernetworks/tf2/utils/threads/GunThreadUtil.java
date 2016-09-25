@@ -28,8 +28,6 @@ public class GunThreadUtil extends Thread {
 
     public static HashMap<String, Long> clickPlayers = new HashMap<>();
 
-    private boolean nope = true;
-
     private PlayerGuns playerGuns = new PlayerGuns();
     PlayerHealth playerHealth = new PlayerHealth();
 
@@ -92,7 +90,10 @@ public class GunThreadUtil extends Thread {
                                                 } else {
                                                     new Bullet(player, shot.get(player));
                                                 }
-                                                nope = true;
+                                                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+                                                if (shot.get(player).getSound() != null) {
+                                                    player.playSound(player.getLocation(), shot.get(player).getSound(), 1, 1);
+                                                }
                                             }
                                         }
                                     }

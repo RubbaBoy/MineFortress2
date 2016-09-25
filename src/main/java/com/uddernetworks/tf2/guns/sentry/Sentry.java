@@ -1,9 +1,12 @@
 package com.uddernetworks.tf2.guns.sentry;
 
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.utils.TeamEnum;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
 import net.minecraft.server.v1_10_R1.EntityItem;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
@@ -66,6 +69,13 @@ public class Sentry implements Listener {
     public void spawnSentry() {
         sentry_obj = location.getWorld().spawn(location, ArmorStand.class);
         sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
+        if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+            sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 1 - " + owner.getName());
+        } else {
+            sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 1 - " + owner.getName());
+        }
+        sentry_obj.setCustomNameVisible(true);
+        sentry_obj.setHealth(20F);
 
         BukkitScheduler scheduler = Main.getPlugin().getServer().getScheduler();
         scheduler.scheduleSyncRepeatingTask(Main.getPlugin(), () -> {
@@ -74,13 +84,13 @@ public class Sentry implements Listener {
             for (Entity entity : location.getWorld().getEntities()) {
                 if (closest_entity == null) {
                     if (location.distance(entity.getLocation()) <= range && entity != sentry_obj) {
-                        if (!(entity instanceof Arrow) && !(entity instanceof EntityItem) && !(entity instanceof Player)) {
+                        if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
                             closest_entity = entity;
                         }
                     }
                 } else {
                     if (location.distance(entity.getLocation()) <= location.distance(closest_entity.getLocation()) && entity != sentry_obj) {
-                        if (!(entity instanceof Arrow) && !(entity instanceof EntityItem) && !(entity instanceof Player)) {
+                        if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
                             closest_entity = entity;
                         }
                     }
@@ -109,25 +119,33 @@ public class Sentry implements Listener {
 
     public void upgrade() {
         if (tier == 0) {
-            Bukkit.getPlayer("RubbaBoy").sendMessage("Upgrading sentry from level " + tier);
             tier = 1;
+            sentry_obj.setHelmet(null);
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 8));
             damage = damage_2;
             power = power_2;
             cooldown = cooldown_2;
             accuracy = accuracy_2;
             health = health_2;
+            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 2 - " + owner.getName());
+            } else {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 2 - " + owner.getName());
+            }
         } else if (tier == 1) {
-            Bukkit.getPlayer("RubbaBoy").sendMessage("Upgrading sentry from level " + tier);
             tier = 2;
+            sentry_obj.setHelmet(null);
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 7));
+            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 3 - " + owner.getName());
+            } else {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 3 - " + owner.getName());
+            }
             damage = damage_3;
             power = power_3;
             cooldown = cooldown_3;
             accuracy = accuracy_3;
             health = health_3;
-        } else {
-            Bukkit.getPlayer("RubbaBoy").sendMessage("Sentries cant be upgraded past tier 3!");
         }
     }
 

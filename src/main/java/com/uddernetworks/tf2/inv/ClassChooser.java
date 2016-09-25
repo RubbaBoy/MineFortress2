@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 public class ClassChooser implements Listener {
 
     static private Inventory inv;
+    PlayerHealth playerHealth = new PlayerHealth();
 
     private static Main main;
 
@@ -107,6 +108,7 @@ public class ClassChooser implements Listener {
                         loadout.openGUI(player);
                         break;
                 }
+                playerHealth.addPlayer(player, PlayerClasses.getPlayerClass(player).getHealth());
 
             }
         } catch (Exception ignored) {}

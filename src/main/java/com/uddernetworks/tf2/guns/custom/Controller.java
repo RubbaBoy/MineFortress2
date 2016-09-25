@@ -5,6 +5,7 @@ import com.uddernetworks.tf2.guns.custom.demoman.Demoman;
 import com.uddernetworks.tf2.guns.custom.engineer.Engineer;
 import com.uddernetworks.tf2.guns.custom.medic.Medic;
 import com.uddernetworks.tf2.guns.custom.pyro.Pyro;
+import com.uddernetworks.tf2.guns.custom.soldier.Soldier;
 import com.uddernetworks.tf2.guns.custom.spy.Spy;
 import org.bukkit.entity.Player;
 
@@ -62,6 +63,8 @@ public class Controller {
             return new Engineer(gun, player, held);
         } else if (parent.equalsIgnoreCase("pyro")) {
             return new Pyro(gun, player, held);
+        } else if (parent.equalsIgnoreCase("soldier")) {
+            return new Soldier(gun, player, held);
         } else {
             throw new Exception("Parent custom identifier not recognised");
         }

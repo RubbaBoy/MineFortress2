@@ -6,11 +6,15 @@ import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArmorStand;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 public class TeleporterEntrance {
 
     private Location location;
+    private ArmorStand tag;
 
     private int health = 150;
 
@@ -33,11 +37,45 @@ public class TeleporterEntrance {
                 } else {
                     location.getBlock().setData(DyeColor.RED.getData());
                 }
+
+                if (tag == null) {
+                    tag = (ArmorStand) location.getWorld().spawnEntity(location.clone().subtract(0, 1.5, 0), EntityType.ARMOR_STAND);
+                    tag.setGravity(false);
+                    tag.setCanPickupItems(false);
+                    tag.setCustomNameVisible(true);
+                    tag.setVisible(false);
+                    tag.setSmall(true);
+                    tag.setCollidable(false);
+                    tag.setSilent(true);
+
+                    if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                        tag.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Teleporter Entrance Active - " + owner.getName());
+                    } else {
+                        tag.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Teleporter Entrance Active - " + owner.getName());
+                    }
+                }
             } else {
                 if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                     location.getBlock().setData(DyeColor.LIGHT_BLUE.getData());
                 } else {
                     location.getBlock().setData(DyeColor.ORANGE.getData());
+                }
+
+                if (tag == null) {
+                    tag = (ArmorStand) location.getWorld().spawnEntity(location.clone().subtract(0, 1.5, 0), EntityType.ARMOR_STAND);
+                    tag.setGravity(false);
+                    tag.setCanPickupItems(false);
+                    tag.setCustomNameVisible(true);
+                    tag.setVisible(false);
+                    tag.setSmall(true);
+                    tag.setCollidable(false);
+                    tag.setSilent(true);
+
+                    if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                        tag.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Teleporter Entrance Unactive - " + owner.getName());
+                    } else {
+                        tag.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Teleporter Entrance Unactive - " + owner.getName());
+                    }
                 }
             }
         } else {
@@ -48,18 +86,42 @@ public class TeleporterEntrance {
     public void update() {
         location.getBlock().setType(Material.CARPET);
         if (Teleporters.hasCounterpart(this)) {
+
             if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                 location.getBlock().setData(DyeColor.BLUE.getData());
             } else {
                 location.getBlock().setData(DyeColor.RED.getData());
             }
+
+            tag.teleport(location.clone().subtract(0, 1.5, 0));
+            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                tag.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Teleporter Entrance Active - " + owner.getName());
+            } else {
+                tag.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Teleporter Entrance Active - " + owner.getName());
+            }
         } else {
+
             if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                 location.getBlock().setData(DyeColor.LIGHT_BLUE.getData());
             } else {
                 location.getBlock().setData(DyeColor.ORANGE.getData());
             }
+
+            tag.teleport(location.clone().subtract(0, 1.5, 0));
+            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                tag.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Teleporter Entrance Unactive - " + owner.getName());
+            } else {
+                tag.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Teleporter Entrance Unactive - " + owner.getName());
+            }
         }
+
+        tag.setGravity(false);
+        tag.setCanPickupItems(false);
+        tag.setCustomNameVisible(true);
+        tag.setVisible(false);
+        tag.setSmall(true);
+        tag.setCollidable(false);
+        tag.setSilent(true);
     }
 
     public void teleport(Player player) {
@@ -69,8 +131,9 @@ public class TeleporterEntrance {
     }
 
     public void remove() {
-        Teleporters.removeTeleporterEntrance(this);
+        tag.remove();
         location.getBlock().setType(Material.AIR);
+        Teleporters.removeTeleporterEntrance(this);
         if (Teleporters.hasCounterpart(this)) {
             Teleporters.getCounterpart(this).update();
         }

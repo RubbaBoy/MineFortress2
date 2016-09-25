@@ -1,10 +1,12 @@
 package com.uddernetworks.tf2.arena;
 
 import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
 import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -77,11 +79,6 @@ public class ArenaManager {
 
         p.setFlying(false);
         p.setFoodLevel(20);
-        try {
-            p.setWalkSpeed(0.5F);
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
 
         Random random = new Random();
         Game game = new Game(plugin);

@@ -18,13 +18,10 @@ public class PlayerHealth {
     }
 
     public void addHealth(Player player, double health) {
-//        player.sendMessage("Trying to add you!");
         if (PlayerHealth.health.containsKey(player)) {
             PlayerHealth.health.put(player, health);
 
             new HealthGUI(player);
-        } else {
-            System.out.println("The player hasn't been initialized in the health system!");
         }
     }
 
@@ -32,7 +29,6 @@ public class PlayerHealth {
         if (PlayerHealth.health.containsKey(player)) {
             return PlayerHealth.health.getT(player);
         } else {
-            System.out.println("The player hasn't been initialized in the health system!");
             return 0;
         }
     }

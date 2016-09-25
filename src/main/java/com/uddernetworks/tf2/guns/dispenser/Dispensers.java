@@ -23,6 +23,7 @@ public class Dispensers {
     public static void removeDispenser(int id) {
         dispensers.remove(id);
         dispenser_ids.remove(id);
+        size -= 1;
     }
 
     public static int getDipenserId(Dispenser dispenser) {
@@ -44,11 +45,11 @@ public class Dispensers {
 
     public static boolean isObjectDispenser(Block block) {
         for (Dispenser dispenser : dispenser_ids.values()) {
-            if (dispenser.getLocation().getBlock() == block) {
+            if (dispenser.getLocation().getBlock().getLocation().clone().equals(block.getLocation())) {
                 return true;
-            } else if (dispenser.getLocation().add(0, 1, 0).getBlock() == block) {
+            } else if (dispenser.getLocation().clone().add(0, 1, 0).getBlock().getLocation().equals(block.getLocation())) {
                 return true;
-            } else if (dispenser.getLocation().add(0, 2, 0).getBlock() == block) {
+            } else if (dispenser.getLocation().clone().add(0, 2, 0).getBlock().getLocation().equals(block.getLocation())) {
                 if (dispenser.getLevel() == 3) {
                     return true;
                 }
@@ -59,11 +60,11 @@ public class Dispensers {
 
     public static Dispenser getDispenser(Block block) {
         for (Dispenser dispenser : dispenser_ids.values()) {
-            if (dispenser.getLocation().getBlock() == block) {
+            if (dispenser.getLocation().clone().getBlock().equals(block)) {
                 return dispenser;
-            } else if (dispenser.getLocation().add(0, 1, 0).getBlock() == block) {
+            } else if (dispenser.getLocation().clone().add(0, 1, 0).getBlock().equals(block)) {
                 return dispenser;
-            } else if (dispenser.getLocation().add(0, 2, 0).getBlock() == block) {
+            } else if (dispenser.getLocation().clone().add(0, 2, 0).getBlock().equals(block)) {
                 if (dispenser.getLevel() == 3) {
                     return dispenser;
                 }

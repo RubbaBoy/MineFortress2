@@ -35,7 +35,7 @@ public class Bullet implements Listener {
         gun = gunObject;
         this.shooter = shooter;
 
-            shoot(shooter, gunObject);
+        shoot(shooter, gunObject);
     }
 
     public Bullet(Sentry sentry) {
@@ -125,9 +125,9 @@ public class Bullet implements Listener {
                 Vector direction = loc.getDirection().normalize();
                 Random random = new Random();
                 if (gunObject.getAccuracy() < 10) {
-                    double x = direction.getX() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
-                    double y = direction.getY() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
-                    double z = direction.getZ() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 3.5)) / 2;
+                    double x = direction.getX() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 4)) / 2;
+                    double y = direction.getY() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 4)) / 2;
+                    double z = direction.getZ() + (random.nextGaussian() / (10 + gunObject.getAccuracy() * 4)) / 2;
                     bullet.setBounce(false);
                     bullet.setVelocity(new Vector(x, y, z).multiply(gunObject.getPower()));
                     bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));

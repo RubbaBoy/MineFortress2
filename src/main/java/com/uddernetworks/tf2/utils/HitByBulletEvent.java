@@ -4,12 +4,15 @@ import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.dispenser.Dispenser;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.sentry.Sentry;
 import com.uddernetworks.tf2.guns.teleporter.TeleporterEntrance;
 import com.uddernetworks.tf2.guns.teleporter.TeleporterExit;
 import com.uddernetworks.tf2.guns.teleporter.Teleporters;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -32,11 +35,11 @@ public class HitByBulletEvent extends Event {
     }
 
     public boolean isEntity() {
-        return damaged instanceof Entity;
+        return damaged instanceof Entity && !(damaged instanceof ArmorStand);
     }
 
     public boolean isSentry() {
-        return damaged instanceof Sentry;
+        return damaged instanceof ArmorStand && Sentries.isObjectSentry((ArmorStand) damaged);
     }
 
     public boolean isDispenser() {
@@ -51,6 +54,10 @@ public class HitByBulletEvent extends Event {
         return damaged instanceof Location && Teleporters.isExit(((Location) damaged));
     }
 
+    public Sentry getDamagingSentry() {
+        return sentry;
+    }
+
     public Entity getEntity() {
         if (isEntity()) {
             return (Entity) damaged;
@@ -61,7 +68,7 @@ public class HitByBulletEvent extends Event {
 
     public Sentry getSentry() {
         if (isSentry()) {
-            return (Sentry) damaged;
+            return Sentries.getSentry((ArmorStand) damaged);
         } else {
             return null;
         }
@@ -69,7 +76,7 @@ public class HitByBulletEvent extends Event {
 
     public Dispenser getDispenser() {
         if (isDispenser()) {
-            return (Dispenser) damaged;
+            return Dispensers.getDispenser(((Location) damaged).getBlock());
         } else {
             return null;
         }
@@ -77,7 +84,7 @@ public class HitByBulletEvent extends Event {
 
     public TeleporterEntrance getTeleporterEntrance() {
         if (isTeleporterEntrance()) {
-            return (TeleporterEntrance) damaged;
+            return Teleporters.getEntrance((Location) damaged);
         } else {
             return null;
         }
@@ -85,7 +92,7 @@ public class HitByBulletEvent extends Event {
 
     public TeleporterExit getTeleporterExit() {
         if (isTeleporterExit()) {
-            return (TeleporterExit) damaged;
+            return Teleporters.getExit((Location) damaged);
         } else {
             return null;
         }

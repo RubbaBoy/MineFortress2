@@ -40,14 +40,16 @@ public class PlayerGuns {
 
             curr_gun.put(player, gun);
 
-            playerHealth.addPlayer(player, PlayerClasses.getPlayerClass(player).getHealth());
+            playerHealth.addHealth(player, PlayerClasses.getPlayerClass(player).getHealth());
 
             ItemStack itemgun = new ItemStack(getPlayerGun(player).getItemStack());
             ItemMeta meta = itemgun.getItemMeta();
             meta.setDisplayName(getPlayerGun(player).getName());
             itemgun.setItemMeta(meta);
             player.getInventory().setItem(0, itemgun);
-            new BulletGUI(player);
+            if (gun.showGUI()) {
+                new BulletGUI(player);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
