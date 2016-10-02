@@ -21,7 +21,7 @@ public class Demoman extends Controller {
                     new StickyBomb(getGun(), getPlayer(), isHeald()).sendStopNotify();
                     break;
                 default:
-                    throw new Exception("Unknown demoman child");
+                    System.out.println("Unknown demoman child");
             }
         } catch (Exception ignored) {}
     }
@@ -37,10 +37,8 @@ public class Demoman extends Controller {
                     new StickyBomb(getGun(), getPlayer(), isHeald());
                     break;
                 default:
-                    throw new Exception("Unknown demoman child");
+                    System.out.println("Unknown demoman child");
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 }

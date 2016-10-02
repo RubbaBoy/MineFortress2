@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns.sentry;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 
@@ -16,71 +17,113 @@ public class Sentries {
     static HashMap<Integer, Sentry> sentry_id = new HashMap<>();
 
     public static void addSentry(Sentry sentry) {
-        sentries.add(sentry);
-        sentry_id.put(size, sentry);
-        size += 1;
+        try {
+            sentries.add(sentry);
+            sentry_id.put(size, sentry);
+            size += 1;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public static void removeSentry(int id) {
-        sentries.remove(id);
-        sentry_id.remove(id);
+        try {
+            sentries.remove(id);
+            sentry_id.remove(id);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public static int getSentryId(Sentry sentry) {
-        for (int id : sentry_id.keySet()) {
-            if (sentry_id.get(id) == sentry) {
-                return id;
+        try {
+            for (int id : sentry_id.keySet()) {
+                if (sentry_id.get(id) == sentry) {
+                    return id;
+                }
             }
+            return -1;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return -1;
         }
-        return -1;
     }
 
     public static Sentry getSentry(int id) {
-        if (sentry_id.keySet().contains(id)) {
-            return sentries.get(id);
-        } else {
+        try {
+            if (sentry_id.keySet().contains(id)) {
+                return sentries.get(id);
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public static Sentry getSentry(ArmorStand armorStand) {
-        for (Sentry sentry : sentry_id.values()) {
-            if (sentry.getObj() == armorStand) {
-                return sentry;
+        try {
+            for (Sentry sentry : sentry_id.values()) {
+                if (sentry.getObj() == armorStand) {
+                    return sentry;
+                }
             }
+            return null;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
         }
-        return null;
     }
 
     public static Sentry getSentry(Player player) {
-        for (Sentry sentry : sentry_id.values()) {
-            if (sentry.getPlayer() == player) {
-                return sentry;
+        try {
+            for (Sentry sentry : sentry_id.values()) {
+                if (sentry.getPlayer() == player) {
+                    return sentry;
+                }
             }
+            return null;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
         }
-        return null;
     }
 
     public static boolean isObjectSentry(ArmorStand object) {
-        for (Sentry sentry : sentry_id.values()) {
-            if (sentry.getObj() == object) {
-                return true;
+        try {
+            for (Sentry sentry : sentry_id.values()) {
+                if (sentry.getObj() == object) {
+                    return true;
+                }
             }
+            return false;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
         }
-        return false;
     }
 
     public static boolean hasSentry(Player player) {
-        for (Sentry sentry : sentry_id.values()) {
-            if (sentry.getPlayer() == player) {
-                return true;
+        try {
+            for (Sentry sentry : sentry_id.values()) {
+                if (sentry.getPlayer() == player) {
+                    return true;
+                }
             }
+            return false;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
         }
-        return false;
     }
 
     public static void removeAll() {
-        sentry_id.values().forEach(Sentry::remove);
+        try {
+            sentry_id.values().forEach(Sentry::remove);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
 }

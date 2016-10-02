@@ -18,7 +18,7 @@ public class Soldier extends Controller {
                     new RocketLauncher(getGun(), getPlayer(), isHeald()).sendStopNotify();
                     break;
                 default:
-                    throw new Exception("Unknown soldier child");
+                    System.out.println("Unknown soldier child");
             }
         } catch (Exception ignored) {}
     }
@@ -31,11 +31,9 @@ public class Soldier extends Controller {
                     new RocketLauncher(getGun(), getPlayer(), isHeald());
                     break;
                 default:
-                    throw new Exception("Unknown soldier child");
+                    System.out.println("Unknown soldier child");
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 
 }

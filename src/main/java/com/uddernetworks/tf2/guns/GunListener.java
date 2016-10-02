@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns;
 
 import com.uddernetworks.tf2.arena.ArenaManager;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.custom.Controller;
 import com.uddernetworks.tf2.guns.custom.demoman.StickyBombPlayers;
 import com.uddernetworks.tf2.guns.dispenser.Dispenser;
@@ -76,14 +77,19 @@ public class GunListener implements Listener {
     static HashMap<Player, Long> melee_cooldowns = new HashMap<>();
 
     public GunListener(Main main, GunThreadUtil thread) {
-        this.main = main;
-        this.thread = thread;
+        try {
+            this.main = main;
+            this.thread = thread;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
     public void onPlayerClick(PlayerInteractEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            Player player = event.getPlayer();
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+                Player player = event.getPlayer();
                 if (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.LEFT_CLICK_AIR) {
                     for (int i = 0; i < GunList.getGunlist().size(); i++) {
                         GunObject gun = GunList.getGunAt(i);
@@ -184,152 +190,137 @@ public class GunListener implements Listener {
                         }
                     }
                 } else if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-                    try {
-                        for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                            GunObject gun = GunList.getGunAt(i);
-                            if (player.getInventory().getItemInMainHand() == null) {
+                    for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                        GunObject gun = GunList.getGunAt(i);
+                        if (player.getInventory().getItemInMainHand() == null) {
+                            return;
+                        }
+                        if (gun.getItemStack() == null) {
+                            return;
+                        }
+                        if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
+                            if (!new Controller(gun, player, false).canProceed()) {
                                 return;
                             }
-                            if (gun.getItemStack() == null) {
-                                return;
-                            }
-                            if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
-                                if (!new Controller(gun, player, false).canProceed()) {
-                                    return;
-                                }
-                                if (gun.getScopeable()) {
-                                    if (!zoom.contains(player)) {
-                                        if (!zoom_second.containsKey(player)) {
-                                            zoom_second.put(player, false);
+                            if (gun.getScopeable()) {
+                                if (!zoom.contains(player)) {
+                                    if (!zoom_second.containsKey(player)) {
+                                        zoom_second.put(player, false);
+                                    }
+                                    i = GunList.getGunlist().size();
+                                    if (zoom_second.containsKey(player) && zoom_second.get(player)) {
+                                        zoom_second.put(player, false);
+                                        zoom.add(player);
+                                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 90000000, 255, true, false));
+
+                                        player.getInventory().setHelmet(new ItemStack(Material.PUMPKIN));
+
+                                        if (gun.getNVscope()) {
+                                            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 90000000, 1, true, false));
                                         }
-                                        i = GunList.getGunlist().size();
-                                        if (zoom_second.containsKey(player) && zoom_second.get(player)) {
-                                            zoom_second.put(player, false);
-                                            zoom.add(player);
-                                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 90000000, 255, true, false));
+                                    } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
+                                        zoom_second.put(player, true);
+                                    }
+                                } else {
+                                    i = GunList.getGunlist().size();
+                                    if (zoom_second.containsKey(player) && zoom_second.get(player)) {
+                                        zoom_second.put(player, false);
+                                        zoom.remove(player);
+                                        player.removePotionEffect(PotionEffectType.SLOW);
 
-                                            player.getInventory().setHelmet(new ItemStack(Material.PUMPKIN));
+                                        player.getInventory().setHelmet(new ItemStack(Material.AIR));
 
-                                            if (gun.getNVscope()) {
-                                                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 90000000, 1, true, false));
-                                            }
-                                        } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
-                                            zoom_second.put(player, true);
+                                        if (gun.getNVscope()) {
+                                            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
                                         }
-                                    } else {
-                                        i = GunList.getGunlist().size();
-                                        if (zoom_second.containsKey(player) && zoom_second.get(player)) {
-                                            zoom_second.put(player, false);
-                                            zoom.remove(player);
-                                            player.removePotionEffect(PotionEffectType.SLOW);
-
-                                            player.getInventory().setHelmet(new ItemStack(Material.AIR));
-
-                                            if (gun.getNVscope()) {
-                                                player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-                                            }
-                                        } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
-                                            zoom_second.put(player, true);
-                                        }
+                                    } else if (zoom_second.containsKey(player) && !zoom_second.get(player)) {
+                                        zoom_second.put(player, true);
                                     }
                                 }
                             }
                         }
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
                     }
                 }
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player) {
-            if (!ArenaManager.getManager().isInGame((Player) event.getDamager())) {
-                return;
+        try {
+            if (event.getDamager() instanceof Player) {
+                if (!ArenaManager.getManager().isInGame((Player) event.getDamager())) {
+                    return;
+                }
             }
-        }
-        if (event.getEntity() instanceof Player) {
-            if (!ArenaManager.getManager().isInGame((Player) event.getEntity())) {
-                return;
+            if (event.getEntity() instanceof Player) {
+                if (!ArenaManager.getManager().isInGame((Player) event.getEntity())) {
+                    return;
+                }
             }
-        }
-        if (event.getDamager() instanceof Arrow) {
-            Arrow bullet = (Arrow) event.getDamager();
-            if (bullet.getShooter() instanceof Player) {
-                Bullet bullet1 = new Bullet();
-                if (event.getEntity() instanceof ArmorStand) {
-                    GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
-                    ((ArmorStand) event.getEntity()).setHealth(((ArmorStand) event.getEntity()).getMaxHealth());
-                    HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
-                    Bukkit.getPluginManager().callEvent(event2);
-                    event.getDamager().remove();
-                    event.setCancelled(true);
-                } else {
-                    Player shooter = (Player) bullet.getShooter();
-                    if (bullet1.isBullet(bullet.getCustomName())) {
+            if (event.getDamager() instanceof Arrow) {
+                Arrow bullet = (Arrow) event.getDamager();
+                if (bullet.getShooter() instanceof Player) {
+                    Bullet bullet1 = new Bullet();
+                    if (event.getEntity() instanceof ArmorStand) {
                         GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
-                        if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
-                            event.setCancelled(true);
-                            bullet.remove();
-                            HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
-                            Bukkit.getPluginManager().callEvent(event2);
-                        }
-                    } else if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
-                        if (NumberUtils.isNumber(bullet.getCustomName().substring(6, bullet.getCustomName().length()))) {
-                            int id = Integer.parseInt(bullet.getCustomName().substring(6, bullet.getCustomName().length()));
-                            Sentry sentry = Sentries.getSentry(id);
+                        ((ArmorStand) event.getEntity()).setHealth(((ArmorStand) event.getEntity()).getMaxHealth());
+                        HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
+                        Bukkit.getPluginManager().callEvent(event2);
+                        event.getDamager().remove();
+                        event.setCancelled(true);
+                    } else {
+                        Player shooter = (Player) bullet.getShooter();
+                        if (bullet1.isBullet(bullet.getCustomName())) {
+                            GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
+                            if (gun.getType() == WeaponType.PRIMARY || gun.getType() == WeaponType.SECONDARY) {
+                                event.setCancelled(true);
+                                bullet.remove();
+                                HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), gun);
+                                Bukkit.getPluginManager().callEvent(event2);
+                            }
+                        } else if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
+                            if (NumberUtils.isNumber(bullet.getCustomName().substring(6, bullet.getCustomName().length()))) {
+                                int id = Integer.parseInt(bullet.getCustomName().substring(6, bullet.getCustomName().length()));
+                                Sentry sentry = Sentries.getSentry(id);
 
-                            bullet.remove();
-                            HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), sentry);
-                            Bukkit.getPluginManager().callEvent(event2);
+                                bullet.remove();
+                                HitByBulletEvent event2 = new HitByBulletEvent(event.getEntity(), sentry);
+                                Bukkit.getPluginManager().callEvent(event2);
+                            }
                         }
                     }
                 }
-            }
-        } else if (event.getDamager() instanceof Player) {
-            Player player = (Player) event.getDamager();
-            Entity victim = event.getEntity();
-            for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                GunObject gun = GunList.getGunAt(i);
-                if (gun.getType() == WeaponType.MELEE) {
-                    if (event.getEntity() instanceof ArmorStand) {
-                        try {
-                            if (gun.getCustom() != null) {
-                                if (gun.getCustom().equalsIgnoreCase("engineer.wrench")) {
-                                    if (Sentries.isObjectSentry((ArmorStand) event.getEntity())) {
-                                        if (PlayerMetal.getPlayer(player) >= 200) {
-                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) - 200);
-                                            Sentry sentry = Sentries.getSentry((ArmorStand) event.getEntity());
-                                            sentry.upgrade();
-                                            event.setCancelled(true);
+            } else if (event.getDamager() instanceof Player) {
+                Player player = (Player) event.getDamager();
+                Entity victim = event.getEntity();
+                for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                    GunObject gun = GunList.getGunAt(i);
+                    if (gun.getType() == WeaponType.MELEE) {
+                        if (event.getEntity() instanceof ArmorStand) {
+                            try {
+                                if (gun.getCustom() != null) {
+                                    if (gun.getCustom().equalsIgnoreCase("engineer.wrench")) {
+                                        if (Sentries.isObjectSentry((ArmorStand) event.getEntity())) {
+                                            if (PlayerMetal.getPlayer(player) >= 200) {
+                                                PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) - 200);
+                                                Sentry sentry = Sentries.getSentry((ArmorStand) event.getEntity());
+                                                sentry.upgrade();
+                                                event.setCancelled(true);
+                                            }
                                         }
                                     }
                                 }
+                            } catch (NullPointerException e) {
+                                e.printStackTrace();
                             }
-                        } catch (NullPointerException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        if (player.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
+                        } else {
+                            if (player.getInventory().getItemInMainHand().serialize().toString().equals(gun.getItemStack().serialize().toString())) {
 
-                            event.setCancelled(true);
-                            if (melee_cooldowns.containsKey(player) && (melee_cooldowns.get(player) + gun.getCooldown()) - System.currentTimeMillis() <= 0) {
-                                playerHealth.addHealth((Player) victim, playerHealth.getHealth((Player) victim) - gun.getDamage());
-                                List<Entity> near = victim.getWorld().getEntities();
-                                for (Entity e : near) {
-                                    if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
-                                        if (e instanceof Player) {
-                                            playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
-                                            DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
-                                        }
-                                    }
-                                }
-
-                                melee_cooldowns.put(player, System.currentTimeMillis());
-
-                            } else if (!melee_cooldowns.containsKey(player)) {
-                                if (victim instanceof Player) {
+                                event.setCancelled(true);
+                                if (melee_cooldowns.containsKey(player) && (melee_cooldowns.get(player) + gun.getCooldown()) - System.currentTimeMillis() <= 0) {
                                     playerHealth.addHealth((Player) victim, playerHealth.getHealth((Player) victim) - gun.getDamage());
                                     List<Entity> near = victim.getWorld().getEntities();
                                     for (Entity e : near) {
@@ -340,114 +331,140 @@ public class GunListener implements Listener {
                                             }
                                         }
                                     }
+
+                                    melee_cooldowns.put(player, System.currentTimeMillis());
+
+                                } else if (!melee_cooldowns.containsKey(player)) {
+                                    if (victim instanceof Player) {
+                                        playerHealth.addHealth((Player) victim, playerHealth.getHealth((Player) victim) - gun.getDamage());
+                                        List<Entity> near = victim.getWorld().getEntities();
+                                        for (Entity e : near) {
+                                            if (e.getLocation().distance(victim.getLocation()) <= gun.getKZR()) {
+                                                if (e instanceof Player) {
+                                                    playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                                                    DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    melee_cooldowns.put(player, System.currentTimeMillis());
+
+                                } else if (melee_cooldowns.containsKey(player) && (melee_cooldowns.get(player) + gun.getCooldown()) - System.currentTimeMillis() > 0) {
+                                    event.setCancelled(true);
                                 }
-
-                                melee_cooldowns.put(player, System.currentTimeMillis());
-
-                            } else if (melee_cooldowns.containsKey(player) && (melee_cooldowns.get(player) + gun.getCooldown()) - System.currentTimeMillis() > 0) {
-                                event.setCancelled(true);
                             }
                         }
                     }
                 }
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onFireballExplode(EntityExplodeEvent event) {
-        if (event.getEntity() instanceof Fireball) {
-            if (ArenaManager.getManager().getArena() != null) {
-                Fireball fireball = (Fireball) event.getEntity();
-                if (fireball.getShooter() instanceof Player) {
-                    Player shooter = (Player) fireball.getShooter();
-                    if (fireball.getCustomName().contains("fireball_")) {
-                        event.setCancelled(true);
-                        if (GunList.isGunId(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")))) {
-                            GunObject gun = GunList.getGunAt(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")));
-                            List<Entity> near = shooter.getWorld().getEntities();
-                            near.stream().filter(e -> !e.equals(shooter)).filter(e -> e instanceof LivingEntity).forEach(e -> {
-                                ((Damageable) e).damage(gun.getDamage());
-                                DamageIndicator.spawnIndicator(gun.getDamage(), fireball.getWorld(), fireball.getLocation().getX(), fireball.getLocation().getY(), fireball.getLocation().getZ());
-                            });
+        try {
+            if (event.getEntity() instanceof Fireball) {
+                if (ArenaManager.getManager().getArena() != null) {
+                    Fireball fireball = (Fireball) event.getEntity();
+                    if (fireball.getShooter() instanceof Player) {
+                        Player shooter = (Player) fireball.getShooter();
+                        if (fireball.getCustomName().contains("fireball_")) {
+                            event.setCancelled(true);
+                            if (GunList.isGunId(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")))) {
+                                GunObject gun = GunList.getGunAt(Integer.parseInt(fireball.getCustomName().replace("fireball_", "")));
+                                List<Entity> near = shooter.getWorld().getEntities();
+                                near.stream().filter(e -> !e.equals(shooter)).filter(e -> e instanceof LivingEntity).forEach(e -> {
+                                    ((Damageable) e).damage(gun.getDamage());
+                                    DamageIndicator.spawnIndicator(gun.getDamage(), fireball.getWorld(), fireball.getLocation().getX(), fireball.getLocation().getY(), fireball.getLocation().getZ());
+                                });
+                            }
                         }
                     }
                 }
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onBulletHitEntity(HitByBulletEvent event) {
-        if (event.isEntity()) {
-            if (event.getEntity() instanceof Player) {
-                if (!ArenaManager.getManager().isInGame((Player) event.getEntity())) {
-                    return;
-                }
-            }
-        }
         try {
-            if (event.isEntity() && event.getEntity() instanceof Player) {
-                Player player = (Player) event.getEntity();
-                if (event.usesGun()) {
-                    GunObject gun = event.getGun();
-                    player.setHealth(player.getMaxHealth());
-                    playerHealth.addHealth(player, playerHealth.getHealth(player) - gun.getDamage());
-                    List<Entity> near = player.getWorld().getEntities();
-                    near.stream().filter(e -> e.getLocation().distance(player.getLocation()) <= gun.getKZR()).filter(e -> e instanceof Player).filter(e -> e != player).forEach(e -> {
-                        playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
-                        DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
-                    });
-                } else {
-                    Sentry sentry = event.getSentry();
-                    player.setHealth(player.getMaxHealth());
-                    playerHealth.addHealth(player, playerHealth.getHealth(player) - sentry.getDamage());
-                }
-            } else if (event.isSentry()) {
-                Sentry sentry = event.getSentry();
-                sentry.getObj().setHealth(20F);
-                if (event.usesGun()) {
-                    sentry.setHealth(sentry.getHealth() - (int) event.getGun().getDamage());
-                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
-                } else {
-                    sentry.setHealth(sentry.getHealth() - (int) event.getSentry().getDamage());
-                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
-                }
-            } else if (event.isDispenser()) {
-                Dispenser dispenser = event.getDispenser();
-                if (event.usesGun()) {
-                    dispenser.setHealth(dispenser.getHealth() - (int) event.getGun().getDamage());
-                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
-                } else {
-                    dispenser.setHealth(dispenser.getHealth() - (int) event.getSentry().getDamage());
-                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
-                }
-            } else if (event.isTeleporterEntrance()) {
-                TeleporterEntrance teleporterEntrance = event.getTeleporterEntrance();
-                if (event.usesGun()) {
-                    teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getGun().getDamage());
-                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
-                } else {
-                    teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getSentry().getDamage());
-                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
-                }
-            } else if (event.isTeleporterExit()) {
-                TeleporterExit teleporterExit = event.getTeleporterExit();
-                if (event.usesGun()) {
-                    teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getGun().getDamage());
-                    DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
-                } else {
-                    teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getSentry().getDamage());
-                    DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
+            if (event.isEntity()) {
+                if (event.getEntity() instanceof Player) {
+                    if (!ArenaManager.getManager().isInGame((Player) event.getEntity())) {
+                        return;
+                    }
                 }
             }
-        } catch (NullPointerException ignored) {}
+            try {
+                if (event.isEntity() && event.getEntity() instanceof Player) {
+                    Player player = (Player) event.getEntity();
+                    if (event.usesGun()) {
+                        GunObject gun = event.getGun();
+                        player.setHealth(player.getMaxHealth());
+                        playerHealth.addHealth(player, playerHealth.getHealth(player) - gun.getDamage());
+                        List<Entity> near = player.getWorld().getEntities();
+                        near.stream().filter(e -> e.getLocation().distance(player.getLocation()) <= gun.getKZR()).filter(e -> e instanceof Player).filter(e -> e != player).forEach(e -> {
+                            playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gun.getDamage());
+                            DamageIndicator.spawnIndicator(gun.getDamage(), e.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+                        });
+                    } else {
+                        Sentry sentry = event.getSentry();
+                        player.setHealth(player.getMaxHealth());
+                        playerHealth.addHealth(player, playerHealth.getHealth(player) - sentry.getDamage());
+                    }
+                } else if (event.isSentry()) {
+                    Sentry sentry = event.getSentry();
+                    sentry.getObj().setHealth(20F);
+                    if (event.usesGun()) {
+                        sentry.setHealth(sentry.getHealth() - (int) event.getGun().getDamage());
+                        DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
+                    } else {
+                        sentry.setHealth(sentry.getHealth() - (int) event.getSentry().getDamage());
+                        DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getSentry().getObj().getLocation().getWorld(), event.getSentry().getObj().getLocation().getX(), event.getSentry().getObj().getLocation().getY(), event.getSentry().getObj().getLocation().getZ());
+                    }
+                } else if (event.isDispenser()) {
+                    Dispenser dispenser = event.getDispenser();
+                    if (event.usesGun()) {
+                        dispenser.setHealth(dispenser.getHealth() - (int) event.getGun().getDamage());
+                        DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
+                    } else {
+                        dispenser.setHealth(dispenser.getHealth() - (int) event.getSentry().getDamage());
+                        DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getDispenser().getLocation().getWorld(), event.getDispenser().getLocation().getX(), event.getDispenser().getLocation().getY(), event.getDispenser().getLocation().getZ());
+                    }
+                } else if (event.isTeleporterEntrance()) {
+                    TeleporterEntrance teleporterEntrance = event.getTeleporterEntrance();
+                    if (event.usesGun()) {
+                        teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getGun().getDamage());
+                        DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
+                    } else {
+                        teleporterEntrance.setHealth(teleporterEntrance.getHealth() - (int) event.getSentry().getDamage());
+                        DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterEntrance().getLocation().getWorld(), event.getTeleporterEntrance().getLocation().getX(), event.getTeleporterEntrance().getLocation().getY(), event.getTeleporterEntrance().getLocation().getZ());
+                    }
+                } else if (event.isTeleporterExit()) {
+                    TeleporterExit teleporterExit = event.getTeleporterExit();
+                    if (event.usesGun()) {
+                        teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getGun().getDamage());
+                        DamageIndicator.spawnIndicator(event.getGun().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
+                    } else {
+                        teleporterExit.setHealth(teleporterExit.getHealth() - (int) event.getSentry().getDamage());
+                        DamageIndicator.spawnIndicator(event.getDamagingSentry().getDamage(), event.getTeleporterExit().getLocation().getWorld(), event.getTeleporterExit().getLocation().getX(), event.getTeleporterExit().getLocation().getY(), event.getTeleporterExit().getLocation().getZ());
+                    }
+                }
+            } catch (NullPointerException ignored) {}
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            try {
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
                 Player player = event.getPlayer();
                 long currTime = System.currentTimeMillis();
                 if (event.getHand() == EquipmentSlot.HAND) {
@@ -533,118 +550,126 @@ public class GunListener implements Listener {
                         }
                     }
                 }
-            } catch (NullPointerException e) {
-                e.printStackTrace();
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void arrowHit(ArrowHitBlockEvent event) {
-        if (event.getArrow().getShooter() instanceof Player) {
-            if (ArenaManager.getManager().isInGame((Player) event.getArrow().getShooter())) {
-                Arrow bullet = event.getArrow();
-                Block block = event.getBlock();
+        try {
+            if (event.getArrow().getShooter() instanceof Player) {
+                if (ArenaManager.getManager().isInGame((Player) event.getArrow().getShooter())) {
+                    Arrow bullet = event.getArrow();
+                    Block block = event.getBlock();
 
-                if (bullet.getShooter() instanceof Player) {
-                    Bullet bullet1 = new Bullet();
-                    if (bullet1.isBullet(bullet.getCustomName())) {
-                        GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
-                        HitByBulletEvent event2 = new HitByBulletEvent(block.getLocation(), gun);
-                        Bukkit.getPluginManager().callEvent(event2);
-                        if (!gun.isSniper()) {
-                            if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                    if (bullet.getShooter() instanceof Player) {
+                        Bullet bullet1 = new Bullet();
+                        if (bullet1.isBullet(bullet.getCustomName())) {
+                            GunObject gun = GunList.getGunAt(Integer.parseInt(bullet.getCustomName()));
+                            HitByBulletEvent event2 = new HitByBulletEvent(block.getLocation(), gun);
+                            Bukkit.getPluginManager().callEvent(event2);
+                            if (!gun.isSniper()) {
+                                if (gun.getDamage() >= 2 && gun.getDamage() < 5) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (gun.getDamage() >= 5 && gun.getDamage() < 10) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (gun.getDamage() >= 10 && gun.getDamage() < 20) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (gun.getDamage() >= 20) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
                                 }
-                            } else if (gun.getDamage() >= 5 && gun.getDamage() < 10) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
-                            } else if (gun.getDamage() >= 10 && gun.getDamage() < 20) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
-                            } else if (gun.getDamage() >= 20) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
+                                bullet.remove();
                             }
-                            bullet.remove();
-                        }
-                    } else if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
-                        if (NumberUtils.isNumber(bullet.getCustomName().substring(6, bullet.getCustomName().length()))) {
-                            int id = Integer.parseInt(bullet.getCustomName().substring(6, bullet.getCustomName().length()));
-                            Sentry sentry = Sentries.getSentry(id);
+                        } else if (bullet1.isBulletFromSentry(bullet.getCustomName())) {
+                            if (NumberUtils.isNumber(bullet.getCustomName().substring(6, bullet.getCustomName().length()))) {
+                                int id = Integer.parseInt(bullet.getCustomName().substring(6, bullet.getCustomName().length()));
+                                Sentry sentry = Sentries.getSentry(id);
 
-                            if (sentry.getDamage() >= 2 && sentry.getDamage() < 5) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                if (sentry.getDamage() >= 2 && sentry.getDamage() < 5) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (sentry.getDamage() >= 5 && sentry.getDamage() < 10) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (sentry.getDamage() >= 10 && sentry.getDamage() < 20) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
+                                } else if (sentry.getDamage() >= 20) {
+                                    for (Player player : Bukkit.getOnlinePlayers()) {
+                                        EntityArmorStand entity;
+                                        entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
+                                        ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
+                                        PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
+                                        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
+                                    }
                                 }
-                            } else if (sentry.getDamage() >= 5 && sentry.getDamage() < 10) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 5);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
-                            } else if (sentry.getDamage() >= 10 && sentry.getDamage() < 20) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 7);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
-                            } else if (sentry.getDamage() >= 20) {
-                                for (Player player : Bukkit.getOnlinePlayers()) {
-                                    EntityArmorStand entity;
-                                    entity = new EntityArmorStand(((CraftWorld) block.getLocation().getWorld()).getHandle());
-                                    ((CraftWorld) block.getLocation().getWorld()).getHandle().addEntity(entity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-                                    PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()), (byte) 9);
-                                    ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
-                                }
+                                bullet.remove();
                             }
-                            bullet.remove();
                         }
                     }
                 }
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void ArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            event.setCancelled(true);
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+                event.setCancelled(true);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onPlayerSlotSwitch(PlayerItemHeldEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            try {
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
                 Player player = event.getPlayer();
                 for (int i = 0; i < GunList.getGunlist().size(); i++) {
                     GunObject gun = GunList.getGunAt(i);
@@ -657,19 +682,23 @@ public class GunListener implements Listener {
                         }
                     }
                 }
-            } catch (Exception ignored) {
-                ignored.printStackTrace();
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onWindowClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player) {
-            if (ArenaManager.getManager().isInGame((Player) event.getPlayer())) {
-                PlayerSlots playerSlots = new PlayerSlots(main);
-                playerSlots.rawAdd((Player) event.getPlayer(), 0);
+        try {
+            if (event.getPlayer() instanceof Player) {
+                if (ArenaManager.getManager().isInGame((Player) event.getPlayer())) {
+                    PlayerSlots playerSlots = new PlayerSlots(main);
+                    playerSlots.rawAdd((Player) event.getPlayer(), 0);
+                }
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 }

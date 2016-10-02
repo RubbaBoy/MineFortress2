@@ -24,7 +24,7 @@ public class Engineer extends Controller {
                 case "wrench":
                     break;
                 default:
-                    throw new Exception("Unknown engineer child");
+                    System.out.println("Unknown engineer child");
             }
         } catch (Exception ignored) {}
     }
@@ -42,7 +42,7 @@ public class Engineer extends Controller {
                 case "wrench":
                     break;
                 default:
-                    throw new Exception("Unknown engineer child");
+                    System.out.println("Unknown engineer child");
             }
         } catch (Exception ignored) {}
     }

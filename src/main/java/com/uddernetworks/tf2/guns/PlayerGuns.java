@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.gui.BulletGUI;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
@@ -21,9 +22,7 @@ public class PlayerGuns {
     private PlayerHealth playerHealth = new PlayerHealth();
 
     public void addPlayerGun(Player player, GunObject gun) {
-
         try {
-
             boolean used = false;
             for (GunPersonalized gunPersonalized : player_guns) {
                 if (gunPersonalized.getPlayer() == player && gunPersonalized.getGun() == gun) {
@@ -50,106 +49,147 @@ public class PlayerGuns {
             if (gun.showGUI()) {
                 new BulletGUI(player);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public GunObject getPlayerGun(Player player) {
-        if (curr_gun.containsKey(player)) {
-            return curr_gun.get(player);
-        } else {
-            for (int i = 0; i < GunList.getGunlist().size(); i++) {
-                GunObject gun = GunList.getGunAt(i);
-                if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
-                    addPlayerGun(player, gun);
-                    return gun;
+        try {
+            if (curr_gun.containsKey(player)) {
+                return curr_gun.get(player);
+            } else {
+                for (int i = 0; i < GunList.getGunlist().size(); i++) {
+                    GunObject gun = GunList.getGunAt(i);
+                    if (player.getInventory().getItemInMainHand().toString().equals(gun.getItemStack().toString())) {
+                        addPlayerGun(player, gun);
+                        return gun;
+                    }
                 }
+                return null;
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public void setAmmo(Player player, int ammoNum) {
-        GunPersonalized gunPersonalized2;
-        int i = 0;
-        for (GunPersonalized gunPersonalized : player_guns) {
-            if (gunPersonalized.getGun() == getPlayerGun(player) && gunPersonalized.getPlayer() == player) {
-                gunPersonalized2 = gunPersonalized;
-                gunPersonalized2.setAmmo(ammoNum);
-                player_guns.set(i, gunPersonalized2);
+        try {
+            GunPersonalized gunPersonalized2;
+            int i = 0;
+            for (GunPersonalized gunPersonalized : player_guns) {
+                if (gunPersonalized.getGun() == getPlayerGun(player) && gunPersonalized.getPlayer() == player) {
+                    gunPersonalized2 = gunPersonalized;
+                    gunPersonalized2.setAmmo(ammoNum);
+                    player_guns.set(i, gunPersonalized2);
 
-                if (getPlayerGun(player).showGUI()) {
-                    new BulletGUI(player);
+                    if (getPlayerGun(player).showGUI()) {
+                        new BulletGUI(player);
+                    }
                 }
+                i++;
             }
-            i++;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void setClip(Player player, int clipNum) {
-        GunPersonalized gunPersonalized2;
-        int i = 0;
-        for (GunPersonalized gunPersonalized : player_guns) {
-            if (gunPersonalized.getGun() == getPlayerGun(player) && gunPersonalized.getPlayer() == player) {
-                gunPersonalized2 = gunPersonalized;
-                gunPersonalized2.setClip(clipNum);
-                player_guns.set(i, gunPersonalized2);
+        try {
+            GunPersonalized gunPersonalized2;
+            int i = 0;
+            for (GunPersonalized gunPersonalized : player_guns) {
+                if (gunPersonalized.getGun() == getPlayerGun(player) && gunPersonalized.getPlayer() == player) {
+                    gunPersonalized2 = gunPersonalized;
+                    gunPersonalized2.setClip(clipNum);
+                    player_guns.set(i, gunPersonalized2);
 
-                if (getPlayerGun(player).showGUI()) {
-                    new BulletGUI(player);
+                    if (getPlayerGun(player).showGUI()) {
+                        new BulletGUI(player);
+                    }
                 }
+                i++;
             }
-            i++;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public int getAmmo(Player player) {
-        for (GunPersonalized gunPersonalized : player_guns) {
-            if (gunPersonalized.getPlayer() == player && gunPersonalized.getGun() == getPlayerGun(player)) {
-                return gunPersonalized.getAmmo();
+        try {
+            for (GunPersonalized gunPersonalized : player_guns) {
+                if (gunPersonalized.getPlayer() == player && gunPersonalized.getGun() == getPlayerGun(player)) {
+                    return gunPersonalized.getAmmo();
+                }
             }
+            return 0;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
         }
-        return 0;
     }
 
     public int getClip(Player player) {
-        for (GunPersonalized gunPersonalized : player_guns) {
-            if (gunPersonalized.getPlayer() == player && gunPersonalized.getGun() == getPlayerGun(player)) {
-                return gunPersonalized.getClip();
+        try {
+            for (GunPersonalized gunPersonalized : player_guns) {
+                if (gunPersonalized.getPlayer() == player && gunPersonalized.getGun() == getPlayerGun(player)) {
+                    return gunPersonalized.getClip();
+                }
             }
+            return 0;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
         }
-        return 0;
     }
 
     public int getMaxAmmo(Player player) {
-        return getPlayerGun(player).getMaxAmmo();
+        try {
+            return getPlayerGun(player).getMaxAmmo();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public int getMaxClip(Player player) {
-        return getPlayerGun(player).getMaxClip();
+        try {
+            return getPlayerGun(player).getMaxClip();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public void reloadGun(Player player) {
-        if (getAmmo(player) - getClip(player) > 0) {
-            if (getClip(player) <= getAmmo(player)) {
-                setAmmo(player, getAmmo(player) - (getPlayerGun(player).getMaxClip() - getClip(player)));
-                setClip(player, getPlayerGun(player).getMaxClip() - getClip(player));
-            } else {
-                setClip(player, getAmmo(player));
-                setAmmo(player, 0);
+        try {
+            if (getAmmo(player) - getClip(player) > 0) {
+                if (getClip(player) <= getAmmo(player)) {
+                    setAmmo(player, getAmmo(player) - (getPlayerGun(player).getMaxClip() - getClip(player)));
+                    setClip(player, getPlayerGun(player).getMaxClip() - getClip(player));
+                } else {
+                    setClip(player, getAmmo(player));
+                    setAmmo(player, 0);
+                }
+                if (getPlayerGun(player).showGUI()) {
+                    new BulletGUI(player);
+                }
             }
-            if (getPlayerGun(player).showGUI()) {
-                new BulletGUI(player);
-            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void fillAll(Player player) {
-        player_guns.stream().filter(gunPersonalized -> gunPersonalized.getPlayer() == player).forEach(gunPersonalized -> {
-            gunPersonalized.setAmmo(gunPersonalized.getGun().getMaxAmmo());
-            gunPersonalized.setClip(gunPersonalized.getGun().getMaxClip());
-        });
+        try {
+            player_guns.stream().filter(gunPersonalized -> gunPersonalized.getPlayer() == player).forEach(gunPersonalized -> {
+                gunPersonalized.setAmmo(gunPersonalized.getGun().getMaxAmmo());
+                gunPersonalized.setClip(gunPersonalized.getGun().getMaxClip());
+            });
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
 }

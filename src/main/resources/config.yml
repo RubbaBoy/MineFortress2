@@ -1,8 +1,4 @@
-MySql:
-  Host: sql9.freemysqlhosting.net
-  User: sql9132376
-  Password: T6-zFMh~2/rC
-  Database: sql9132376
+anonymous-error-messages: true
 world: world
 door-X: -247
 door-Y: 70

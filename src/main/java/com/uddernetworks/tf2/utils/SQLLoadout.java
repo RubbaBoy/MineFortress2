@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.utils;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.main.Main;
@@ -19,8 +20,12 @@ public class SQLLoadout {
     private MySQL mySQL;
 
     public SQLLoadout(Main main) {
-        this.main = main;
-         mySQL = new MySQL(this.main);
+        try {
+            this.main = main;
+            mySQL = new MySQL(this.main);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void reload() {
@@ -37,47 +42,64 @@ public class SQLLoadout {
                 System.out.println("Adding: " + UUID);
                 loadouts.put(UUID, gunObjects);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void setPlayerLoadout(Player player, GunObject... guns) {
-        for (int i = 0; i < guns.length; i++) {
-            mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + guns[i].getClassType().toString() + "', 'WEAPON', " + i + ", '" + guns[i].getName() + "')");
+        try {
+            for (int i = 0; i < guns.length; i++) {
+                mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + guns[i].getClassType().toString() + "', 'WEAPON', " + i + ", '" + guns[i].getName() + "')");
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void setPlayerLoadout(Player player, ArrayList<GunObject> guns) {
-        for (int i = 0; i < guns.size(); i++) {
-            mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + guns.get(i).getClassType().toString() + "', 'WEAPON', " + i + ", '" + guns.get(i).getName() + "')");
+        try {
+            for (int i = 0; i < guns.size(); i++) {
+                mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + guns.get(i).getClassType().toString() + "', 'WEAPON', " + i + ", '" + guns.get(i).getName() + "')");
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void setPlayerLoadout(Player player, GunObject gun, int id) {
-        mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + gun.getClassType().toString() + "', 'WEAPON', " + id + ", '" + gun.getName() + "')");
+        try {
+            mySQL.query("INSERT INTO Loadouts VALUES ('" + player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString() + "', '" + gun.getClassType().toString() + "', 'WEAPON', " + id + ", '" + gun.getName() + "')");
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public ArrayList<GunObject> getPlayerLoadout(Player player) {
-        if (player.isOnline()) {
-            try {
-                if (PlayerClasses.getPlayerClass(player) != null) {
-                    if (loadouts.containsKey(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString())) {
-                        return loadouts.get(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString());
+        try {
+            if (player.isOnline()) {
+                try {
+                    if (PlayerClasses.getPlayerClass(player) != null) {
+                        if (loadouts.containsKey(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString())) {
+                            return loadouts.get(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString());
+                        } else {
+                            System.out.println("Adding player to database...");
+                            setPlayerLoadout(player, GunList.getDefaultGuns(PlayerClasses.getPlayerClass(player)));
+                            reload();
+                            return loadouts.get((player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString()));
+                        }
                     } else {
-                        System.out.println("Adding player to database...");
-                        setPlayerLoadout(player, GunList.getDefaultGuns(PlayerClasses.getPlayerClass(player)));
-                        reload();
-                        return loadouts.get((player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString()));
+                        return null;
                     }
-                } else {
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
                     return null;
                 }
-            } catch (NullPointerException e) {
-                e.printStackTrace();
+            } else {
                 return null;
             }
-        } else {
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }

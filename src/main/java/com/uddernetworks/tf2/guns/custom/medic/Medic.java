@@ -19,7 +19,7 @@ public class Medic extends Controller {
                     new Medi(getGun(), getPlayer(), isHeald()).sendStopNotify();
                     break;
                 default:
-                    throw new Exception("Unknown medic child");
+                    System.out.println("Unknown medic child");
             }
         } catch (Exception ignored) {}
     }
@@ -32,10 +32,8 @@ public class Medic extends Controller {
                     new Medi(getGun(), getPlayer(), isHeald());
                     break;
                 default:
-                    throw new Exception("Unknown medic child");
+                    System.out.println("Unknown medic child");
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 }

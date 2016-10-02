@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.inv;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.PlayerMetal;
 import com.uddernetworks.tf2.guns.dispenser.Dispenser;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
@@ -32,42 +33,50 @@ public class ConstructionChooser implements Listener {
     }
 
     public void openGUI(Player p) {
+        try {
 
-        inv = Bukkit.createInventory(p, 27, "Choose what to create");
+            inv = Bukkit.createInventory(p, 27, "Choose what to create");
 
-        if (!Sentries.hasSentry(p)) {
-            createDisplay(Material.EMERALD_BLOCK, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Sentry (125 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a sentry");
-        } else {
-            createDisplay(Material.CLAY, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Sentry (125 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a sentry");
-        }
-        if (!Dispensers.hasDispenser(p)) {
-            createDisplay(Material.EMERALD_BLOCK, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Dispenser (100 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a dispenser");
-        } else {
-            createDisplay(Material.CLAY, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Dispenser (100 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a dispenser");
-        }
-        if (!Teleporters.hasEntrance(p)) {
-            createDisplay(Material.EMERALD_BLOCK, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Teleporter entrance (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a teleporter entrance");
-        } else {
-            createDisplay(Material.CLAY, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Teleporter entrance (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a teleporter entrance");
-        }
-        if (!Teleporters.hasExit(p)) {
-            createDisplay(Material.EMERALD_BLOCK, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Teleporter exit (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a teleporter exit");
-        } else {
-            createDisplay(Material.CLAY, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Teleporter exit (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a teleporter exit");
-        }
+            if (!Sentries.hasSentry(p)) {
+                createDisplay(Material.EMERALD_BLOCK, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Sentry (125 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a sentry");
+            } else {
+                createDisplay(Material.CLAY, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Sentry (125 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a sentry");
+            }
+            if (!Dispensers.hasDispenser(p)) {
+                createDisplay(Material.EMERALD_BLOCK, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Dispenser (100 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a dispenser");
+            } else {
+                createDisplay(Material.CLAY, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Dispenser (100 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a dispenser");
+            }
+            if (!Teleporters.hasEntrance(p)) {
+                createDisplay(Material.EMERALD_BLOCK, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Teleporter entrance (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a teleporter entrance");
+            } else {
+                createDisplay(Material.CLAY, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Teleporter entrance (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a teleporter entrance");
+            }
+            if (!Teleporters.hasExit(p)) {
+                createDisplay(Material.EMERALD_BLOCK, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Teleporter exit (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "Click to create a teleporter exit");
+            } else {
+                createDisplay(Material.CLAY, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GRAY + "Teleporter exit (50 metal)", ChatColor.RESET + "" + ChatColor.BOLD + "You already have a teleporter exit");
+            }
 
-        p.openInventory(inv);
+            p.openInventory(inv);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public static void createDisplay(Material material, Inventory inv, int Slot, String name, String lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        item.setItemMeta(meta);
-        inv.setItem(Slot, item);
+        try {
+            ItemStack item = new ItemStack(material);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(name);
+            ArrayList<String> Lore = new ArrayList<>();
+            Lore.add(lore);
+            meta.setLore(Lore);
+            item.setItemMeta(meta);
+            inv.setItem(Slot, item);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler

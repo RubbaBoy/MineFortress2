@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.inv;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.Gun;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
@@ -34,51 +35,57 @@ public class AdminGunList implements Listener {
     static private Inventory inv;
 
     public void openGUI(Player p) {
+        try {
 
-        int i_ = 0;
-        for (int i = 0; i < GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).size(); i++) {
-            GunObject gun = GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).get(i);
-            gun_slot.put(gun.getItemStack().serialize().toString(), gun);
-            i_++;
-        }
-
-        this.maxPage = (((gun_slot.size() / 45) + ((gun_slot.size() % 45 == 0) ? 0 : 1)) * 45) / 45;
-
-        inv = Bukkit.createInventory(p, 54, "Admin Gun List «" + pageId + "/" + maxPage + "»");
-
-        if (gun_slot.size() <= 45) {
-            for (int i = 0; i < gun_slot.size(); i++) {
-                createDisplay(new ArrayList<GunObject>(gun_slot.values()).get(i).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i).getLore());
+            for (int i = 0; i < GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).size(); i++) {
+                GunObject gun = GunList.getGunsOfType(PlayerClasses.getPlayerClass(p)).get(i);
+                gun_slot.put(gun.getItemStack().serialize().toString(), gun);
             }
-        } else {
 
-            if (pageId * 45 > gun_slot.size()) {
-                for (int i = 0; i < gun_slot.size() - (((pageId - 1) * 45)); i++) {
-                    createDisplay(new ArrayList<GunObject>(gun_slot.values()).get(i + ((pageId - 1) * 45)).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getName(), (new ArrayList<GunObject>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getLore());
+            this.maxPage = (((gun_slot.size() / 45) + ((gun_slot.size() % 45 == 0) ? 0 : 1)) * 45) / 45;
+
+            inv = Bukkit.createInventory(p, 54, "Admin Gun List «" + pageId + "/" + maxPage + "»");
+
+            if (gun_slot.size() <= 45) {
+                for (int i = 0; i < gun_slot.size(); i++) {
+                    createDisplay(new ArrayList<>(gun_slot.values()).get(i).getItemStack().getType(), inv, i, (new ArrayList<>(gun_slot.values())).get(i).getName(), (new ArrayList<>(gun_slot.values())).get(i).getLore());
                 }
             } else {
-                for (int i = 0; i < 45; i++) {
-                    createDisplay(new ArrayList<GunObject>(gun_slot.values()).get((pageId - 1) * 45).getItemStack().getType(), inv, i, (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getName(), (new ArrayList<GunObject>(gun_slot.values())).get((pageId - 1) * 45).getLore());
+
+                if (pageId * 45 > gun_slot.size()) {
+                    for (int i = 0; i < gun_slot.size() - (((pageId - 1) * 45)); i++) {
+                        createDisplay(new ArrayList<>(gun_slot.values()).get(i + ((pageId - 1) * 45)).getItemStack().getType(), inv, i, (new ArrayList<>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getName(), (new ArrayList<>(gun_slot.values())).get(i + ((pageId - 1) * 45)).getLore());
+                    }
+                } else {
+                    for (int i = 0; i < 45; i++) {
+                        createDisplay(new ArrayList<>(gun_slot.values()).get((pageId - 1) * 45).getItemStack().getType(), inv, i, (new ArrayList<>(gun_slot.values())).get((pageId - 1) * 45).getName(), (new ArrayList<>(gun_slot.values())).get((pageId - 1) * 45).getLore());
+                    }
                 }
             }
+
+            createDisplay(Material.REDSTONE_BLOCK, inv, 45, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.RED + "Back", ChatColor.RESET + "" + ChatColor.BOLD + "Go back a page or exit the menu");
+
+            createDisplay(Material.EMERALD_BLOCK, inv, 53, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Next", ChatColor.RESET + "" + ChatColor.BOLD + "Go to the next page");
+
+            p.openInventory(inv);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
-
-        createDisplay(Material.REDSTONE_BLOCK, inv, 45, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.RED + "Back", ChatColor.RESET + "" + ChatColor.BOLD + "Go back a page or exit the menu");
-
-        createDisplay(Material.EMERALD_BLOCK, inv, 53, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Next", ChatColor.RESET + "" + ChatColor.BOLD + "Go to the next page");
-
-        p.openInventory(inv);
     }
 
     public static void createDisplay(Material material, Inventory inv, int Slot, String name, String lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<String>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        item.setItemMeta(meta);
-        inv.setItem(Slot, item);
+        try {
+            ItemStack item = new ItemStack(material);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(name);
+            ArrayList<String> Lore = new ArrayList<>();
+            Lore.add(lore);
+            meta.setLore(Lore);
+            item.setItemMeta(meta);
+            inv.setItem(Slot, item);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler

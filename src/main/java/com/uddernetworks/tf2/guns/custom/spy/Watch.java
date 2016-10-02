@@ -2,6 +2,7 @@ package com.uddernetworks.tf2.guns.custom.spy;
 
 import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.PlayerTeams;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.ActionBar;
@@ -26,40 +27,52 @@ public class Watch extends Spy {
 
     public Watch(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
-        if (held) {
-            if (!invis_players.containsKey(player)) {
-                invis_players.put(player, false);
+        try {
+            if (held) {
+                if (!invis_players.containsKey(player)) {
+                    invis_players.put(player, false);
+                }
+                if (!invis_players.get(player)) {
+                    timer(true);
+                    setCanProceed(false);
+                    invis_players.put(player, true);
+                    Entity en = ((CraftPlayer) player).getHandle();
+                    en.setSilent(true);
+                    Bukkit.getOnlinePlayers().stream().filter(player2 -> PlayerTeams.getPlayer(player2) != PlayerTeams.getPlayer(player)).forEach(player2 -> {
+                        player2.hidePlayer(player);
+                    });
+                } else {
+                    timer(false);
+                    showPlayer();
+                }
             }
-            if (!invis_players.get(player)) {
-                timer(true);
-                setCanProceed(false);
-                invis_players.put(player, true);
-                Entity en = ((CraftPlayer) player).getHandle();
-                en.setSilent(true);
-                Bukkit.getOnlinePlayers().stream().filter(player2 -> PlayerTeams.getPlayer(player2) != PlayerTeams.getPlayer(player)).forEach(player2 -> {
-                    player2.hidePlayer(player);
-                });
-            } else {
-                timer(false);
-                showPlayer();
-            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void timer(boolean running) {
-        new BukkitRunnable() {
-            public void run() {
-                if (running) {
-                    if (counter < 49) {
-                        counter++;
-                        if (PlayerTeams.getPlayer(getPlayer()) == TeamEnum.BLUE) {
-                            new ActionBar(getPlayer(), counter_text, ChatColor.BLUE, ChatColor.BOLD);
-                        } else {
-                            new ActionBar(getPlayer(), counter_text, ChatColor.RED, ChatColor.BOLD);
-                        }
-                        counter_text = complete_counter_text;
-                        counter_text = counter_text.substring(0, (50 - counter)) + ChatColor.GRAY + ChatColor.BOLD + counter_text.substring((50 - counter), counter_text.length());
+        try {
+            new BukkitRunnable() {
+                public void run() {
+                    if (running) {
+                        if (counter < 49) {
+                            counter++;
+                            if (PlayerTeams.getPlayer(getPlayer()) == TeamEnum.BLUE) {
+                                new ActionBar(getPlayer(), counter_text, ChatColor.BLUE, ChatColor.BOLD);
+                            } else {
+                                new ActionBar(getPlayer(), counter_text, ChatColor.RED, ChatColor.BOLD);
+                            }
+                            counter_text = complete_counter_text;
+                            counter_text = counter_text.substring(0, (50 - counter)) + ChatColor.GRAY + ChatColor.BOLD + counter_text.substring((50 - counter), counter_text.length());
 
+                        } else {
+                            new ActionBar(getPlayer(), "");
+                            showPlayer();
+                            counter = 0;
+                            counter_text = complete_counter_text;
+                            this.cancel();
+                        }
                     } else {
                         new ActionBar(getPlayer(), "");
                         showPlayer();
@@ -67,30 +80,30 @@ public class Watch extends Spy {
                         counter_text = complete_counter_text;
                         this.cancel();
                     }
-                } else {
-                    new ActionBar(getPlayer(), "");
-                    showPlayer();
-                    counter = 0;
-                    counter_text = complete_counter_text;
-                    this.cancel();
                 }
-            }
-        }.runTaskTimer(Main.getPlugin(), 0, 4L);
+            }.runTaskTimer(Main.getPlugin(), 0, 4L);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void showPlayer() {
-        invis_players.put(getPlayer(), false);
-        Entity en = ((CraftPlayer) getPlayer()).getHandle();
-        en.setSilent(false);
-        ArenaManager.getManager().getArena().getPlayers().stream().filter(player2 -> PlayerTeams.getPlayer(Bukkit.getPlayer(player2)) != PlayerTeams.getPlayer(getPlayer())).forEach(player2 -> {
-            Bukkit.getPlayer(player2).showPlayer(getPlayer());
-        });
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                setCanProceed(true);
-            }
-        }.runTaskLater(Main.getPlugin(), 20);
+        try {
+            invis_players.put(getPlayer(), false);
+            Entity en = ((CraftPlayer) getPlayer()).getHandle();
+            en.setSilent(false);
+            ArenaManager.getManager().getArena().getPlayers().stream().filter(player2 -> PlayerTeams.getPlayer(Bukkit.getPlayer(player2)) != PlayerTeams.getPlayer(getPlayer())).forEach(player2 -> {
+                Bukkit.getPlayer(player2).showPlayer(getPlayer());
+            });
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    setCanProceed(true);
+                }
+            }.runTaskLater(Main.getPlugin(), 20);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @Override

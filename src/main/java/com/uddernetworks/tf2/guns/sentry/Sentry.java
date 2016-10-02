@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns.sentry;
 
 import com.uddernetworks.tf2.arena.PlayerTeams;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.TeamEnum;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
@@ -59,93 +60,105 @@ public class Sentry implements Listener {
     private Player owner;
 
     public Sentry(Location location, Player owner, int range) {
-        this.location = location;
-        this.range = range;
-        this.owner = owner;
+        try {
+            this.location = location;
+            this.range = range;
+            this.owner = owner;
 
-        Sentries.addSentry(this);
+            Sentries.addSentry(this);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void spawnSentry() {
-        sentry_obj = location.getWorld().spawn(location, ArmorStand.class);
-        sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
-        if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
-            sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 1 - " + owner.getName());
-        } else {
-            sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 1 - " + owner.getName());
-        }
-        sentry_obj.setCustomNameVisible(true);
-        sentry_obj.setHealth(20F);
+        try {
+            sentry_obj = location.getWorld().spawn(location, ArmorStand.class);
+            sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
+            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 1 - " + owner.getName());
+            } else {
+                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 1 - " + owner.getName());
+            }
+            sentry_obj.setCustomNameVisible(true);
+            sentry_obj.setHealth(20F);
 
-        BukkitScheduler scheduler = Main.getPlugin().getServer().getScheduler();
-        scheduler.scheduleSyncRepeatingTask(Main.getPlugin(), () -> {
-            Entity closest_entity = null;
+            BukkitScheduler scheduler = Main.getPlugin().getServer().getScheduler();
+            scheduler.scheduleSyncRepeatingTask(Main.getPlugin(), () -> {
+                Entity closest_entity = null;
 
-            for (Entity entity : location.getWorld().getEntities()) {
-                if (closest_entity == null) {
-                    if (location.distance(entity.getLocation()) <= range && entity != sentry_obj) {
-                        if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
-                            closest_entity = entity;
+                for (Entity entity : location.getWorld().getEntities()) {
+                    if (closest_entity == null) {
+                        if (location.distance(entity.getLocation()) <= range && entity != sentry_obj) {
+                            if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
+                                closest_entity = entity;
+                            }
                         }
+                    } else {
+                        if (location.distance(entity.getLocation()) <= location.distance(closest_entity.getLocation()) && entity != sentry_obj) {
+                            if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
+                                closest_entity = entity;
+                            }
+                        }
+                    }
+                }
+
+                target = closest_entity;
+
+                if (closest_entity != null) {
+
+                    float angle = (float) Math.toDegrees(Math.atan2(location.getZ() - closest_entity.getLocation().getZ(), location.getX() - closest_entity.getLocation().getX()));
+                    float angle2 = (float) Math.toDegrees(location.getY() - closest_entity.getLocation().getY());
+
+                    EulerAngle angle3 = new EulerAngle(Math.toRadians(angle2), Math.toRadians(angle + 45), 0F);
+                    sentry_obj.setHeadPose(angle3);
+
+                    if (!SentryThreadUtil.sentries.containsKey(this) || !SentryThreadUtil.sentries.get(this)) {
+                        SentryThreadUtil.sentries.put(this, true);
+                        SentryThreadUtil.sentries.setT(this, System.currentTimeMillis() + this.getCooldown());
                     }
                 } else {
-                    if (location.distance(entity.getLocation()) <= location.distance(closest_entity.getLocation()) && entity != sentry_obj) {
-                        if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
-                            closest_entity = entity;
-                        }
-                    }
+                    SentryThreadUtil.sentries.put(this, false);
                 }
-            }
-
-            target = closest_entity;
-
-            if (closest_entity != null) {
-
-                float angle = (float) Math.toDegrees(Math.atan2(location.getZ() - closest_entity.getLocation().getZ(), location.getX() - closest_entity.getLocation().getX()));
-                float angle2 = (float) Math.toDegrees(location.getY() - closest_entity.getLocation().getY());
-
-                EulerAngle angle3 = new EulerAngle(Math.toRadians(angle2), Math.toRadians(angle + 45), 0F);
-                sentry_obj.setHeadPose(angle3);
-
-                if (!SentryThreadUtil.sentries.containsKey(this) || !SentryThreadUtil.sentries.get(this)) {
-                    SentryThreadUtil.sentries.put(this, true);
-                    SentryThreadUtil.sentries.setT(this, System.currentTimeMillis() + this.getCooldown());
-                }
-            } else {
-                SentryThreadUtil.sentries.put(this, false);
-            }
-        }, 0L, 1L);
+            }, 0L, 1L);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void upgrade() {
-        if (tier == 0) {
-            tier = 1;
-            sentry_obj.setHelmet(null);
-            sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 8));
-            damage = damage_2;
-            power = power_2;
-            cooldown = cooldown_2;
-            accuracy = accuracy_2;
-            health = health_2;
-            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
-                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 2 - " + owner.getName());
-            } else {
-                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 2 - " + owner.getName());
+        try {
+            if (tier == 0) {
+                tier = 1;
+                sentry_obj.setHelmet(null);
+                sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 8));
+                damage = damage_2;
+                power = power_2;
+                cooldown = cooldown_2;
+                accuracy = accuracy_2;
+                health = health_2;
+                if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                    sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 2 - " + owner.getName());
+                } else {
+                    sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 2 - " + owner.getName());
+                }
+            } else if (tier == 1) {
+                tier = 2;
+                sentry_obj.setHelmet(null);
+                sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 7));
+                if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
+                    sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 3 - " + owner.getName());
+                } else {
+                    sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 3 - " + owner.getName());
+                }
+                damage = damage_3;
+                power = power_3;
+                cooldown = cooldown_3;
+                accuracy = accuracy_3;
+                health = health_3;
             }
-        } else if (tier == 1) {
-            tier = 2;
-            sentry_obj.setHelmet(null);
-            sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 7));
-            if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
-                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 3 - " + owner.getName());
-            } else {
-                sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.RED + "Sentry Level 3 - " + owner.getName());
-            }
-            damage = damage_3;
-            power = power_3;
-            cooldown = cooldown_3;
-            accuracy = accuracy_3;
-            health = health_3;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
@@ -156,46 +169,95 @@ public class Sentry implements Listener {
     }
 
     public int getTier() {
-        return tier;
+        try {
+            return tier;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public double getDamage() {
-        return damage;
+        try {
+            return damage;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public double getAccuracy() {
-        return accuracy;
+        try {
+            return accuracy;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public double getPower() {
-        return power;
+        try {
+            return power;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public long getCooldown() {
-        return cooldown;
+        try {
+            return cooldown;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public ArmorStand getObj() {
-        return sentry_obj;
+        try {
+            return sentry_obj;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public Entity getTarget() {
-        return target;
+        try {
+            return target;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public Player getPlayer() {
-        return owner;
+        try {
+            return owner;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public int getHealth() {
-        return health;
+        try {
+            return health;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return 0;
+        }
     }
 
     public void setHealth(int health) {
-        if (health < 0) {
-            remove();
-        } else {
-            this.health = health;
+        try {
+            if (health < 0) {
+                remove();
+            } else {
+                this.health = health;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 }

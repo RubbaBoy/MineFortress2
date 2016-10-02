@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.utils.data;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.main.Main;
@@ -60,41 +61,67 @@ public class PlayerSlots {
             } else {
                 runsecond.put(player, false);
             }
-        } catch (NullPointerException ignored) {}
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public boolean contains(Player player) {
-        return playerslots.containsKey(player);
+        try {
+            return playerslots.containsKey(player);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public int getSelectedSlot(Player player) {
-        if (playerslots.containsKey(player)) {
-            return playerslots.get(player);
-        } else {
-            SQLLoadout sqlLoadout = new SQLLoadout(main);
-            playerslots.put(player, 0);
-            playerslots.setT(player, sqlLoadout.getPlayerLoadout(player));
+        try {
+            if (playerslots.containsKey(player)) {
+                return playerslots.get(player);
+            } else {
+                SQLLoadout sqlLoadout = new SQLLoadout(main);
+                playerslots.put(player, 0);
+                playerslots.setT(player, sqlLoadout.getPlayerLoadout(player));
+                return 0;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return 0;
         }
     }
 
     public void rawAdd(Player player, int slot) {
-        if (playerslots.containsKey(player)) {
-            playerslots.put(player, slot);
+        try {
+            if (playerslots.containsKey(player)) {
+                playerslots.put(player, slot);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public ArrayList<GunObject> getPlayerGuns(Player player) {
-        if (playerslots.containsKey(player)) {
-            return playerslots.getT(player);
-        } else {
-            System.out.println("Trying to call for a player that is not registered in player slots");
+        try {
+            if (playerslots.containsKey(player)) {
+                return playerslots.getT(player);
+            } else {
+                System.out.println("Trying to call for a player that is not registered in player slots");
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public HashMap3<Player, Integer, ArrayList<GunObject>> getHashMap() {
-        return playerslots;
+        try {
+            return playerslots;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
 }

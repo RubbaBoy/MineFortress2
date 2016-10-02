@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.utils.threads;
 
 import com.uddernetworks.tf2.arena.PlayerTeams;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
@@ -41,9 +42,13 @@ public class GunThreadUtil extends Thread {
 
     public GunThreadUtil(Main main) {
         super();
-        this.main = main;
-        this.start();
-        game = new Game(main);
+        try {
+            this.main = main;
+            this.start();
+            game = new Game(main);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void stahp() {
@@ -106,8 +111,8 @@ public class GunThreadUtil extends Thread {
                     exec.shutdown();
                 }
             }, 0, 100, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 }

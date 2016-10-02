@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.playerclass;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.gui.MetalGUI;
 import com.uddernetworks.tf2.guns.PlayerMetal;
 import com.uddernetworks.tf2.utils.ClassEnum;
@@ -14,25 +15,44 @@ public class PlayerClasses {
     static HashMap<Player, ClassEnum> classes = new HashMap<>();
 
     public static void setPlayerClass(Player player, ClassEnum classtype) {
-        if (classtype == ClassEnum.ENGINEER) {
-            PlayerMetal.addPlayer(player, 0);
-        } else {
-            PlayerMetal.addPlayer(player, -1);
+        try {
+            if (classtype == ClassEnum.ENGINEER) {
+                PlayerMetal.addPlayer(player, 0);
+            } else {
+                PlayerMetal.addPlayer(player, -1);
+            }
+            new MetalGUI(player);
+            classes.put(player, classtype);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
-        new MetalGUI(player);
-        classes.put(player, classtype);
     }
 
     public static ArrayList<Player> getPlayersOfClassType(ClassEnum classtype) {
-        return PlayerClasses.classes.keySet().stream().filter(player -> PlayerClasses.classes.get(player) == classtype).collect(Collectors.toCollection(ArrayList::new));
+        try {
+            return PlayerClasses.classes.keySet().stream().filter(player -> PlayerClasses.classes.get(player) == classtype).collect(Collectors.toCollection(ArrayList::new));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public static boolean isSet(Player player) {
-        return PlayerClasses.classes.containsKey(player);
+        try {
+            return PlayerClasses.classes.containsKey(player);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public static ClassEnum getPlayerClass(Player player) {
-        return classes.get(player);
+        try {
+            return classes.get(player);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
 }

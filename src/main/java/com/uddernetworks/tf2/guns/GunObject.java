@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.WeaponType;
 import org.bukkit.Material;
@@ -157,16 +158,21 @@ public class GunObject {
     }
 
     public ItemStack getItemStack() {
-        ItemStack itemgun = new ItemStack(item);
-        ItemMeta meta = itemgun.getItemMeta();
-        meta.setDisplayName(name);
-        if (getLore() != null) {
-            ArrayList<String> Lore = new ArrayList<>();
-            Lore.add(lore);
-            meta.setLore(Lore);
+        try {
+            ItemStack itemgun = new ItemStack(item);
+            ItemMeta meta = itemgun.getItemMeta();
+            meta.setDisplayName(name);
+            if (getLore() != null) {
+                ArrayList<String> Lore = new ArrayList<>();
+                Lore.add(lore);
+                meta.setLore(Lore);
+            }
+            itemgun.setItemMeta(meta);
+            return itemgun;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
         }
-        itemgun.setItemMeta(meta);
-        return itemgun;
     }
 
 }

@@ -21,11 +21,9 @@ public class Pyro extends Controller {
                     new Flamethrower(getGun(), getPlayer(), isHeald()).sendStopNotify();
                     break;
                 default:
-                    throw new Exception("Unknown pyro child");
+                    System.out.println("Unknown pyro child");
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -36,10 +34,8 @@ public class Pyro extends Controller {
                     new Flamethrower(getGun(), getPlayer(), isHeald());
                     break;
                 default:
-                    throw new Exception("Unknown pyro child");
+                    System.out.println("Unknown pyro child");
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
 }

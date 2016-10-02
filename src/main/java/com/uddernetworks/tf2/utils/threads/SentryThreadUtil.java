@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.utils.threads;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
@@ -27,8 +28,12 @@ public class SentryThreadUtil extends Thread {
 
     public SentryThreadUtil(Main main) {
         super();
-        this.main = main;
-        this.start();
+        try {
+            this.main = main;
+            this.start();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void stahp() {
@@ -57,8 +62,8 @@ public class SentryThreadUtil extends Thread {
                     exec.shutdown();
                 }
             }, 0, 10, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 }

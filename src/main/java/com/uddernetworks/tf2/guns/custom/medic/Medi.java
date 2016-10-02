@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns.custom.medic;
 
 import com.uddernetworks.tf2.arena.PlayerTeams;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
@@ -19,27 +20,30 @@ public class Medi extends Medic {
 
     public Medi(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
-
-        if (isHeald()) {
-            game.getWorld().getEntities().stream().filter(entity -> player.hasLineOfSight(entity) && entity.getLocation().distance(player.getLocation()) <= 5 && entity instanceof Player).forEach(entity -> {
-                Player tempplayer = (Player) entity;
-                if (tempplayer.getUniqueId() != player.getUniqueId()) {
-                    if (this.newPlayer == null) {
-                        this.newPlayer = (Player) entity;
-                    } else if (entity.getLocation().distance(player.getLocation()) < this.newPlayer.getLocation().distance(player.getLocation())) {
-                        this.newPlayer = (Player) entity;
+        try {
+            if (isHeald()) {
+                game.getWorld().getEntities().stream().filter(entity -> player.hasLineOfSight(entity) && entity.getLocation().distance(player.getLocation()) <= 5 && entity instanceof Player).forEach(entity -> {
+                    Player tempplayer = (Player) entity;
+                    if (tempplayer.getUniqueId() != player.getUniqueId()) {
+                        if (this.newPlayer == null) {
+                            this.newPlayer = (Player) entity;
+                        } else if (entity.getLocation().distance(player.getLocation()) < this.newPlayer.getLocation().distance(player.getLocation())) {
+                            this.newPlayer = (Player) entity;
+                        }
                     }
+                });
+                if (this.newPlayer != null) {
+                    Particles.spawnHealthParticles(this.newPlayer.getLocation().add(0, this.newPlayer.getEyeHeight(), 0), player.getLocation().add(0, player.getEyeHeight(), 0), PlayerTeams.getPlayer(player));
+                    if (playerHealth.getHealth(this.newPlayer) + 6 > playerHealth.getMaxHealth(this.newPlayer)) {
+                        playerHealth.addHealth(this.newPlayer, playerHealth.getMaxHealth(this.newPlayer));
+                    } else {
+                        playerHealth.addHealth(this.newPlayer, playerHealth.getHealth(this.newPlayer) + 6);
+                    }
+                    playerGuns.setClip(player, playerGuns.getClip(player) - 1);
                 }
-            });
-            if (this.newPlayer != null) {
-                Particles.spawnHealthParticles(this.newPlayer.getLocation().add(0, this.newPlayer.getEyeHeight(), 0), player.getLocation().add(0, player.getEyeHeight(), 0), PlayerTeams.getPlayer(player));
-                if (playerHealth.getHealth(this.newPlayer) + 6 > playerHealth.getMaxHealth(this.newPlayer)) {
-                    playerHealth.addHealth(this.newPlayer, playerHealth.getMaxHealth(this.newPlayer));
-                } else {
-                    playerHealth.addHealth(this.newPlayer, playerHealth.getHealth(this.newPlayer) + 6);
-                }
-                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

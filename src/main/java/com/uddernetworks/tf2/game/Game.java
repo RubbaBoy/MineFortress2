@@ -3,6 +3,7 @@ package com.uddernetworks.tf2.game;
 import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.arena.TeamChooser;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.inv.ClassChooser;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.GameEnum;
@@ -42,56 +43,50 @@ public class Game implements Listener {
     }
 
     public void sendPlayer(Player player) {
-        state = GameState.WAITING;
-        ClassChooser chooser = new ClassChooser(main);
-        chooser.openGUI(player);
+        try {
+            state = GameState.WAITING;
+            ClassChooser chooser = new ClassChooser(main);
+            chooser.openGUI(player);
 
-        if (gameType == GameEnum.ARENA) {
-            Random random = new Random();
+            if (gameType == GameEnum.ARENA) {
 //            world = Bukkit.getWorld(main.worlds.get(random.nextInt(main.worlds.size())));
-            if (world == null) {
-                try {
-                    world = Bukkit.getWorld(main.worlds.get(0));
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
+                if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
+                    try {
+                        world = Bukkit.getWorld(main.worlds.get(0));
+                    } catch (NullPointerException ignored) {
+                    }
                 }
             }
-        }
 
-        ArenaManager.getManager().addPlayer(player);
+            ArenaManager.getManager().addPlayer(player);
 
-        if (gameType == GameEnum.ARENA) {
-            state = GameState.INGAME;
-        } else {
-            state = GameState.COUNTDOWN;
-            count = 0;
-            new BukkitRunnable() {
-                public void run() {
-                    if (count < 5) {
-                        try {
+            if (gameType == GameEnum.ARENA) {
+                state = GameState.INGAME;
+            } else {
+                state = GameState.COUNTDOWN;
+                count = 0;
+                new BukkitRunnable() {
+                    public void run() {
+                        if (count < 5) {
                             for (Player player : Bukkit.getServer().getOnlinePlayers()) {
                                 sendTitle(player, "Starting game in " + (5 - count), "Get ready!", 0, 20, 0);
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        count++;
-                    } else if (count == 6) {
-                        try {
+                            count++;
+                        } else if (count == 6) {
                             for (Player player : Bukkit.getServer().getOnlinePlayers()) {
                                 sendTitle(player, "The game has begun!", "Good luck!", 5, 30, 5);
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        count++;
-                    } else {
-                        count = 0;
-                        this.cancel();
+                            count++;
+                        } else {
+                            count = 0;
+                            this.cancel();
 //                        start();
+                        }
                     }
-                }
-            }.runTaskTimer(Main.getPlugin(), 20, 20);
+                }.runTaskTimer(Main.getPlugin(), 20, 20);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
@@ -122,43 +117,29 @@ public class Game implements Listener {
     }
 
     @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity();
-        if (getGameState() != GameState.NOTHING) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 1, true));
-            player.setGameMode(GameMode.ADVENTURE);
-            player.setFlying(true);
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    player.setGameMode(GameMode.SURVIVAL);
-                    player.setFlying(false);
-                    player.teleport(main.getSpectateLocation(player.getWorld()));
-                }
-            }.runTaskLater(main, 60);
-        }
-    }
-
-    @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (getGameState() == GameState.INGAME) {
-            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-                if (main.isInBarrier(event.getTo(), PlayerTeams.getPlayer(event.getPlayer()))) {
-                    if (event.getFrom() != event.getTo()) {
-                        Location to = event.getFrom();
-                        to.setPitch(event.getTo().getPitch());
-                        to.setYaw(event.getTo().getYaw());
-                        event.setTo(to);
+        try {
+            if (getGameState() == GameState.INGAME) {
+                if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+                    if (main.isInBarrier(event.getTo(), PlayerTeams.getPlayer(event.getPlayer()))) {
+                        if (event.getFrom() != event.getTo()) {
+                            Location to = event.getFrom();
+                            to.setPitch(event.getTo().getPitch());
+                            to.setYaw(event.getTo().getYaw());
+                            event.setTo(to);
+                        }
                     }
                 }
+            } else if (getGameState() == GameState.COUNTDOWN || getGameState() == GameState.WAITING) {
+                if (event.getFrom() != event.getTo()) {
+                    Location to = event.getFrom();
+                    to.setPitch(event.getTo().getPitch());
+                    to.setYaw(event.getTo().getYaw());
+                    event.setTo(to);
+                }
             }
-        } else if (getGameState() == GameState.COUNTDOWN || getGameState() == GameState.WAITING) {
-            if (event.getFrom() != event.getTo()) {
-                Location to = event.getFrom();
-                to.setPitch(event.getTo().getPitch());
-                to.setYaw(event.getTo().getYaw());
-                event.setTo(to);
-            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
@@ -175,8 +156,8 @@ public class Game implements Listener {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.utils;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.Bullet;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.dispenser.Dispenser;
@@ -35,75 +36,140 @@ public class HitByBulletEvent extends Event {
     }
 
     public boolean isEntity() {
-        return damaged instanceof Entity && !(damaged instanceof ArmorStand);
+        try {
+            return damaged instanceof Entity && !(damaged instanceof ArmorStand);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public boolean isSentry() {
-        return damaged instanceof ArmorStand && Sentries.isObjectSentry((ArmorStand) damaged);
+        try {
+            return damaged instanceof ArmorStand && Sentries.isObjectSentry((ArmorStand) damaged);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public boolean isDispenser() {
-        return damaged instanceof Location && Dispensers.isObjectDispenser(((Location) damaged).getBlock());
+        try {
+            return damaged instanceof Location && Dispensers.isObjectDispenser(((Location) damaged).getBlock());
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public boolean isTeleporterEntrance() {
-        return damaged instanceof Location && Teleporters.isEntrance(((Location) damaged));
+        try {
+            return damaged instanceof Location && Teleporters.isEntrance(((Location) damaged));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public boolean isTeleporterExit() {
-        return damaged instanceof Location && Teleporters.isExit(((Location) damaged));
+        try {
+            return damaged instanceof Location && Teleporters.isExit(((Location) damaged));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     public Sentry getDamagingSentry() {
-        return sentry;
+        try {
+            return sentry;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public Entity getEntity() {
-        if (isEntity()) {
-            return (Entity) damaged;
-        } else {
+        try {
+            if (isEntity()) {
+                return (Entity) damaged;
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public Sentry getSentry() {
-        if (isSentry()) {
-            return Sentries.getSentry((ArmorStand) damaged);
-        } else {
+        try {
+            if (isSentry()) {
+                return Sentries.getSentry((ArmorStand) damaged);
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public Dispenser getDispenser() {
-        if (isDispenser()) {
-            return Dispensers.getDispenser(((Location) damaged).getBlock());
-        } else {
+        try {
+            if (isDispenser()) {
+                return Dispensers.getDispenser(((Location) damaged).getBlock());
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public TeleporterEntrance getTeleporterEntrance() {
-        if (isTeleporterEntrance()) {
-            return Teleporters.getEntrance((Location) damaged);
-        } else {
+        try {
+            if (isTeleporterEntrance()) {
+                return Teleporters.getEntrance((Location) damaged);
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public TeleporterExit getTeleporterExit() {
-        if (isTeleporterExit()) {
-            return Teleporters.getExit((Location) damaged);
-        } else {
+        try {
+            if (isTeleporterExit()) {
+                return Teleporters.getExit((Location) damaged);
+            } else {
+                return null;
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
 
     public GunObject getGun() {
-        return gun;
+        try {
+            return gun;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public boolean usesGun() {
-        return !(gun == null && sentry != null);
+        try {
+            return !(gun == null && sentry != null);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
+        }
     }
 
     private static final HandlerList handlers = new HandlerList();

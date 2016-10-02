@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.gui;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import org.bukkit.Material;
@@ -9,10 +10,14 @@ import org.bukkit.inventory.ItemStack;
 public class HealthGUI {
 
     public HealthGUI(Player player) {
-        PlayerHealth health = new PlayerHealth();
-        int percentage = Math.toIntExact(Math.round(health.getHealth(player) / ((double) (PlayerClasses.getPlayerClass(player).getHealth()) / (double) 100)));
-        if (percentage < 0 || percentage > 100) return;
-        player.getInventory().setItemInOffHand(new ItemStack(Material.DIAMOND_HOE, 1, (short) (percentage + 1)));
+        try {
+            PlayerHealth health = new PlayerHealth();
+            int percentage = Math.toIntExact(Math.round(health.getHealth(player) / ((double) (PlayerClasses.getPlayerClass(player).getHealth()) / (double) 100)));
+            if (percentage < 0 || percentage > 100) return;
+            player.getInventory().setItemInOffHand(new ItemStack(Material.DIAMOND_HOE, 1, (short) (percentage + 1)));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
 }

@@ -18,7 +18,7 @@ public class Spy extends Controller {
                     new Watch(getGun(), getPlayer(), isHeald()).sendStopNotify();
                     break;
                 default:
-                    throw new Exception("Unknown spy child");
+                    System.out.println("Unknown spy child");
             }
         } catch (Exception ignored) {}
     }
@@ -31,7 +31,7 @@ public class Spy extends Controller {
                     new Watch(getGun(), getPlayer(), isHeald());
                     break;
                 default:
-                    throw new Exception("Unknown spy child");
+                    System.out.println("Unknown spy child");
             }
         } catch (Exception ignored) {}
     }

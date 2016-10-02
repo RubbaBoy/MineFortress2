@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.inv;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
@@ -32,43 +33,49 @@ public class ClassChooser implements Listener {
     }
 
     public void openGUI(Player p) {
+        try {
 
-        inv = Bukkit.createInventory(p, 27, "Choose your class");
+            inv = Bukkit.createInventory(p, 27, "Choose your class");
 
-        createDisplay(Material.EMERALD_BLOCK, inv, 9, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Scout", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the scout class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 10, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Soldier", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the soldier class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 11, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Pyro", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the pyro class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Demoman", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the demoman class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Heavy", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the Heavy class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Engineer", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the engineer class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Medic", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the medic class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 16, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Sniper", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the sniper class");
-        createDisplay(Material.EMERALD_BLOCK, inv, 17, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Spy", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the spy class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 9, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Scout", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the scout class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 10, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Soldier", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the soldier class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 11, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Pyro", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the pyro class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 12, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Demoman", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the demoman class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 13, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Heavy", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the Heavy class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 14, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Engineer", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the engineer class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 15, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Medic", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the medic class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 16, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Sniper", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the sniper class");
+            createDisplay(Material.EMERALD_BLOCK, inv, 17, ChatColor.RESET + "" + ChatColor.BOLD + "" + ChatColor.GREEN + "Spy", ChatColor.RESET + "" + ChatColor.BOLD + "Click to choose the spy class");
 
-        p.openInventory(inv);
+            p.openInventory(inv);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public static void createDisplay(Material material, Inventory inv, int Slot, String name, String lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        item.setItemMeta(meta);
-        inv.setItem(Slot, item);
+        try {
+            ItemStack item = new ItemStack(material);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(name);
+            ArrayList<String> Lore = new ArrayList<>();
+            Lore.add(lore);
+            meta.setLore(Lore);
+            item.setItemMeta(meta);
+            inv.setItem(Slot, item);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        Player player = (Player) event.getWhoClicked();
-        Inventory inventory = event.getInventory();
-        ItemStack clicked = event.getCurrentItem();
         try {
+            Player player = (Player) event.getWhoClicked();
+            Inventory inventory = event.getInventory();
             if (inventory.getName().equals(inv.getName())) {
                 event.setCancelled(true);
                 Loadout loadout = new Loadout(main);
-
                 switch (event.getSlot()) {
                     case 9:
                         PlayerClasses.setPlayerClass(player, ClassEnum.SCOUT);
@@ -109,16 +116,17 @@ public class ClassChooser implements Listener {
                         break;
                 }
                 playerHealth.addPlayer(player, PlayerClasses.getPlayerClass(player).getHealth());
-
             }
-        } catch (Exception ignored) {}
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
     public void onWindowClose(InventoryCloseEvent event) {
-        Player player = (Player) event.getPlayer();
-        Inventory inventory = event.getInventory();
         try {
+            Player player = (Player) event.getPlayer();
+            Inventory inventory = event.getInventory();
             if (inventory.getName().equals(inv.getName())) {
                 if (!PlayerClasses.isSet(player)) {
                     main.getServer().getScheduler().scheduleSyncDelayedTask(main, () -> openGUI(player), 1L);

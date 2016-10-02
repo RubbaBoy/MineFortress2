@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.arena;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.TeamEnum;
@@ -50,17 +51,25 @@ public class TeamChooser implements Listener {
     }
 
     public void sendPlayer(Player player) {
-        if (!players.contains(player)) {
-            locs.put(player, player.getLocation());
-            Entity en = ((CraftPlayer) player).getHandle();
-            en.setInvisible(true);
-            player.teleport(Locations.teamChooseSpawn);
-            players.add(player);
+        try {
+            if (!players.contains(player)) {
+                locs.put(player, player.getLocation());
+                Entity en = ((CraftPlayer) player).getHandle();
+                en.setInvisible(true);
+                player.teleport(Locations.teamChooseSpawn);
+                players.add(player);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void sendBack(Player player) {
-        player.teleport(locs.get(player));
+        try {
+            player.teleport(locs.get(player));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
@@ -153,51 +162,46 @@ public class TeamChooser implements Listener {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void reloadAbleDoors() {
-        if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() > PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
-            blueDoor = false;
-            redDoor = true;
-            changeSignText(Locations.blueSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
-        } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() < PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
-            blueDoor = true;
-            redDoor = false;
-            changeSignText(Locations.redSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
-        } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() == PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()){
-            blueDoor = true;
-            redDoor = true;
+        try {
+            if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE) != null && PlayerTeams.getPlayersInTeam(TeamEnum.RED) != null) {
+                if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() > PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
+                    blueDoor = false;
+                    redDoor = true;
+                    changeSignText(Locations.blueSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.BOLD + "Blue", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() < PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
+                    blueDoor = true;
+                    redDoor = false;
+                    changeSignText(Locations.redSign, "", ChatColor.STRIKETHROUGH + "" + ChatColor.BLUE + "" + ChatColor.RED + "Red", ChatColor.BOLD + "" + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size() + "/" + (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() + PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()), "");
+                } else if (PlayerTeams.getPlayersInTeam(TeamEnum.BLUE).size() == PlayerTeams.getPlayersInTeam(TeamEnum.RED).size()) {
+                    blueDoor = true;
+                    redDoor = true;
+                }
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     public void changeSignText(Location location, String line1, String line2, String line3, String line4) {
-        if (location.getBlock().getState() instanceof Sign) {
-            Sign sign = (Sign) location.getBlock().getState();
-            sign.setLine(0, line1);
-            sign.setLine(1, line2);
-            sign.setLine(2, line3);
-            sign.setLine(3, line4);
-            sign.update();
-        } else {
-            System.out.println("Location was not a sign!");
-        }
-    }
-
-
-    public void toggleDoorState(Block block) {
-        String doorName = block.getType().getData().getName();
-        if (doorName.equalsIgnoreCase("org.bukkit.material.door")) {
-            BlockState state = block.getState();
-            Door door = (Door) state.getData();
-            if (door.isOpen()) {
-                door.setOpen(false);
+        try {
+            if (location.getBlock().getState() instanceof Sign) {
+                Sign sign = (Sign) location.getBlock().getState();
+                sign.setLine(0, line1);
+                sign.setLine(1, line2);
+                sign.setLine(2, line3);
+                sign.setLine(3, line4);
+                sign.update();
             } else {
-                door.setOpen(true);
+                System.out.println("Location was not a sign!");
             }
-            state.update();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.inv;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.main.Main;
@@ -31,56 +32,63 @@ public class Loadout implements Listener {
     }
 
     public void openGUI(Player p) {
+        try {
 
-        inv = Bukkit.createInventory(p, 54, "Loadout");
+            inv = Bukkit.createInventory(p, 54, "Loadout");
 
-        int slot;
-        SQLLoadout sqlLoadout = new SQLLoadout(main);
-        ArrayList<GunObject> loadout = sqlLoadout.getPlayerLoadout(p);
-        System.out.println("Player loadout is: " + loadout);
-        for (int i = 0; i < loadout.size(); i++) {
-            GunObject gun = loadout.get(i);
-            switch (i) {
-                case 0:
-                    slot = 10;
-                    break;
-                case 1:
-                    slot = 19;
-                    break;
-                case 2:
-                    slot = 28;
-                    break;
-                case 3:
-                    slot = 37;
-                    break;
-                case 4:
-                    slot = 46;
-                    break;
-                default:
-                    slot = 0;
-                    break;
+            int slot;
+            SQLLoadout sqlLoadout = new SQLLoadout(main);
+            ArrayList<GunObject> loadout = sqlLoadout.getPlayerLoadout(p);
+            for (int i = 0; i < loadout.size(); i++) {
+                GunObject gun = loadout.get(i);
+                switch (i) {
+                    case 0:
+                        slot = 10;
+                        break;
+                    case 1:
+                        slot = 19;
+                        break;
+                    case 2:
+                        slot = 28;
+                        break;
+                    case 3:
+                        slot = 37;
+                        break;
+                    case 4:
+                        slot = 46;
+                        break;
+                    default:
+                        slot = 0;
+                        break;
+                }
+
+                createDisplay(gun.getItemStack().getType(), inv, slot, ChatColor.RESET + gun.getName(), ChatColor.RESET + gun.getLore());
             }
 
-            createDisplay(gun.getItemStack().getType(), inv, slot, ChatColor.RESET + gun.getName(), ChatColor.RESET + gun.getLore());
+            createDisplay(Material.BARRIER, inv, 16, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
+            createDisplay(Material.BARRIER, inv, 25, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
+            createDisplay(Material.BARRIER, inv, 34, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
+            createDisplay(Material.BARRIER, inv, 43, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
+
+            p.openInventory(inv);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
-
-        createDisplay(Material.BARRIER, inv, 16, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
-        createDisplay(Material.BARRIER, inv, 25, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
-        createDisplay(Material.BARRIER, inv, 34, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
-        createDisplay(Material.BARRIER, inv, 43, ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Cosmetics not yet implemented", ChatColor.RESET + "" + ChatColor.RED + ChatColor.BOLD + "Check back another time, they may be implemented sometime");
-
-        p.openInventory(inv);
     }
 
     public static void createDisplay(Material material, Inventory inv, int Slot, String name, String lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        ArrayList<String> Lore = new ArrayList<>();
-        Lore.add(lore);
-        meta.setLore(Lore);
-        item.setItemMeta(meta);
-        inv.setItem(Slot, item);
+        try {
+            ItemStack item = new ItemStack(material);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(name);
+            ArrayList<String> Lore = new ArrayList<>();
+            Lore.add(lore);
+            meta.setLore(Lore);
+            item.setItemMeta(meta);
+            inv.setItem(Slot, item);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler

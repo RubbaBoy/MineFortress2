@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns.custom.pyro;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.utils.particles.Particles;
@@ -12,10 +13,13 @@ public class Flamethrower extends Pyro {
 
     public Flamethrower(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
-
-        if (isHeald()) {
-            Particles.spawnFlamethrowerParticles(player);
-            playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+        try {
+            if (isHeald()) {
+                Particles.spawnFlamethrowerParticles(player);
+                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

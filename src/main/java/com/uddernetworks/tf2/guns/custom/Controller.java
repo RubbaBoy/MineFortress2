@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns.custom;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.custom.demoman.Demoman;
 import com.uddernetworks.tf2.guns.custom.engineer.Engineer;
@@ -66,36 +67,51 @@ public class Controller {
         } else if (parent.equalsIgnoreCase("soldier")) {
             return new Soldier(gun, player, held);
         } else {
-            throw new Exception("Parent custom identifier not recognised");
+            System.out.println("Parent custom identifier not recognised");
+            return null;
         }
     }
 
     public ArrayList<String> getChildAbilities() throws Exception {
-        if (gun.getCustom() == null) {
+        try {
+            if (gun.getCustom() == null) {
+                return null;
+            }
+            String[] children = gun.getCustom().split(Pattern.quote("."));
+            if (children.length == 1) {
+                System.out.println("No children attached to parent ability");
+            }
+            ArrayList<String> toReturn = new ArrayList<>();
+            for (int i = 0; i < children.length; i++) {
+                if (i != 0) {
+                    toReturn.add(children[i]);
+                }
+            }
+            return toReturn;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
-        String[] children = gun.getCustom().split(Pattern.quote("."));
-        if (children.length == 1) {
-            throw new Exception("No children attached to parent ability");
-        }
-        ArrayList<String> toReturn = new ArrayList<>();
-        for (int i = 0; i < children.length; i++) {
-            if (i != 0) {
-                toReturn.add(children[i]);
-            }
-        }
-        return toReturn;
     }
 
     public boolean canProceed() {
-        if (!Controller.canproceed.containsKey(player)) {
-            return true;
+        try {
+            if (!Controller.canproceed.containsKey(player)) {
+                return true;
+            }
+            return Controller.canproceed.get(player);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return Controller.canproceed.get(player);
     }
 
     public void setCanProceed(boolean canproceed) {
-        Controller.canproceed.put(player, canproceed);
+        try {
+            Controller.canproceed.put(player, canproceed);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void runAbility() {}

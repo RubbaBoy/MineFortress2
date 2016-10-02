@@ -3,6 +3,7 @@ package com.uddernetworks.tf2.main;
 import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.arena.TeamChooser;
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.game.GameState;
 import com.uddernetworks.tf2.guns.*;
@@ -15,8 +16,10 @@ import com.uddernetworks.tf2.utils.*;
 import com.uddernetworks.tf2.utils.data.Locations;
 import com.uddernetworks.tf2.utils.threads.GunThreadUtil;
 import com.uddernetworks.tf2.utils.threads.SentryThreadUtil;
+import net.minecraft.server.v1_10_R1.ChatMessage;
 import net.minecraft.server.v1_10_R1.EntityArrow;
 import net.minecraft.server.v1_10_R1.EntityPlayer;
+import net.minecraft.server.v1_10_R1.PacketPlayOutOpenWindow;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -36,8 +39,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.inventory.AnvilInventory;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.material.Door;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -73,69 +79,82 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     @Override
     public void onEnable() {
         plugin = this;
-
-        getConfig().options().copyDefaults(true);
-        saveConfig();
-
-        new ArenaManager(this);
-        new Locations(this);
-
-        Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
-        Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
-        Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
-        Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
-        Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
-        Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
-        Bukkit.getPluginManager().registerEvents(new ConstructionChooser(this), this);
-        Bukkit.getPluginManager().registerEvents(new DestructionChooser(this), this);
-        Bukkit.getPluginManager().registerEvents(this, this);
-
-        MySQL mySQL = new MySQL(this);
-
-        System.out.println("Creating the Loadouts table if it doesn't exist...");
-        mySQL.query("CREATE TABLE IF NOT EXISTS 'Loadouts'(UUID TEXT NOT NULL, CLASS TEXT NOT NULL, TYPE TEXT NOT NULL, ID int(0) NOT NULL, NAME TEXT NOT NULL);");
-
-        worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
-        for (int i2 = 0; i2 < worlds.size(); i2++) {
-            World world = Bukkit.getWorld(worlds.get(i2));
-            ArrayList<String> numbs = new ArrayList<>();
-            numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers").getKeys(false).stream().collect(Collectors.toList()));
-            for (int i = 0; i < numbs.size(); i++) {
-                for (int x = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-X"); x++) {
-                    for (int y = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Y"); y++) {
-                        for (int z = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Z"); z++) {
-                            red_barriers.add(new Location(world, x, y, z));
-                        }
-                    }
-                }
-            }
-            numbs.clear();
-            numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".blue.barriers").getKeys(false).stream().collect(Collectors.toList()));
-            for (int i = 0; i < numbs.size(); i++) {
-                for (int x = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-X"); x++) {
-                    for (int y = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Y"); y++) {
-                        for (int z = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Z"); z++) {
-                            blue_barriers.add(new Location(world, x, y, z));
-                        }
-                    }
-                }
-            }
-        }
-
-        thread = new GunThreadUtil(this);
-        sentry_thread = new SentryThreadUtil(this);
-
         try {
-            gun.loadGuns();
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+
+            new ArenaManager(this);
+            new Locations(this);
+
+            Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
+            Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
+            Bukkit.getPluginManager().registerEvents(new Anvil(), this);
+            Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
+            Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
+            Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
+            Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
+            Bukkit.getPluginManager().registerEvents(new ConstructionChooser(this), this);
+            Bukkit.getPluginManager().registerEvents(new DestructionChooser(this), this);
+            Bukkit.getPluginManager().registerEvents(this, this);
+
+            MySQL mySQL = new MySQL(this);
+
+            System.out.println("Creating the Loadouts table if it doesn't exist...");
+            mySQL.query("CREATE TABLE IF NOT EXISTS 'Loadouts'(UUID TEXT NOT NULL, CLASS TEXT NOT NULL, TYPE TEXT NOT NULL, ID int(0) NOT NULL, NAME TEXT NOT NULL);");
+
+            worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i2 = 0; i2 < worlds.size(); i2++) {
+                World world = Bukkit.getWorld(worlds.get(i2));
+                ArrayList<String> numbs = new ArrayList<>();
+                numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".red.barriers").getKeys(false).stream().collect(Collectors.toList()));
+                for (int i = 0; i < numbs.size(); i++) {
+                    for (int x = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-X"); x++) {
+                        for (int y = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Y"); y++) {
+                            for (int z = getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".red.barriers." + i + "2-Z"); z++) {
+                                red_barriers.add(new Location(world, x, y, z));
+                            }
+                        }
+                    }
+                }
+                numbs.clear();
+                numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + ".blue.barriers").getKeys(false).stream().collect(Collectors.toList()));
+                for (int i = 0; i < numbs.size(); i++) {
+                    for (int x = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-X"); x <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-X"); x++) {
+                        for (int y = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Y"); y <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Y"); y++) {
+                            for (int z = getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "1-Z"); z <= getConfig().getInt("playworlds." + world.getName() + ".blue.barriers." + i + "2-Z"); z++) {
+                                blue_barriers.add(new Location(world, x, y, z));
+                            }
+                        }
+                    }
+                }
+            }
+
+            thread = new GunThreadUtil(this);
+            sentry_thread = new SentryThreadUtil(this);
+
+            try {
+                gun.loadGuns();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            doPlayerEffects();
+            running = true;
+
+            SQLLoadout sqlLoadout = new SQLLoadout(plugin);
+            sqlLoadout.reload();
+
+            String hi = null;
+            if (hi.contains("hello")) {}
         } catch (Exception e) {
-            e.printStackTrace();
+            new ExceptionReporter(e);
         }
 
-        doPlayerEffects();
-        running = true;
+    }
 
-        SQLLoadout sqlLoadout = new SQLLoadout(plugin);
-        sqlLoadout.reload();
+    public boolean anonError() {
+        reloadConfig();
+        return getConfig().getBoolean("anonymous-error-messages");
     }
 
     @Override
@@ -248,8 +267,8 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             } else {
                 return null;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
@@ -264,25 +283,35 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     public Location getSpectateLocation(World world) {
-        return new Location(world, getConfig().getInt("playworlds." + world.getName() + ".spectate-X"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Y"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Z"));
+        try {
+            return new Location(world, getConfig().getInt("playworlds." + world.getName() + ".spectate-X"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Y"), getConfig().getInt("playworlds." + world.getName() + ".spectate-Z"));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
     public boolean isInBarrier(Location location, TeamEnum teamOfPlayer) {
-        if (teamOfPlayer == TeamEnum.BLUE) {
-            return red_barriers.contains(location);
-        } else {
-            return blue_barriers.contains(location);
+        try {
+            if (teamOfPlayer == TeamEnum.BLUE) {
+                return red_barriers.contains(location);
+            } else {
+                return blue_barriers.contains(location);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
         }
     }
 
     HashMap<Player, Boolean> players = new HashMap<>();
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            if (!players.containsKey(event.getPlayer())) {
-                players.put(event.getPlayer(), false);
-            }
-            try {
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+                if (!players.containsKey(event.getPlayer())) {
+                    players.put(event.getPlayer(), false);
+                }
                 if (Game.getGameState() == GameState.INGAME) {
                     if (game.getGameType() != null) {
                         if (game.getWorld() != null) {
@@ -300,7 +329,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     if (!players.get(event.getPlayer())) {
                                         toggleDoorState(Locations.firstDoorLoc.getBlock());
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
-
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
                                         playerGuns.fillAll(event.getPlayer());
                                         if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
@@ -314,7 +342,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     if (!players.get(event.getPlayer())) {
                                         toggleDoorState(Locations.firstDoorLoc.getBlock());
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
-
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
                                         playerGuns.fillAll(event.getPlayer());
                                         if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
@@ -328,7 +355,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     if (!players.get(event.getPlayer())) {
                                         toggleDoorState(Locations.firstDoorLoc.getBlock());
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
-
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
                                         playerGuns.fillAll(event.getPlayer());
                                         if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
@@ -342,7 +368,6 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     if (!players.get(event.getPlayer())) {
                                         toggleDoorState(Locations.firstDoorLoc.getBlock());
                                         toggleDoorState(Locations.secondDoorLoc.getBlock());
-
                                         playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
                                         playerGuns.fillAll(event.getPlayer());
                                         if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
@@ -358,156 +383,162 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                     }
                                 }
                             }
-
                             if (Teleporters.isEntrance(event.getTo())) {
                                 Teleporters.getEntrance(event.getTo()).teleport(event.getPlayer());
                             }
-
                             if (Dispensers.isInRange(event.getPlayer()) && !dispenser_players.contains(event.getPlayer())) {
                                 dispenser_players.add(event.getPlayer());
                             }
                         }
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     static ArrayList<Player> tochange = new ArrayList<>();
     public void doPlayerEffects() {
-        new BukkitRunnable() {
-            public void run() {
-                if (!running) {
-                    cancel();
-                }
-                tochange = (ArrayList<Player>) dispenser_players.clone();
-                for (Player player : dispenser_players) {
-                    if (Dispensers.isInRange(player)) {
-                        Dispenser dispenser = Dispensers.getNearestDispenser(player);
-                        assert dispenser != null;
-                        if (dispenser.getLevel() == 1) {
-                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
-                                if (playerHealth.getHealth(player) + 10 > playerHealth.getMaxHealth(player)) {
-                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
-                                } else {
-                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 10);
-                                }
-                            }
-                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
-                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2 > playerGuns.getMaxAmmo(player)) {
-                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
-                                } else {
-                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2));
-                                }
-                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
-                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2 > playerGuns.getMaxClip(player)) {
-                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
-                                } else {
-                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2));
-                                }
-                            }
-                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                if (PlayerMetal.getPlayer(player) != 200) {
-                                    if (PlayerMetal.getPlayer(player) + 25 > 200) {
-                                        PlayerMetal.addPlayer(player, 200);
-                                    } else {
-                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
-                                    }
-                                }
-                            }
-                        } else if (dispenser.getLevel() == 2) {
-                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
-                                if (playerHealth.getHealth(player) + 15 > playerHealth.getMaxHealth(player)) {
-                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
-                                } else {
-                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 15);
-                                }
-                            }
-                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
-                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3 > playerGuns.getMaxAmmo(player)) {
-                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
-                                } else {
-                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3));
-                                }
-                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
-                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3 > playerGuns.getMaxClip(player)) {
-                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
-                                } else {
-                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3));
-                                }
-                            }
-                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                if (PlayerMetal.getPlayer(player) != 200) {
-                                    if (PlayerMetal.getPlayer(player) + 25 > 200) {
-                                        PlayerMetal.addPlayer(player, 200);
-                                    } else {
-                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
-                                    }
-                                }
-                            }
-                        } else if (dispenser.getLevel() == 3) {
-                            if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
-                                if (playerHealth.getHealth(player) + 20 > playerHealth.getMaxHealth(player)) {
-                                    playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
-                                } else {
-                                    playerHealth.addHealth(player, playerHealth.getHealth(player) + 20);
-                                }
-                            }
-                            if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
-                                if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4 > playerGuns.getMaxAmmo(player)) {
-                                    playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
-                                } else {
-                                    playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4));
-                                }
-                            } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
-                                if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4 > playerGuns.getMaxClip(player)) {
-                                    playerGuns.setClip(player, playerGuns.getMaxClip(player));
-                                } else {
-                                    playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4));
-                                }
-                            }
-                            if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
-                                if (PlayerMetal.getPlayer(player) != 200) {
-                                    if (PlayerMetal.getPlayer(player) + 50 > 200) {
-                                        PlayerMetal.addPlayer(player, 200);
-                                    } else {
-                                        PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 50);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        tochange.remove(player);
+        try {
+            new BukkitRunnable() {
+                public void run() {
+                    if (!running) {
+                        cancel();
                     }
+                    tochange = (ArrayList<Player>) dispenser_players.clone();
+                    for (Player player : dispenser_players) {
+                        if (Dispensers.isInRange(player)) {
+                            Dispenser dispenser = Dispensers.getNearestDispenser(player);
+                            assert dispenser != null;
+                            if (dispenser.getLevel() == 1) {
+                                if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                    if (playerHealth.getHealth(player) + 10 > playerHealth.getMaxHealth(player)) {
+                                        playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                    } else {
+                                        playerHealth.addHealth(player, playerHealth.getHealth(player) + 10);
+                                    }
+                                }
+                                if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                    if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2 > playerGuns.getMaxAmmo(player)) {
+                                        playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                    } else {
+                                        playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.2));
+                                    }
+                                } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                    if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2 > playerGuns.getMaxClip(player)) {
+                                        playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                    } else {
+                                        playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.2));
+                                    }
+                                }
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
+                                        }
+                                    }
+                                }
+                            } else if (dispenser.getLevel() == 2) {
+                                if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                    if (playerHealth.getHealth(player) + 15 > playerHealth.getMaxHealth(player)) {
+                                        playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                    } else {
+                                        playerHealth.addHealth(player, playerHealth.getHealth(player) + 15);
+                                    }
+                                }
+                                if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                    if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3 > playerGuns.getMaxAmmo(player)) {
+                                        playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                    } else {
+                                        playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.3));
+                                    }
+                                } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                    if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3 > playerGuns.getMaxClip(player)) {
+                                        playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                    } else {
+                                        playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.3));
+                                    }
+                                }
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 25 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 25);
+                                        }
+                                    }
+                                }
+                            } else if (dispenser.getLevel() == 3) {
+                                if (playerHealth.getHealth(player) != playerHealth.getHealth(player)) {
+                                    if (playerHealth.getHealth(player) + 20 > playerHealth.getMaxHealth(player)) {
+                                        playerHealth.addHealth(player, playerHealth.getMaxHealth(player));
+                                    } else {
+                                        playerHealth.addHealth(player, playerHealth.getHealth(player) + 20);
+                                    }
+                                }
+                                if (playerGuns.getAmmo(player) != playerGuns.getMaxAmmo(player)) {
+                                    if (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4 > playerGuns.getMaxAmmo(player)) {
+                                        playerGuns.setAmmo(player, playerGuns.getMaxAmmo(player));
+                                    } else {
+                                        playerGuns.setAmmo(player, (int) (playerGuns.getAmmo(player) + playerGuns.getMaxAmmo(player) * 0.4));
+                                    }
+                                } else if (playerGuns.getClip(player) != playerGuns.getMaxClip(player)) {
+                                    if (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4 > playerGuns.getMaxClip(player)) {
+                                        playerGuns.setClip(player, playerGuns.getMaxClip(player));
+                                    } else {
+                                        playerGuns.setClip(player, (int) (playerGuns.getClip(player) + playerGuns.getMaxClip(player) * 0.4));
+                                    }
+                                }
+                                if (PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+                                    if (PlayerMetal.getPlayer(player) != 200) {
+                                        if (PlayerMetal.getPlayer(player) + 50 > 200) {
+                                            PlayerMetal.addPlayer(player, 200);
+                                        } else {
+                                            PlayerMetal.addPlayer(player, PlayerMetal.getPlayer(player) + 50);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            tochange.remove(player);
+                        }
+                    }
+                    dispenser_players = tochange;
+                    tochange.clear();
                 }
-                dispenser_players = tochange;
-                tochange.clear();
-            }
-        }.runTaskTimer(Main.getPlugin(), 0, 40);
+            }.runTaskTimer(Main.getPlugin(), 0, 40);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     @EventHandler
     public void onItemPickup(PlayerPickupItemEvent event) {
-        if (ArenaManager.getManager().isInGame(event.getPlayer())) {
-            if (event.getItem().getItemStack().getTypeId() == 284) {
-                event.setCancelled(true);
-                event.getItem().remove();
-                playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                event.getPlayer().setFoodLevel(20);
-            } else if (event.getItem().getItemStack().getTypeId() == 256) {
-                event.setCancelled(true);
-                event.getItem().remove();
-                playerGuns.setClip(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxClip());
-                playerGuns.setAmmo(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxAmmo());
-            } else if (event.getItem().getCustomName().equals("GrenadeLauncher")) {
-                event.setCancelled(true);
-                event.getItem().remove();
-            } else if (event.getItem().getCustomName().equals("StickyBomb")) {
-                event.setCancelled(true);
+        try {
+            if (ArenaManager.getManager().isInGame(event.getPlayer())) {
+                if (event.getItem().getItemStack().getTypeId() == 284) {
+                    event.setCancelled(true);
+                    event.getItem().remove();
+                    playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                    event.getPlayer().setFoodLevel(20);
+                } else if (event.getItem().getItemStack().getTypeId() == 256) {
+                    event.setCancelled(true);
+                    event.getItem().remove();
+                    playerGuns.setClip(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxClip());
+                    playerGuns.setAmmo(event.getPlayer(), playerGuns.getPlayerGun(event.getPlayer()).getMaxAmmo());
+                } else if (event.getItem().getItemStack().getItemMeta() != null) {
+                    if (event.getItem().getCustomName().equals("GrenadeLauncher")) {
+                        event.setCancelled(true);
+                        event.getItem().remove();
+                    } else if (event.getItem().getCustomName().equals("StickyBomb")) {
+                        event.setCancelled(true);
+                    }
+                }
             }
-        }
+        } catch (Exception ignored) {}
     }
 
     @EventHandler
@@ -515,7 +546,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         if(e.getEntityType() == EntityType.ARROW) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
                 try {
-                    EntityArrow e1 = ((CraftArrow)e.getEntity()).getHandle();
+                    EntityArrow e1 = ((CraftArrow) e.getEntity()).getHandle();
                     Field fieldX = EntityArrow.class.getDeclaredField("h");
                     Field fieldY = EntityArrow.class.getDeclaredField("au");
                     Field fieldZ = EntityArrow.class.getDeclaredField("av");
@@ -525,12 +556,12 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     int x = fieldX.getInt(e1);
                     int y = fieldY.getInt(e1);
                     int z = fieldZ.getInt(e1);
-                    if(isValidBlock(x, y, z)) {
+                    if (isValidBlock(x, y, z)) {
                         Block block = e.getEntity().getWorld().getBlockAt(x, y, z);
-                        Bukkit.getServer().getPluginManager().callEvent(new ArrowHitBlockEvent((Arrow)e.getEntity(), block));
+                        Bukkit.getServer().getPluginManager().callEvent(new ArrowHitBlockEvent((Arrow) e.getEntity(), block));
                     }
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                } catch (Throwable throwable) {
+                    new ExceptionReporter(throwable);
                 }
 
             });
@@ -539,16 +570,20 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     public void toggleDoorState(Block block) {
-        String doorName = block.getType().getData().getName();
-        if (doorName.equalsIgnoreCase("org.bukkit.material.door")) {
-            BlockState state = block.getState();
-            Door door = (Door) state.getData();
-            if (door.isOpen()) {
-                door.setOpen(false);
-            } else {
-                door.setOpen(true);
+        try {
+            String doorName = block.getType().getData().getName();
+            if (doorName.equalsIgnoreCase("org.bukkit.material.door")) {
+                BlockState state = block.getState();
+                Door door = (Door) state.getData();
+                if (door.isOpen()) {
+                    door.setOpen(false);
+                } else {
+                    door.setOpen(true);
+                }
+                state.update();
             }
-            state.update();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
@@ -600,8 +635,8 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             }
 
             return new ArrayList<>(locs);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return null;
         }
     }
@@ -613,8 +648,8 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             try {
                 chooser.sendPlayers();
                 ArenaManager.getManager().createArena();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Throwable throwable) {
+                new ExceptionReporter(throwable);
             }
             return true;
         }

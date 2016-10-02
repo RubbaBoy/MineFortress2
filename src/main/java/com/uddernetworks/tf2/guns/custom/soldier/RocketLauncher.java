@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.guns.custom.soldier;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
@@ -12,18 +13,22 @@ public class RocketLauncher extends Soldier {
 
     public RocketLauncher(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
-        if (!held) {
-            playerGuns.setClip(player, playerGuns.getClip(player) - 1);
-            if (gun.getSound() != null) {
-                player.playSound(player.getLocation(), gun.getSound(), 1, 1);
-            }
+        try {
+            if (!held) {
+                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+                if (gun.getSound() != null) {
+                    player.playSound(player.getLocation(), gun.getSound(), 1, 1);
+                }
 
-            Fireball fireball = player.getWorld().spawn(player.getEyeLocation(), Fireball.class);
-            fireball.setBounce(false);
-            fireball.setIsIncendiary(false);
-            fireball.setShooter(getPlayer());
-            fireball.setCustomName("fireball_" + GunList.getIndexOf(gun));
-            fireball.setVelocity(player.getLocation().getDirection().normalize().multiply(2));
+                Fireball fireball = player.getWorld().spawn(player.getEyeLocation(), Fireball.class);
+                fireball.setBounce(false);
+                fireball.setIsIncendiary(false);
+                fireball.setShooter(getPlayer());
+                fireball.setCustomName("fireball_" + GunList.getIndexOf(gun));
+                fireball.setVelocity(player.getLocation().getDirection().normalize().multiply(2));
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

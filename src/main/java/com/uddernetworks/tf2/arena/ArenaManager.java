@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.arena;
 
+import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
@@ -51,42 +52,46 @@ public class ArenaManager {
     }
 
     public void addPlayer(Player p) {
-        Arena a = this.getArena();
-        if (a == null) {
-            p.sendMessage("Invalid arena!");
-            return;
-        }
-
-        if (this.isInGame(p)) {
-            p.sendMessage("Cannot join more than 1 game!");
-            return;
-        }
-
-        a.getPlayers().add(p.getUniqueId());
-
-        inv.put(p.getUniqueId(), p.getInventory().getContents());
-        armor.put(p.getUniqueId(), p.getInventory().getArmorContents());
-
-        p.getInventory().setArmorContents(null);
-        p.getInventory().clear();
-
-        p.setGameMode(GameMode.SURVIVAL);
-
-        locs.put(p.getUniqueId(), p.getLocation());
-
-        p.setSaturation(Integer.MAX_VALUE);
-
-
-        p.setFlying(false);
-        p.setFoodLevel(20);
-
-        Random random = new Random();
-        Game game = new Game(plugin);
-
         try {
-            p.teleport(plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(plugin.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+            Arena a = this.getArena();
+            if (a == null) {
+                p.sendMessage("Invalid arena!");
+                return;
+            }
+
+            if (this.isInGame(p)) {
+                p.sendMessage("Cannot join more than 1 game!");
+                return;
+            }
+
+            a.getPlayers().add(p.getUniqueId());
+
+            inv.put(p.getUniqueId(), p.getInventory().getContents());
+            armor.put(p.getUniqueId(), p.getInventory().getArmorContents());
+
+            p.getInventory().setArmorContents(null);
+            p.getInventory().clear();
+
+            p.setGameMode(GameMode.SURVIVAL);
+
+            locs.put(p.getUniqueId(), p.getLocation());
+
+            p.setSaturation(Integer.MAX_VALUE);
+
+
+            p.setFlying(false);
+            p.setFoodLevel(20);
+
+            Random random = new Random();
+            Game game = new Game(plugin);
+
+            try {
+                p.teleport(plugin.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(plugin.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
@@ -122,7 +127,9 @@ public class ArenaManager {
             locs.remove(p.getUniqueId());
 
             p.setGameMode(GameMode.SURVIVAL);
-        } catch (NullPointerException ignored) {}
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public Arena createArena() {
