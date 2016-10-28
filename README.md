@@ -16,11 +16,11 @@ To shoot guns, hold right click if it is an automatic gun (Ex. Machine gun, Subm
 Installation
 -------------
 The first step in installing Mine Fortress 2 is to download the necessary files from the [uddernetworks website](http://www.uddernetworks.com/download). Unzip the file to see the following files/folders:s
-> MF2
-> MF2 vX.X Map
-> libs.zip
-> MF2 vX.X Resourcepack.zip
-> MineFortress2_vX.X.jar
+>- MF2
+>- MF2 vX.X Map
+>- libs.zip
+>- MF2 vX.X Resourcepack.zip
+>- MineFortress2_vX.X.jar
 
 *(**X.X** is replaced with the version you download from the website.)*
 Put **MF2 vX.X Map** in the server's worlds folder. Go to the server's plugins folder and put **MineFortress2_vX.X.jar** into it. Extract **libs.zip** into the plugins folder as well, making sure the jar files found in it are found directly in the **libs** folder in the server's plugin directory. Lastly, put the **MF2** folder in your server's plugin folder as well. You are now free to modify the config file or guns.xlsx.
@@ -37,34 +37,34 @@ The following are the lines from the **config.yml** file, and what they mean.
 >world: world
 
 the name of the world **TO BE REMOVED**
->random-door-X: -286
-random-door-Y: 70
-random-door-Z: -148
+>- random-door-X: -286
+>- random-door-Y: 70
+>- random-door-Z: -148
 
 **integer** value, the coordinates of the "random" team choosing door (Bottom block of the door)
->blue-door-X: -284
-blue-door-Y: 70
-blue-door-Z: -148
+>- blue-door-X: -284
+>- blue-door-Y: 70
+>- blue-door-Z: -148
 
 **integer** value, the coordinates of the "blue" team choosing door (Bottom block of the door)
->red-door-X: -282
-red-door-Y: 70
-red-door-Z: -148
+>- red-door-X: -282
+>- red-door-Y: 70
+>- red-door-Z: -148
 
 **integer** value, the coordinates of the "red" team choosing door (Bottom block of the door)
->team-choose-spawn-X: -283
-team-choose-spawn-Y: 70
-team-choose-spawn-Z: -144
+>- team-choose-spawn-X: -283
+>- team-choose-spawn-Y: 70
+>- team-choose-spawn-Z: -144
 
 **integer** value, the coordinates of where the players spawn to pick their teams
->blue-sign-X: -284
-blue-sign-Y: 72
-blue-sign-Z: -147
+>- blue-sign-X: -284
+>- blue-sign-Y: 72
+>- blue-sign-Z: -147
 
 **integer** value, the coordinates of the sign above the blue door
->red-sign-X: -282
-red-sign-Y: 72
-red-sign-Z: -147
+>- red-sign-X: -282
+>- red-sign-Y: 72
+>- red-sign-Z: -147
 
 **integer** value, the coordinates of the sign above the red door
 >playworlds:
@@ -73,37 +73,37 @@ red-sign-Z: -147
 >mf2_game:
 
 **world name** value, the name of the world for the world being used next in the configuration section
->spectate-X: -59
-    spectate-Y: 80
-    spectate-Z: 40
+>- spectate-X: -59
+>- spectate-Y: 80
+>- spectate-Z: 40
 
 **integer** value, the coordinates you spawn when you die for a few seconds, and where you spawn when the spectate gamemode is added
 >red
 
 **no value** this is a required value for each world, everything after this will be for the red team
->spawn1-X: -116
-      spawn1-Y: 65
-      spawn1-Z: 5
-      spawn2-X: -112
-      spawn2-Y: 65
-      spawn2-Z: 7
+>- spawn1-X: -116
+>- spawn1-Y: 65
+>- spawn1-Z: 5
+>- spawn2-X: -112
+>- spawn2-Y: 65
+>- spawn2-Z: 7
 
 **integer** value, the two sets of coordinates which players will spawn in-between randomly
->refill-door-X: -115
-      refill-door-Y: 65
-      refill-door-Z: 3
+>- refill-door-X: -115
+>- refill-door-Y: 65
+>- refill-door-Z: 3
 
 **integer** value, the bottom block of either of the team's dispenser doors
 >barriers:
 
 **list** of the barriers that the opposite team can not cross into spawn
->barrier-1:
-          1-X: -101
-          1-Y: 67
-          1-Z: 6
-          2-X: -191
-          2-Y: 65
-          2-Z: 4
+>- barrier-1:
+>- 1-X: -101
+>- 1-Y: 67
+>- 1-Z: 6
+>- 2-X: -191
+>- 2-Y: 65
+>- 2-Z: 4
 
 **integer** value, the two corner coordinates of the invisible barriers that players on the opposite team cannot cross. The number **1** in **barrier-1** can be added by one for each new barrier, and for that barrier alone (Starting with 1)
 >blue:
@@ -112,19 +112,19 @@ red-sign-Z: -147
 >healths:
 
 **list** of the health packs that spawn
->health-0:
-        X: -24.5
-        Y: 66
-        Z: 47.5
+>- health-0:
+>- X: -24.5
+>- Y: 66
+>- Z: 47.5
 
 **integer** value, the coordinates of where the health pack will spawn in the game world. Like the barriers, the **0** in **health-0** goes up in intervals of 1 with each new health pack location, but starting at 0
 >ammos:
 
 **list** of the ammo packs that spawn, a direct child of the world name again
->ammo-0:
-        X: -24.5
-        Y: 66
-        Z: 49.5
+>- ammo-0:
+>- X: -24.5
+>- Y: 66
+>- Z: 49.5
 
 **integer** value, the coordinates of where the ammo pack will spawn in the game world. Like the health packs, the **0** in **ammo-0** goes up in intervals of 1 with each new ammo pack location
 
