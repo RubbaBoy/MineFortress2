@@ -39,8 +39,6 @@ public class PlayerGuns {
 
             curr_gun.put(player, gun);
 
-            playerHealth.addHealth(player, PlayerClasses.getPlayerClass(player).getHealth());
-
             ItemStack itemgun = new ItemStack(getPlayerGun(player).getItemStack());
             ItemMeta meta = itemgun.getItemMeta();
             meta.setDisplayName(getPlayerGun(player).getName());

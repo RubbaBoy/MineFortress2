@@ -117,9 +117,7 @@ public class ClassChooser implements Listener {
                 }
                 playerHealth.addPlayer(player, PlayerClasses.getPlayerClass(player).getHealth());
             }
-        } catch (Throwable throwable) {
-            new ExceptionReporter(throwable);
-        }
+        } catch (Exception ignored) {}
     }
 
     @EventHandler

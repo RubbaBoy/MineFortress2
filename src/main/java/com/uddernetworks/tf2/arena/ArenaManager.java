@@ -78,7 +78,6 @@ public class ArenaManager {
 
             p.setSaturation(Integer.MAX_VALUE);
 
-
             p.setFlying(false);
             p.setFoodLevel(20);
 
@@ -105,7 +104,6 @@ public class ArenaManager {
             }
 
             if (a == null) {
-                p.sendMessage("Invalid operation!");
                 return;
             }
 

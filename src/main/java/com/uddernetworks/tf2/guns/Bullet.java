@@ -28,6 +28,8 @@ public class Bullet implements Listener {
     private Sentry sentry = null;
     private Player shooter;
 
+    PlayerHealth playerHealth = new PlayerHealth();
+
     public Bullet() {}
 
     public Bullet(Player shooter, GunObject gunObject) {
@@ -103,18 +105,18 @@ public class Bullet implements Listener {
                         if (!inBlock) {
                             for (Entity e : near) {
                                 if (!e.equals(shooter)) {
-                                    if (e instanceof LivingEntity) {
+                                    if (e instanceof Player) {
                                         if (((LivingEntity) e).getEyeLocation().distance(loc) < 3) {
                                             Hitbox hitbox = new Hitbox(e);
                                             if (hitbox.contains(loc)) {
-                                                ((Damageable) e).damage(gunObject.getDamage());
+                                                playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gunObject.getDamage());
                                                 DamageIndicator.spawnIndicator(gunObject.getDamage(), loc.getWorld(), x, y, z);
                                                 i = 100;
                                             }
                                         } else if (e.getLocation().distance(loc) < 3) {
                                             Hitbox hitbox = new Hitbox(e);
                                             if (hitbox.contains(loc)) {
-                                                ((Damageable) e).damage(gunObject.getDamage());
+                                                playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gunObject.getDamage());
                                                 DamageIndicator.spawnIndicator(gunObject.getDamage(), loc.getWorld(), x, y, z);
                                                 i = 100;
                                             }

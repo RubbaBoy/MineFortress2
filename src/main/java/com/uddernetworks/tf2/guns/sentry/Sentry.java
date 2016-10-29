@@ -74,6 +74,7 @@ public class Sentry implements Listener {
     public void spawnSentry() {
         try {
             sentry_obj = location.getWorld().spawn(location, ArmorStand.class);
+            sentry_obj.setMaximumNoDamageTicks(0);
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
             if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                 sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 1 - " + owner.getName());

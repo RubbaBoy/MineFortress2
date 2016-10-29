@@ -57,6 +57,7 @@ public class StickyBombPlayers {
                     players.get(player).remove(i);
                     player_times.get(player).remove(i);
                 }
+                players.remove(player);
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);

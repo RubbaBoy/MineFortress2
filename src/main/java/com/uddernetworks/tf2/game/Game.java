@@ -4,6 +4,9 @@ import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.arena.TeamChooser;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import com.uddernetworks.tf2.guns.pickups.Ammo;
+import com.uddernetworks.tf2.guns.pickups.Health;
+import com.uddernetworks.tf2.guns.pickups.Healths;
 import com.uddernetworks.tf2.inv.ClassChooser;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.GameEnum;
@@ -20,6 +23,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -53,9 +57,18 @@ public class Game implements Listener {
                 if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
                     try {
                         world = Bukkit.getWorld(main.worlds.get(0));
-                    } catch (NullPointerException ignored) {
-                    }
+                    } catch (NullPointerException ignored) {}
                 }
+            }
+
+            for (Location location : Main.getPlugin().getHealthPackLocs(world)) {
+                Health health = new Health(location);
+                health.spawn();
+            }
+
+            for (Location location : Main.getPlugin().getAmmoPackLocs(world)) {
+                Ammo ammo = new Ammo(location);
+                ammo.spawn();
             }
 
             ArenaManager.getManager().addPlayer(player);

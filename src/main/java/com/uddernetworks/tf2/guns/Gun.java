@@ -358,14 +358,18 @@ public class Gun {
                             }
                             gunObject = new GunObject(type, name, lore, item, sound, power, damage, KZR, scopeable, NVscope, maxclip, maxammo, cooldown, cooldown_reload, tracer, sniper, accuracy, shotgun, shotgun_bullet, classtype, classDefault, custom, showGUI, leftclick);
                             GunList.registerGun(gunObject);
-                            System.out.println("The gun has been created and registered!");
+                            System.out.println("The gun \"" + name + "\"has been created and registered!");
                         } else {
                             if (finished.containsKey(false)) {
                                 finished.put(false, finished.get(false) + 1);
                             } else {
                                 finished.put(false, 1);
                             }
-                            System.out.println("The gun couldn't be created.");
+                            if (name != null && !name.equalsIgnoreCase("")) {
+                                System.out.println("The gun \"" + name + "\" couldn't be created.");
+                            } else {
+                                System.out.println("The gun \"NO_NAME\" couldn't be created.");
+                            }
                         }
                     }
                 }

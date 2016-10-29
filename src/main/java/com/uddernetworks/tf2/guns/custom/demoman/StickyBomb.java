@@ -1,7 +1,9 @@
 package com.uddernetworks.tf2.guns.custom.demoman;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import com.uddernetworks.tf2.guns.DamageIndicator;
 import com.uddernetworks.tf2.guns.GunObject;
+import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.particles.Particles;
 import org.bukkit.Material;
@@ -16,6 +18,7 @@ public class StickyBomb extends Demoman {
 
     private Item itemdrop;
     private StickyBombPlayers players = new StickyBombPlayers();
+    PlayerHealth playerHealth = new PlayerHealth();
 
     public StickyBomb(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
@@ -48,7 +51,10 @@ public class StickyBomb extends Demoman {
                 Particles.spawnExplosionParticles(itemdrop.getLocation(), 2);
                 itemdrop.remove();
                 List<Entity> near = getPlayer().getWorld().getEntities();
-                near.stream().filter(e -> e instanceof LivingEntity).filter(e -> e.getLocation().distance(itemdrop.getLocation()) < 3).forEach(e -> ((Damageable) e).damage(getGun().getDamage()));
+                near.stream().filter(e -> e instanceof LivingEntity).filter(e -> e.getLocation().distance(itemdrop.getLocation()) < 3).forEach(e -> {
+                    playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - getGun().getDamage());
+                    DamageIndicator.spawnIndicator(getGun().getDamage(), e.getLocation().getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+                });
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);

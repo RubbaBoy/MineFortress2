@@ -19,7 +19,7 @@ public class MySQL {
     private Connection connect() {
         String url = "";
         try {
-            url = "jdbc:sqlite:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + "\\TF2\\Loadouts.db";
+            url = "jdbc:sqlite:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + "\\MF2\\Loadouts.db";
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

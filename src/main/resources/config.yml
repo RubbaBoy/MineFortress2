@@ -1,8 +1,9 @@
 anonymous-error-messages: true
+silent-error-reports: false
 world: world
-door-X: -247
-door-Y: 70
-door-Z: -140
+#door-X: -247
+#door-Y: 70
+#door-Z: -140
 random-door-X: -286
 random-door-Y: 70
 random-door-Z: -148
@@ -12,9 +13,6 @@ blue-door-Z: -148
 red-door-X: -282
 red-door-Y: 70
 red-door-Z: -148
-spectator-door-X: -285
-spectator-door-Y: 71
-spectator-door-Z: -147
 team-choose-spawn-X: -283
 team-choose-spawn-Y: 70
 team-choose-spawn-Z: -144
@@ -40,28 +38,28 @@ playworlds:
       refill-door-Y: 65
       refill-door-Z: 3
       barriers:
-        1:
+        barrier-1:
           1-X: -101
           1-Y: 67
           1-Z: 6
           2-X: -191
           2-Y: 65
           2-Z: 4
-        2:
+        barrier-2:
           1-X: -115
           1-Y: 67
           1-Z: 21
           2-X: -113
           2-Y: 65
           2-Z: 21
-        3:
+        barrier-3:
           1-X: -116
           1-Y: 71
           1-Z: 22
           2-X: -114
           2-Y: 69
           2-Z: 22
-        4:
+        barrier-4:
           1-X: -108
           1-Y: 83
           1-Z: 7
@@ -79,38 +77,112 @@ playworlds:
       refill-door-Y: 65
       refill-door-Z: 71
       barriers:
-        1:
+        barrier-1:
           1-X: -24
           1-Y: 67
           1-Z: 73
           2-X: -24
           2-Y: 65
           2-Z: 75
-        2:
+        barrier-2:
           1-X: -14
           1-Y: 67
           1-Z: 51
           2-X: -14
           2-Y: 66
           2-Z: 53
-        3:
+        barrier-3:
           1-X: -23
           1-Y: 74
           1-Z: 69
           2-X: -21
           2-Y: 72
           2-Z: 69
-        4:
+        barrier-4:
           1-X: -25
           1-Y: 74
           1-Z: 73
           2-X: -25
           2-Y: 73
           2-Z: 75
-        5:
+        barrier-5:
           1-X: -1
           1-Y: 74
           1-Z: 75
           2-X: -1
           2-Y: 73
           2-Z: 73
+    healths:
+      health-0:
+        X: -24.5
+        Y: 66
+        Z: 47.5
+      health-1:
+        X: -21.5
+        Y: 67
+        Z: 66.5
+      health-2:
+        X: -40.5
+        Y: 65
+        Z: 75.5
+      health-3:
+        X: -54.5
+        Y: 65
+        Z: 71.5
+      health-4:
+        X: -75.5
+        Y: 65
+        Z: 77.5
+      health-5:
+        X: -75.5
+        Y: 65
+        Z: 64.5
+      health-6:
+        X: -85.5
+        Y: 65
+        Z: 75.5
+      health-7:
+        X: -99.5
+        Y: 65
+        Z: 65.5
+      health-8:
+        X: -109.5
+        Y: 65
+        Z: 74.5
+    ammos:
+      ammo-0:
+        X: -24.5
+        Y: 66
+        Z: 49.5
+      ammo-1:
+        X: -21.5
+        Y: 67
+        Z: 65.5
+      ammo-2:
+        X: -42.5
+        Y: 65
+        Z: 75.5
+      ammo-3:
+        X: -52.5
+        Y: 65
+        Z: 71.5
+      ammo-4:
+        X: -75.5
+        Y: 65
+        Z: 76.5
+      ammo-5:
+        X: -75.5
+        Y: 65
+        Z: 65.5
+      ammo-6:
+        X: -86.5
+        Y: 65
+        Z: 65.5
+      ammo-7:
+        X: -98.5
+        Y: 65
+        Z: 75.5
+      ammo-8:
+        X: -109.5
+        Y: 65
+        Z: 73.5
