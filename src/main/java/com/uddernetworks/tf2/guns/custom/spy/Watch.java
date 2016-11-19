@@ -28,12 +28,12 @@ public class Watch extends Spy {
     public Watch(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
         try {
-            if (held) {
+            if (!held) {
                 if (!invis_players.containsKey(player)) {
                     invis_players.put(player, false);
                 }
                 if (!invis_players.get(player)) {
-                    timer(true);
+                    timer();
                     setCanProceed(false);
                     invis_players.put(player, true);
                     Entity en = ((CraftPlayer) player).getHandle();
@@ -41,9 +41,6 @@ public class Watch extends Spy {
                     Bukkit.getOnlinePlayers().stream().filter(player2 -> PlayerTeams.getPlayer(player2) != PlayerTeams.getPlayer(player)).forEach(player2 -> {
                         player2.hidePlayer(player);
                     });
-                } else {
-                    timer(false);
-                    showPlayer();
                 }
             }
         } catch (Throwable throwable) {
@@ -51,11 +48,11 @@ public class Watch extends Spy {
         }
     }
 
-    public void timer(boolean running) {
+    public void timer() {
         try {
             new BukkitRunnable() {
                 public void run() {
-                    if (running) {
+                    if (!stop) {
                         if (counter < 49) {
                             counter++;
                             if (PlayerTeams.getPlayer(getPlayer()) == TeamEnum.BLUE) {
@@ -82,6 +79,7 @@ public class Watch extends Spy {
                     }
                 }
             }.runTaskTimer(Main.getPlugin(), 0, 4L);
+            stop = false;
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -107,7 +105,8 @@ public class Watch extends Spy {
     }
 
     @Override
-    public void sendStopNotify() {
+    public void sendStopNotify(Player player) {
         stop = true;
+        showPlayer();
     }
 }

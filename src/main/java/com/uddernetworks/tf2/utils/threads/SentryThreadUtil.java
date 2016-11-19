@@ -14,11 +14,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class SentryThreadUtil extends Thread {
+public class SentryThreadUtil {
 
     private boolean stahp = false;
 
@@ -30,7 +31,11 @@ public class SentryThreadUtil extends Thread {
         super();
         try {
             this.main = main;
-            this.start();
+
+            java.util.Timer jTimer = new java.util.Timer();
+            Timer timer = new Timer(jTimer);
+            jTimer.schedule(timer, 0, 10);
+
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -40,14 +45,16 @@ public class SentryThreadUtil extends Thread {
         stahp = true;
     }
 
-    public void run() {
-        doThings();
-    }
+    private class Timer extends TimerTask {
 
-    private void doThings() {
-        try {
-            ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-            exec.scheduleAtFixedRate((Runnable) () -> {
+        java.util.Timer timer;
+
+        public Timer(java.util.Timer timer) {
+            this.timer = timer;
+        }
+
+        private void doThings() {
+            try {
                 if (!stahp) {
                     sentries.keySet().stream().filter(sentry -> sentries.get(sentry)).filter(sentry -> sentries.getT(sentry) <= System.currentTimeMillis()).forEach(sentry -> {
                         sentries.setT(sentry, System.currentTimeMillis() + sentry.getCooldown());
@@ -59,11 +66,16 @@ public class SentryThreadUtil extends Thread {
                         });
                     });
                 } else {
-                    exec.shutdown();
+                    timer.cancel();
                 }
-            }, 0, 10, TimeUnit.MILLISECONDS);
-        } catch (Throwable throwable) {
-            new ExceptionReporter(throwable);
+            } catch (Throwable throwable) {
+                new ExceptionReporter(throwable);
+            }
+        }
+
+        @Override
+        public void run() {
+            doThings();
         }
     }
 }

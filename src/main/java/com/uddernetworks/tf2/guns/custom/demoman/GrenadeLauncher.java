@@ -2,6 +2,7 @@ package com.uddernetworks.tf2.guns.custom.demoman;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.DamageIndicator;
+import com.uddernetworks.tf2.guns.DeathMessage;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.main.Main;
@@ -34,7 +35,10 @@ public class GrenadeLauncher extends Demoman {
                         if (!itemdrop.isDead()) {
                             List<Entity> near = getPlayer().getWorld().getEntities();
                             near.stream().filter(e -> e instanceof Player).filter(e -> e.getLocation().distance(itemdrop.getLocation()) < 3).forEach(e -> {
-                                playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - getGun().getDamage());
+                                if (playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - getGun().getDamage())) {
+                                    DeathMessage deathMessage = new DeathMessage((Player) e, player, gun);
+                                    deathMessage.sendMessage();
+                                }
                                 DamageIndicator.spawnIndicator(getGun().getDamage(), e.getLocation().getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
                             });
                             Particles.spawnExplosionParticles(itemdrop.getLocation(), 2);

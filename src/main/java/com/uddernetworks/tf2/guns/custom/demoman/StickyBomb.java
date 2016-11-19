@@ -2,6 +2,7 @@ package com.uddernetworks.tf2.guns.custom.demoman;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.DamageIndicator;
+import com.uddernetworks.tf2.guns.DeathMessage;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.main.Main;
@@ -52,7 +53,10 @@ public class StickyBomb extends Demoman {
                 itemdrop.remove();
                 List<Entity> near = getPlayer().getWorld().getEntities();
                 near.stream().filter(e -> e instanceof LivingEntity).filter(e -> e.getLocation().distance(itemdrop.getLocation()) < 3).forEach(e -> {
-                    playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - getGun().getDamage());
+                    if (playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - getGun().getDamage())) {
+                        DeathMessage deathMessage = new DeathMessage((Player) e, getPlayer(), getGun());
+                        deathMessage.sendMessage();
+                    }
                     DamageIndicator.spawnIndicator(getGun().getDamage(), e.getLocation().getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
                 });
             }

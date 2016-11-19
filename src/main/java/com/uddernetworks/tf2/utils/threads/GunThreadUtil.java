@@ -16,14 +16,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class GunThreadUtil extends Thread {
+public class GunThreadUtil {
 
     private boolean stahp = false;
 
@@ -44,8 +47,12 @@ public class GunThreadUtil extends Thread {
         super();
         try {
             this.main = main;
-            this.start();
             game = new Game(main);
+
+            java.util.Timer jTimer = new java.util.Timer();
+            Timer timer = new Timer(jTimer);
+            jTimer.schedule(timer, 0, 10);
+
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -55,64 +62,74 @@ public class GunThreadUtil extends Thread {
         stahp = true;
     }
 
-    public void run() {
-        doThings();
-    }
+    private class Timer extends TimerTask {
 
-    private void doThings() {
-        try {
-            ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-            exec.scheduleAtFixedRate((Runnable) () -> {
+        java.util.Timer timer;
+
+        public Timer(java.util.Timer timer) {
+            this.timer = timer;
+        }
+
+        private void doThings() {
+            try {
                 if (!stahp) {
-
-                    for (String player_str : clickPlayers.keySet()) {
+                    HashMap<String, Long> clickPlayers_temp = new HashMap<>(clickPlayers);
+                    for (String player_str : clickPlayers_temp.keySet()) {
                         Player player = Bukkit.getPlayer(player_str);
-                        if (System.currentTimeMillis() - clickPlayers.get(player_str) > 260) {
+                        if (System.currentTimeMillis() - clickPlayers_temp.get(player_str) > 260) {
                             clickPlayers.remove(player_str);
                             shot.remove(player);
                         } else {
-
                             if (shot.getT(player) <= System.currentTimeMillis()) {
                                 shot.setT(player, System.currentTimeMillis() + shot.get(player).getCooldown());
                                 Bukkit.getScheduler().runTask(main, new BukkitRunnable() {
                                     @Override
                                     public void run() {
                                         if (shot.containsKey(player) && shot.get(player) != null) {
-                                            if (shot.get(player).getCustom() != null) {
-                                                Controller controller = new Controller(shot.get(player), player, true);
-                                                try {
-                                                    if (controller.canProceed()) {
-                                                        controller.run();
-                                                    }
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-                                            } else {
-                                                if (shot.get(player).isShotgun()) {
-                                                    for (int i = 0; i < shot.get(player).getShotgun_bullet(); i++) {
-                                                        new Bullet(player, shot.get(player));
+                                            if (playerGuns.getClip(player) > 0) {
+                                                if (shot.get(player).getCustom() != null) {
+                                                    Controller controller = new Controller(shot.get(player), player, true);
+                                                    try {
+                                                        if (Controller.canProceed(player)) {
+                                                            controller.run();
+                                                        }
+                                                    } catch (Exception e) {
+                                                        e.printStackTrace();
                                                     }
                                                 } else {
-                                                    new Bullet(player, shot.get(player));
-                                                }
-                                                playerGuns.setClip(player, playerGuns.getClip(player) - 1);
-                                                if (shot.get(player).getSound() != null) {
-                                                    player.playSound(player.getLocation(), shot.get(player).getSound(), 1, 1);
+                                                    if (shot.get(player).isShotgun()) {
+                                                        for (int i = 0; i < shot.get(player).getShotgun_bullet(); i++) {
+                                                            new Bullet(player, shot.get(player));
+                                                        }
+                                                    } else {
+                                                        new Bullet(player, shot.get(player));
+                                                    }
+                                                    playerGuns.setClip(player, playerGuns.getClip(player) - 1);
+                                                    Bukkit.getScheduler().callSyncMethod(Main.getPlugin(), () -> {
+                                                        if (shot.get(player).getSound() != null) {
+                                                            player.playSound(player.getLocation(), shot.get(player).getSound(), 1, 1);
+                                                        }
+                                                        return null;
+                                                    });
                                                 }
                                             }
                                         }
                                     }
                                 });
                             }
-
                         }
                     }
                 } else {
-                    exec.shutdown();
+                    timer.cancel();
                 }
-            }, 0, 100, TimeUnit.MILLISECONDS);
-        } catch (Throwable throwable) {
-            new ExceptionReporter(throwable);
+            } catch (Throwable throwable) {
+                new ExceptionReporter(throwable);
+            }
+        }
+
+        @Override
+        public void run() {
+            doThings();
         }
     }
 }

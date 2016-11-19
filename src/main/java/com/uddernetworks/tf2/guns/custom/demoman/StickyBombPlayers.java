@@ -53,7 +53,7 @@ public class StickyBombPlayers {
                         toRemove.add(i);
                     }
                 }
-                for (int i : toRemove) {
+                for (int i = 0; i < toRemove.size(); i++) {
                     players.get(player).remove(i);
                     player_times.get(player).remove(i);
                 }

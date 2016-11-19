@@ -3,10 +3,7 @@ package com.uddernetworks.tf2.guns.teleporter;
 import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.utils.TeamEnum;
-import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -134,16 +131,16 @@ public class TeleporterExit {
         }
     }
 
-    public void remove() {
+    public void remove(boolean update) {
         try {
             tag.remove();
             location.getBlock().setType(Material.AIR);
-            Teleporters.removeTeleporterExit(this);
-            if (Teleporters.hasCounterpart(this)) {
+            if (update && Teleporters.hasCounterpart(this)) {
+                Teleporters.removeTeleporterExit(this);
                 Teleporters.getCounterpart(this).update();
             }
         } catch (Throwable throwable) {
-            new ExceptionReporter(throwable);
+            throwable.printStackTrace();
         }
     }
 
@@ -177,7 +174,7 @@ public class TeleporterExit {
     public void setHealth(int health) {
         try {
             if (health < 0) {
-                remove();
+                remove(true);
             } else {
                 this.health = health;
             }

@@ -98,7 +98,7 @@ public class DestructionChooser implements Listener {
                             break;
                         case 13:
                             if (Dispensers.hasDispenser(player)) {
-                                Dispensers.removeBy(player);
+                                Dispensers.removeDispenserBy(player);
                             } else {
                                 break;
                             }

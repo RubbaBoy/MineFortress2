@@ -16,7 +16,6 @@ public class Medi extends Medic {
     PlayerGuns playerGuns = new PlayerGuns();
     PlayerHealth playerHealth = new PlayerHealth();
     Player newPlayer;
-    static boolean stop = false;
 
     public Medi(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
@@ -45,10 +44,5 @@ public class Medi extends Medic {
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
-    }
-
-    @Override
-    public void sendStopNotify() {
-        stop = true;
     }
 }

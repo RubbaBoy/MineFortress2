@@ -57,6 +57,8 @@ public class Sentry implements Listener {
     private ArmorStand sentry_obj;
     private Entity target;
 
+    private int schedule_id;
+
     private Player owner;
 
     public Sentry(Location location, Player owner, int range) {
@@ -75,6 +77,7 @@ public class Sentry implements Listener {
         try {
             sentry_obj = location.getWorld().spawn(location, ArmorStand.class);
             sentry_obj.setMaximumNoDamageTicks(0);
+            sentry_obj.setNoDamageTicks(0);
             sentry_obj.setHelmet(new ItemStack(Material.WOOL, (short) 0));
             if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                 sentry_obj.setCustomName(ChatColor.BOLD + "" + ChatColor.BLUE + "Sentry Level 1 - " + owner.getName());
@@ -85,41 +88,45 @@ public class Sentry implements Listener {
             sentry_obj.setHealth(20F);
 
             BukkitScheduler scheduler = Main.getPlugin().getServer().getScheduler();
-            scheduler.scheduleSyncRepeatingTask(Main.getPlugin(), () -> {
-                Entity closest_entity = null;
+            schedule_id = scheduler.scheduleSyncRepeatingTask(Main.getPlugin(), () -> {
+                if (sentry_obj != null) {
+                    Entity closest_entity = null;
 
-                for (Entity entity : location.getWorld().getEntities()) {
-                    if (closest_entity == null) {
-                        if (location.distance(entity.getLocation()) <= range && entity != sentry_obj) {
-                            if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
-                                closest_entity = entity;
+                    for (Entity entity : location.getWorld().getEntities()) {
+                        if (closest_entity == null) {
+                            if (location.distance(entity.getLocation()) <= range && entity != sentry_obj) {
+                                if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
+                                    closest_entity = entity;
+                                }
                             }
+                        } else {
+                            if (location.distance(entity.getLocation()) <= location.distance(closest_entity.getLocation()) && entity != sentry_obj) {
+                                if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
+                                    closest_entity = entity;
+                                }
+                            }
+                        }
+                    }
+
+                    target = closest_entity;
+
+                    if (closest_entity != null) {
+
+                        float angle = (float) Math.toDegrees(Math.atan2(location.getZ() - closest_entity.getLocation().getZ(), location.getX() - closest_entity.getLocation().getX()));
+                        float angle2 = (float) Math.toDegrees(location.getY() - closest_entity.getLocation().getY());
+
+                        EulerAngle angle3 = new EulerAngle(Math.toRadians(angle2), Math.toRadians(angle + 45), 0F);
+                        sentry_obj.setHeadPose(angle3);
+
+                        if (!SentryThreadUtil.sentries.containsKey(this) || !SentryThreadUtil.sentries.get(this)) {
+                            SentryThreadUtil.sentries.put(this, true);
+                            SentryThreadUtil.sentries.setT(this, System.currentTimeMillis() + this.getCooldown());
                         }
                     } else {
-                        if (location.distance(entity.getLocation()) <= location.distance(closest_entity.getLocation()) && entity != sentry_obj) {
-                            if (entity instanceof Player && PlayerTeams.getPlayer((Player) entity) != PlayerTeams.getPlayer(owner)) {
-                                closest_entity = entity;
-                            }
-                        }
-                    }
-                }
-
-                target = closest_entity;
-
-                if (closest_entity != null) {
-
-                    float angle = (float) Math.toDegrees(Math.atan2(location.getZ() - closest_entity.getLocation().getZ(), location.getX() - closest_entity.getLocation().getX()));
-                    float angle2 = (float) Math.toDegrees(location.getY() - closest_entity.getLocation().getY());
-
-                    EulerAngle angle3 = new EulerAngle(Math.toRadians(angle2), Math.toRadians(angle + 45), 0F);
-                    sentry_obj.setHeadPose(angle3);
-
-                    if (!SentryThreadUtil.sentries.containsKey(this) || !SentryThreadUtil.sentries.get(this)) {
-                        SentryThreadUtil.sentries.put(this, true);
-                        SentryThreadUtil.sentries.setT(this, System.currentTimeMillis() + this.getCooldown());
+                        SentryThreadUtil.sentries.put(this, false);
                     }
                 } else {
-                    SentryThreadUtil.sentries.put(this, false);
+                    scheduler.cancelTask(schedule_id);
                 }
             }, 0L, 1L);
         } catch (Throwable throwable) {
@@ -164,9 +171,10 @@ public class Sentry implements Listener {
     }
 
     public void remove() {
-        Sentries.removeSentry(Sentries.getSentryId(this));
+        Sentries.removeSentry(this);
         SentryThreadUtil.sentries.remove(this);
         sentry_obj.remove();
+        sentry_obj = null;
     }
 
     public int getTier() {

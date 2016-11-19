@@ -1,7 +1,10 @@
 package com.uddernetworks.tf2.utils.particles;
 
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.guns.DeathMessage;
+import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.TeamEnum;
@@ -54,11 +57,10 @@ public class Particles {
         }
     }
 
-    public static void spawnFlamethrowerParticles(Player player) {
+    public static void spawnFlamethrowerParticles(Player player, GunObject gun) {
         try {
             int particles = 8;
             Game game = new Game(Main.getPlugin());
-            List<Entity> entities = game.getWorld().getEntities();
             double t = 0;
             Location loc = player.getEyeLocation().clone();
             Vector direction = loc.getDirection().normalize();
@@ -68,11 +70,18 @@ public class Particles {
                 double y = direction.getY() * t;
                 double z = direction.getZ() * t;
                 loc.add(x, y, z);
-                entities.stream().filter(entity -> entity instanceof Player && entity != player).filter(entity -> entity.getLocation().distance(loc) < 0.1).forEach(entity -> {
+                List<Entity> entities = game.getWorld().getEntities();
+                entities.stream().filter(entity -> entity instanceof Player && entity != player && PlayerTeams.getPlayer(player) != PlayerTeams.getPlayer((Player) entity) && entity.getLocation().distance(loc) < 2).forEach(entity -> {
                     if (playerHealth.getHealth((Player) entity) - 2 < 0) {
-                        playerHealth.addHealth((Player) entity, 0);
+                        if (playerHealth.addHealth(player, 0)) {
+                            DeathMessage deathMessage = new DeathMessage((Player) entity, player, gun);
+                            deathMessage.sendMessage();
+                        }
                     } else {
-                        playerHealth.addHealth((Player) entity, playerHealth.getHealth((Player) entity) - 2);
+                        if (playerHealth.addHealth((Player) entity, playerHealth.getHealth((Player) entity) - 2)) {
+                            DeathMessage deathMessage = new DeathMessage((Player) entity, player, gun);
+                            deathMessage.sendMessage();
+                        }
                     }
                 });
                 loc.getWorld().spigot().playEffect(loc, Effect.MOBSPAWNER_FLAMES, 0, 0, 1, 1, 1, 100, i + 1, 100);

@@ -25,41 +25,37 @@ public class PlayerSlots {
 
     public void addPlayer(Player player, int newSelected) {
         try {
-            if (!playerslots.containsKey(player) || !runsecond.containsKey(player)) {
+            if (!playerslots.containsKey(player)) {
                 SQLLoadout sqlLoadout = new SQLLoadout(main);
                 playerslots.put(player, 0);
                 playerslots.setT(player, sqlLoadout.getPlayerLoadout(player));
-                runsecond.put(player, false);
             }
-            if (!runsecond.get(player)) {
-                runsecond.put(player, true);
-                int selected = 0;
-                if (newSelected == 1) {
-                    selected = playerslots.get(player) + 1;
-                } else if (newSelected == 8) {
-                    selected = playerslots.get(player) - 1;
-                }
 
-                if (selected < 0) {
-                    selected = playerslots.getT(player).size() - 1;
-                } else if (selected > playerslots.getT(player).size() - 1) {
-                    selected = 0;
-                }
+            int selected = 0;
+            if (newSelected == 1 || newSelected == 2) {
+                selected = playerslots.get(player) + 1;
+            } else if (newSelected == 7 || newSelected == 8) {
+                selected = playerslots.get(player) - 1;
+            }
 
-                playerslots.put(player, selected);
-                PlayerGuns playerGuns = new PlayerGuns();
-                if (playerslots.getT(player).get(selected).showGUI()) {
-                    playerGuns.addPlayerGun(player, playerslots.getT(player).get(selected));
-                } else {
-                    playerGuns.addPlayerGun(player, playerslots.getT(player).get(selected));
-                    player.getInventory().setItem(2, new ItemStack(Material.AIR, 1));
-                    player.getInventory().setItem(4, new ItemStack(Material.AIR, 1));
-                    player.getInventory().setItem(6, new ItemStack(Material.AIR, 1));
-                    player.getInventory().setItem(7, new ItemStack(Material.AIR, 1));
-                    player.getInventory().setItem(8, new ItemStack(Material.AIR, 1));
-                }
+            if (selected < 0) {
+                selected = playerslots.getT(player).size() - 1;
+            } else if (selected > playerslots.getT(player).size() - 1) {
+                selected = 0;
+            }
+
+            playerslots.put(player, selected);
+            PlayerGuns playerGuns = new PlayerGuns();
+
+            if (playerslots.getT(player).get(selected).showGUI()) {
+                playerGuns.addPlayerGun(player, playerslots.getT(player).get(selected));
             } else {
-                runsecond.put(player, false);
+                playerGuns.addPlayerGun(player, playerslots.getT(player).get(selected));
+                player.getInventory().setItem(2, new ItemStack(Material.AIR, 1));
+                player.getInventory().setItem(4, new ItemStack(Material.AIR, 1));
+                player.getInventory().setItem(6, new ItemStack(Material.AIR, 1));
+                player.getInventory().setItem(7, new ItemStack(Material.AIR, 1));
+                player.getInventory().setItem(8, new ItemStack(Material.AIR, 1));
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -72,6 +68,15 @@ public class PlayerSlots {
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
             return false;
+        }
+    }
+
+    public static void clearPlayer(Player player) {
+        if (playerslots.containsKey(player)) {
+            playerslots.remove(player);
+        }
+        if (runsecond.containsKey(player)) {
+            runsecond.remove(player);
         }
     }
 

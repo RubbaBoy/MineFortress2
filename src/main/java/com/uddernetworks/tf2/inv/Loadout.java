@@ -1,6 +1,8 @@
 package com.uddernetworks.tf2.inv;
 
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.guns.GunObject;
 import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.main.Main;
@@ -20,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Loadout implements Listener {
 
@@ -33,6 +36,14 @@ public class Loadout implements Listener {
 
     public void openGUI(Player p) {
         try {
+
+            Game game = new Game(main);
+            Random random = new Random();
+            try {
+                p.teleport(main.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(main.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
 
             inv = Bukkit.createInventory(p, 54, "Loadout");
 

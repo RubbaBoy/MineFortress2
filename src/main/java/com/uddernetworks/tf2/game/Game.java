@@ -46,58 +46,52 @@ public class Game implements Listener {
         this.main = main;
     }
 
+    public void setup() {
+        state = GameState.WAITING;
+
+        if (gameType == GameEnum.ARENA) {
+//            world = Bukkit.getWorld(main.worlds.get(random.nextInt(main.worlds.size())));
+            if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
+                try {
+                    world = Bukkit.getWorld(main.worlds.get(0));
+                } catch (NullPointerException ignored) {}
+            }
+        }
+
+        if (gameType == GameEnum.ARENA) {
+            state = GameState.INGAME;
+        } else {
+            state = GameState.COUNTDOWN;
+            count = 0;
+            new BukkitRunnable() {
+                public void run() {
+                    if (count < 5) {
+                        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+                            sendTitle(player, "Starting game in " + (5 - count), "Get ready!", 0, 20, 0);
+                        }
+                        count++;
+                    } else if (count == 6) {
+                        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+                            sendTitle(player, "The game has begun!", "Good luck!", 5, 30, 5);
+                        }
+                        count++;
+                    } else {
+                        count = 0;
+                        this.cancel();
+//                        start();
+                    }
+                }
+            }.runTaskTimer(Main.getPlugin(), 20, 20);
+        }
+    }
+
     public void sendPlayer(Player player) {
         try {
-            state = GameState.WAITING;
+
             ClassChooser chooser = new ClassChooser(main);
             chooser.openGUI(player);
 
-            if (gameType == GameEnum.ARENA) {
-//            world = Bukkit.getWorld(main.worlds.get(random.nextInt(main.worlds.size())));
-                if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
-                    try {
-                        world = Bukkit.getWorld(main.worlds.get(0));
-                    } catch (NullPointerException ignored) {}
-                }
-            }
-
-            for (Location location : Main.getPlugin().getHealthPackLocs(world)) {
-                Health health = new Health(location);
-                health.spawn();
-            }
-
-            for (Location location : Main.getPlugin().getAmmoPackLocs(world)) {
-                Ammo ammo = new Ammo(location);
-                ammo.spawn();
-            }
-
             ArenaManager.getManager().addPlayer(player);
-
-            if (gameType == GameEnum.ARENA) {
-                state = GameState.INGAME;
-            } else {
-                state = GameState.COUNTDOWN;
-                count = 0;
-                new BukkitRunnable() {
-                    public void run() {
-                        if (count < 5) {
-                            for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-                                sendTitle(player, "Starting game in " + (5 - count), "Get ready!", 0, 20, 0);
-                            }
-                            count++;
-                        } else if (count == 6) {
-                            for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-                                sendTitle(player, "The game has begun!", "Good luck!", 5, 30, 5);
-                            }
-                            count++;
-                        } else {
-                            count = 0;
-                            this.cancel();
-//                        start();
-                        }
-                    }
-                }.runTaskTimer(Main.getPlugin(), 20, 20);
-            }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -120,15 +114,6 @@ public class Game implements Listener {
         connection.sendPacket(thyme);
     }
 
-
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if (getGameState() != GameState.NOTHING) {
-            chooser.sendPlayer(player);
-        }
-    }
-
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         try {
@@ -143,13 +128,6 @@ public class Game implements Listener {
                         }
                     }
                 }
-            } else if (getGameState() == GameState.COUNTDOWN || getGameState() == GameState.WAITING) {
-                if (event.getFrom() != event.getTo()) {
-                    Location to = event.getFrom();
-                    to.setPitch(event.getTo().getPitch());
-                    to.setYaw(event.getTo().getYaw());
-                    event.setTo(to);
-                }
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -163,7 +141,7 @@ public class Game implements Listener {
             if (Game.getGameState() == GameState.INGAME) {
                 if (ArenaManager.getManager().isInGame(player)) {
                     if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        if (player.getInventory().getItemInMainHand().getType() == Material.WOOD_HOE || player.getInventory().getItemInMainHand().getType() == Material.DIAMOND_HOE) {
+                        if (player.getInventory().getItemInOffHand() != null || player.getInventory().getItemInMainHand() != null) {
                             event.setCancelled(true);
                         }
                     }

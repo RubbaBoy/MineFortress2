@@ -2,12 +2,16 @@ package com.uddernetworks.tf2.guns.custom;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunObject;
+import com.uddernetworks.tf2.guns.GunPersonalized;
+import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.guns.custom.demoman.Demoman;
 import com.uddernetworks.tf2.guns.custom.engineer.Engineer;
 import com.uddernetworks.tf2.guns.custom.medic.Medic;
 import com.uddernetworks.tf2.guns.custom.pyro.Pyro;
 import com.uddernetworks.tf2.guns.custom.soldier.Soldier;
 import com.uddernetworks.tf2.guns.custom.spy.Spy;
+import com.uddernetworks.tf2.main.Main;
+import com.uddernetworks.tf2.utils.SQLLoadout;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -28,13 +32,18 @@ public class Controller {
     }
 
     public void run() throws Exception {
-        Controller controller = getParentAbility();
+        Controller controller = getParentAbility(gun, player);
         controller.runAbility();
     }
 
-    public void sendStopNotify() throws Exception {
-        Controller controller = getParentAbility();
-        controller.sendStopNotify();
+    public void sendStopNotify(Player player) throws Exception {
+        SQLLoadout loadout = new SQLLoadout(Main.getPlugin());
+        for (GunObject gun : loadout.getPlayerLoadout(player)) {
+            if (gun.getCustom() != null) {
+                Controller controller = getParentAbility(gun, player);
+                controller.sendStopNotify(player);
+            }
+        }
     }
 
     public GunObject getGun() {
@@ -49,7 +58,7 @@ public class Controller {
         return held;
     }
 
-    public Controller getParentAbility() throws Exception {
+    public Controller getParentAbility(GunObject gun, Player player) throws Exception {
         if (gun.getCustom() == null) {
             return null;
         }
@@ -94,14 +103,15 @@ public class Controller {
         }
     }
 
-    public boolean canProceed() {
+    public static boolean canProceed(Player player) {
         try {
             if (!Controller.canproceed.containsKey(player)) {
                 return true;
+            } else {
+                return Controller.canproceed.get(player);
             }
-            return Controller.canproceed.get(player);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return false;
         }
     }

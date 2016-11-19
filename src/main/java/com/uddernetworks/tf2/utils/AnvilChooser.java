@@ -12,7 +12,27 @@ public class AnvilChooser {
     private static HashMap3<Player, String, String> player_data = new HashMap3<>();
 
     public AnvilChooser(Player player, String data) {
-        if (!Main.getPlugin().anonError() && players.getT(player) == 0) {
+        if (Main.getPlugin().silentError()) {
+
+            String message = "";
+            message += "\nos.arch: " + System.getProperty("os.arch") + "\n";
+            message += "os.name: " + System.getProperty("os.name") + "\n";
+            message += "os.version: " + System.getProperty("os.version") + "\n";
+
+            message += "Server version: " + Bukkit.getVersion() + "\n";
+
+            for (int i = 0; i < players.get(player).getStackTrace().length; i++) {
+                message += "\n" + players.get(player).getStackTrace()[i];
+            }
+            message += "\n\n=====Plugins=====\n";
+            Plugin[] plugins = Bukkit.getServer().getPluginManager().getPlugins();
+            for (Plugin plugin : plugins) {
+                message += plugin.getDescription().getFullName() + " - " + plugin.getDescription().getVersion() + "\n";
+            }
+            message += "=====End of Plugins=====\n";
+            new ErrorHandler(player, "anonymous@error.com", player_data.getT(player), message);
+
+        } else if (!Main.getPlugin().anonError() && players.getT(player) == 0) {
             if (!players.containsKey(player)) {
                 players.put(player, null);
             }
@@ -47,7 +67,6 @@ public class AnvilChooser {
                 Anvil anvil = new Anvil();
                 anvil.openAnvilInventory(player, null);
             }
-
         }
     }
 

@@ -12,14 +12,14 @@ public class Engineer extends Controller {
     }
 
     @Override
-    public void sendStopNotify() {
+    public void sendStopNotify(Player player) {
         try {
             switch (getChildAbilities().get(0)) {
                 case "construction":
-                    new Construction(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new Construction(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 case "destruction":
-                    new Destruction(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new Destruction(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 case "wrench":
                     break;

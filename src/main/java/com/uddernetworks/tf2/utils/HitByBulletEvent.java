@@ -24,15 +24,22 @@ public class HitByBulletEvent extends Event {
     Object damaged;
     GunObject gun;
     Sentry sentry;
+    Player owner;
 
-    public HitByBulletEvent(Object object, GunObject gun) {
+    public HitByBulletEvent(Object object, GunObject gun, Player owner) {
         this.damaged = object;
         this.gun = gun;
+        this.owner = owner;
     }
 
     public HitByBulletEvent(Object object, Sentry sentry) {
         damaged = object;
         this.sentry = sentry;
+        this.owner = sentry.getPlayer();
+    }
+
+    public Player getDamager() {
+        return owner;
     }
 
     public boolean isEntity() {

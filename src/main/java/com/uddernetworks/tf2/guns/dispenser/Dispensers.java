@@ -25,10 +25,10 @@ public class Dispensers {
         }
     }
 
-    public static void removeDispenser(int id) {
+    public static void removeDispenser(Dispenser dispenser) {
         try {
-            dispensers.remove(id);
-            dispenser_ids.remove(id);
+            dispensers.remove(getDipenserId(dispenser));
+            dispenser_ids.remove(getDipenserId(dispenser));
             size -= 1;
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -146,9 +146,10 @@ public class Dispensers {
         }
     }
 
-    public static void removeBy(Player player) {
+    public static void removeDispenserBy(Player player) {
         try {
-            dispenser_ids.values().stream().filter(dispenser -> dispenser.getPlayer() == player).forEach(Dispenser::remove);
+            ArrayList<Dispenser> temp = new ArrayList<>(dispensers);
+            temp.stream().filter(dispenser -> dispenser.getPlayer() == player).forEach(Dispenser::remove);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -156,7 +157,10 @@ public class Dispensers {
 
     public static void removeAll() {
         try {
-            dispenser_ids.values().forEach(Dispenser::remove);
+            ArrayList<Dispenser> temp = new ArrayList<>(dispensers);
+            for (Dispenser dispenser : temp) {
+                dispenser.remove();
+            }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

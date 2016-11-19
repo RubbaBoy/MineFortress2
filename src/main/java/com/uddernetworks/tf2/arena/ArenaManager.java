@@ -4,6 +4,10 @@ import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
 import com.uddernetworks.tf2.guns.PlayerHealth;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.pickups.Ammo;
+import com.uddernetworks.tf2.guns.pickups.Ammos;
+import com.uddernetworks.tf2.guns.pickups.Health;
+import com.uddernetworks.tf2.guns.pickups.Healths;
 import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
@@ -79,7 +83,7 @@ public class ArenaManager {
             p.setSaturation(Integer.MAX_VALUE);
 
             p.setFlying(false);
-            p.setFoodLevel(20);
+            p.setFoodLevel(6);
 
             Random random = new Random();
             Game game = new Game(plugin);
@@ -124,6 +128,7 @@ public class ArenaManager {
             teamChooser.sendBack(p);
             locs.remove(p.getUniqueId());
 
+            p.setWalkSpeed(0.2F);
             p.setGameMode(GameMode.SURVIVAL);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -131,25 +136,46 @@ public class ArenaManager {
     }
 
     public Arena createArena() {
-        this.arenaSize++;
+        try {
+            this.arenaSize++;
 
-        Arena a = new Arena(this.arenaSize);
-        this.arenas.add(a);
+            Arena a = new Arena(this.arenaSize);
+            this.arenas.add(a);
 
-        return a;
+            Game game = new Game(plugin);
+            game.setup();
+
+            for (Location location : plugin.getHealthPackLocs(game.getWorld())) {
+                Health health = new Health(location);
+                health.spawn();
+            }
+
+            for (Location location : plugin.getAmmoPackLocs(game.getWorld())) {
+                Ammo ammo = new Ammo(location);
+                ammo.spawn();
+            }
+
+            return a;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return null;
+        }
     }
 
 
     public void clearArenas() {
+        Healths.removeAll();
+        Ammos.removeAll();
+
+        Sentries.removeAll();
+        Dispensers.removeAll();
+        Teleporters.removeAll();
+
         this.arenas.clear();
         this.arenaSize = 0;
         this.locs.clear();
         this.inv.clear();
         this.armor.clear();
-
-        Sentries.removeAll();
-        Dispensers.removeAll();
-        Teleporters.removeAll();
     }
 
     public boolean isInGame(Player p) {

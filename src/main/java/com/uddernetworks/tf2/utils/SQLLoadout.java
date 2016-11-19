@@ -1,5 +1,6 @@
 package com.uddernetworks.tf2.utils;
 
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.GunList;
 import com.uddernetworks.tf2.guns.GunObject;
@@ -47,6 +48,32 @@ public class SQLLoadout {
                     loadouts.put(UUID, gunObjects);
                 } else {
                     System.out.println("A gun from " + Bukkit.getOfflinePlayer(uuid_).getName() + " was not found, and most likely changed from last restart/reload. Deleting gun from player's class to prevent errors...");
+                }
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
+    }
+
+    ArrayList<GunObject> gunObjects = new ArrayList<>();
+    public void reload(Player player) {
+        System.out.println("Reloading internal data set of loadouts for player: " + player.getName());
+        try {
+            gunObjects.clear();
+            QueryResults results = mySQL.queryReturnable("SELECT * FROM 'Loadouts' WHERE UUID='" + player.getUniqueId() + "@" + PlayerClasses.getPlayerClass(player).toString() + "' ORDER BY ID DESC");
+            for (QueryResult result : results.getList()) {
+                String UUID = result.getUUID();
+                String uuid_ = UUID.substring(0, UUID.indexOf("@"));
+                if (player.getUniqueId().toString().equals(uuid_)) {
+                    if (loadouts.containsKey(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString())) loadouts.remove(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString());
+                    GunObject gun = GunList.getGunByName(result.getNAME());
+                    if (gun != null) {
+                        if (loadouts.get(UUID) != null) gunObjects = new ArrayList<>(loadouts.get(UUID));
+                        gunObjects.add(gun);
+                        loadouts.put(UUID, gunObjects);
+                    } else {
+                        System.out.println("A gun from " + Bukkit.getOfflinePlayer(uuid_).getName() + " was not found, and most likely changed from last restart/reload. Deleting gun from player's class to prevent errors...");
+                    }
                 }
             }
         } catch (Throwable throwable) {
@@ -117,15 +144,15 @@ public class SQLLoadout {
                         if (loadouts.containsKey(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString())) {
                             return loadouts.get(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString());
                         } else {
-                            System.out.println("Adding player to database...");
                             setPlayerLoadout(player, GunList.getDefaultGuns(PlayerClasses.getPlayerClass(player)));
-                            reload();
-                            return loadouts.get((player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString()));
+                            reload(player);
+                            return loadouts.get(player.getUniqueId().toString() + "@" + PlayerClasses.getPlayerClass(player).toString());
                         }
                     } else {
                         return null;
                     }
                 } catch (NullPointerException e) {
+                    e.printStackTrace();
                     return null;
                 }
             } else {

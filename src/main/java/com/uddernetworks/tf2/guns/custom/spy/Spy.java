@@ -11,11 +11,11 @@ public class Spy extends Controller {
     }
 
     @Override
-    public void sendStopNotify() {
+    public void sendStopNotify(Player player) {
         try {
             switch (getChildAbilities().get(0)) {
                 case "watch":
-                    new Watch(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new Watch(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 default:
                     System.out.println("Unknown spy child");

@@ -11,14 +11,14 @@ public class Demoman extends Controller {
     }
 
     @Override
-    public void sendStopNotify() {
+    public void sendStopNotify(Player player) {
         try {
             switch (getChildAbilities().get(0)) {
                 case "grenade_launcher":
-                    new GrenadeLauncher(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new GrenadeLauncher(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 case "stickybomb":
-                    new StickyBomb(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new StickyBomb(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 default:
                     System.out.println("Unknown demoman child");

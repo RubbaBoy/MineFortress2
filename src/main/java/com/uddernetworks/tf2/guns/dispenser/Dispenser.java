@@ -16,7 +16,6 @@ public class Dispenser {
     private ArmorStand tag;
 
     private Location location;
-    private Block topBlock;
     private int level = 1;
     private int health_0 = 150;
     private int health_1 = 180;
@@ -51,7 +50,7 @@ public class Dispenser {
                 tag.setSilent(true);
             }
             if (level == 1) {
-                if (location.getBlock().getType() == Material.AIR && location.clone().add(0, 1, 0).getBlock().getType() == Material.AIR) {
+                if (location.getBlock().getType() == Material.AIR && location.clone().add(0, 1, 0).getBlock().getType() == Material.AIR && location.clone().add(0, 2, 0).getBlock().getType() == Material.AIR) {
                     if (PlayerTeams.getPlayer(owner) == TeamEnum.RED) {
                         location.getBlock().setType(Material.QUARTZ_ORE);
                         location.clone().add(0, 1, 0).getBlock().setType(Material.DIAMOND_ORE);
@@ -98,7 +97,6 @@ public class Dispenser {
                 health = health_1;
                 spawnDispenser();
             } else if (level == 2) {
-                topBlock = location.clone().add(0, 2, 0).getBlock();
                 level = 3;
                 if (PlayerTeams.getPlayer(owner) == TeamEnum.BLUE) {
                     tag.teleport(location.clone().add(0, 1, 0));
@@ -117,12 +115,10 @@ public class Dispenser {
     public void remove() {
         try {
             tag.remove();
-            if (topBlock != null) {
-                location.clone().add(0, 2, 0).getBlock().setType(topBlock.getType());
-            }
             location.clone().getBlock().setType(Material.AIR);
             location.clone().add(0, 1, 0).getBlock().setType(Material.AIR);
-            Dispensers.removeDispenser(Dispensers.getDipenserId(this));
+            location.clone().add(0, 2, 0).getBlock().setType(Material.AIR);
+            Dispensers.removeDispenser(this);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

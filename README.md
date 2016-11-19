@@ -34,9 +34,9 @@ The following are the lines from the **config.yml** file, and what they mean.
 >silent-error-reports: true
 
 **true/false** value, when **true**, no GUI pops up to ask you for information when an error happens, anonymous information only involving hosting server's operating system architecture, name, java version, minecraft server version, other plugins on the server, and the error produced by the server itself.
->world: world
+>world: mf2_game
 
-the name of the world **TO BE REMOVED**
+**string** value, the name of the world the team chooser is in
 >- random-door-X: -286
 >- random-door-Y: 70
 >- random-door-Z: -148

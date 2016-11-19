@@ -1,6 +1,7 @@
 package com.uddernetworks.tf2.guns.teleporter;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -11,9 +12,6 @@ import java.util.HashSet;
 
 public class Teleporters {
 
-    static int ent_size = 0;
-    static int ext_size = 0;
-
     static ArrayList<TeleporterEntrance> teleporters_ent = new ArrayList<>();
 
     static ArrayList<TeleporterExit> teleporters_ext = new ArrayList<>();
@@ -21,7 +19,6 @@ public class Teleporters {
     public static void addTeleporterEntrance(TeleporterEntrance teleporterEntrance) {
         try {
             teleporters_ent.add(teleporterEntrance);
-            ent_size += 1;
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -187,8 +184,16 @@ public class Teleporters {
 
     public static void removeAll() {
         try {
-            teleporters_ent.forEach(TeleporterEntrance::remove);
-            teleporters_ext.forEach(TeleporterExit::remove);
+            ArrayList<TeleporterEntrance> temp = new ArrayList<>(teleporters_ent);
+            for (TeleporterEntrance entrance : temp) {
+                entrance.remove(false);
+            }
+            teleporters_ent.clear();
+            ArrayList<TeleporterExit> temp2 = new ArrayList<>(teleporters_ext);
+            for (TeleporterExit exit : temp2) {
+                exit.remove(false);
+            }
+            teleporters_ent.clear();
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -196,7 +201,11 @@ public class Teleporters {
 
     public static void removeEntranceBy(Player player) {
         try {
-            teleporters_ent.stream().filter(teleporterEntrance -> teleporterEntrance.getPlayer() == player).forEach(TeleporterEntrance::remove);
+            ArrayList<TeleporterEntrance> temp = new ArrayList<>(teleporters_ent);
+            temp.stream().filter(ent -> ent.getPlayer() == player).forEach(ent -> {
+                ent.remove(false);
+                teleporters_ent.remove(ent);
+            });
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -204,7 +213,11 @@ public class Teleporters {
 
     public static void removeExitBy(Player player) {
         try {
-            teleporters_ext.stream().filter(teleporterExit -> teleporterExit.getPlayer() == player).forEach(TeleporterExit::remove);
+            ArrayList<TeleporterExit> temp = new ArrayList<>(teleporters_ext);
+            temp.stream().filter(ext -> ext.getPlayer() == player).forEach(ext -> {
+                ext.remove(false);
+                teleporters_ext.remove(ext);
+            });
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

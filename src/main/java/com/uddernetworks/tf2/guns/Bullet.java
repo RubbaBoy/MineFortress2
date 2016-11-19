@@ -1,24 +1,35 @@
 package com.uddernetworks.tf2.guns;
 
+import com.uddernetworks.tf2.arena.ArenaManager;
+import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import com.uddernetworks.tf2.guns.dispenser.Dispenser;
+import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.sentry.Sentry;
+import com.uddernetworks.tf2.guns.teleporter.TeleporterEntrance;
+import com.uddernetworks.tf2.guns.teleporter.TeleporterExit;
+import com.uddernetworks.tf2.guns.teleporter.Teleporters;
+import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.Hitbox;
 import net.minecraft.server.v1_10_R1.*;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.*;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftArrow;
+import org.bukkit.craftbukkit.v1_10_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 public class Bullet implements Listener {
 
@@ -30,6 +41,8 @@ public class Bullet implements Listener {
 
     PlayerHealth playerHealth = new PlayerHealth();
 
+    private List<Entity> near;
+
     public Bullet() {}
 
     public Bullet(Player shooter, GunObject gunObject) {
@@ -37,7 +50,10 @@ public class Bullet implements Listener {
             gun = gunObject;
             this.shooter = shooter;
 
-            shoot(shooter, gunObject);
+            near = shooter.getWorld().getEntities();
+
+            shoot(shooter, gun);
+
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -60,10 +76,11 @@ public class Bullet implements Listener {
                 if (gunObject.isSniper()) {
                     Location loc = shooter.getLocation();
                     Vector direction = loc.getDirection().normalize();
-                    for (int i = 0; i < 100; i++) {
-                        double x = direction.getX() * i;
-                        double y = direction.getY() * i + shooter.getEyeHeight();
-                        double z = direction.getZ() * i;
+                    for (int i = 0; i < 200; i++) {
+                        double i2 = i;
+                        double x = direction.getX() * (i2 * 0.5);
+                        double y = direction.getY() * (i2 * 0.5) + shooter.getEyeHeight();
+                        double z = direction.getZ() * (i2 * 0.5);
                         loc.add(x, y, z);
 
                         if (gunObject.getTracers()) {
@@ -84,7 +101,7 @@ public class Bullet implements Listener {
 
                                 }
                             } else {
-                                i = 100;
+                                i = 200;
                                 inBlock = true;
                             }
 
@@ -97,29 +114,41 @@ public class Bullet implements Listener {
                                 PacketPlayOutBlockBreakAnimation packet9 = new PacketPlayOutBlockBreakAnimation(entity.getId(), new BlockPosition(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), (byte) 9);
                                 ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet9);
                             }
-                            i = 100;
+                            i = 200;
                             inBlock = true;
+
+                            if (Dispensers.isObjectDispenser(loc.getBlock())) {
+                                Dispenser dispenser = Dispensers.getDispenser(loc.getBlock());
+                                dispenser.setHealth(dispenser.getHealth() - (int) gun.getDamage());
+                            } else if (Teleporters.isEntrance(loc)) {
+                                TeleporterEntrance entrance = Teleporters.getEntrance(loc);
+                                entrance.setHealth(entrance.getHealth() - (int) gun.getDamage());
+                            } else if (Teleporters.isExit(loc)) {
+                                TeleporterExit exit = Teleporters.getExit(loc);
+                                exit.setHealth(exit.getHealth() - (int) gun.getDamage());
+                            }
                         }
 
-                        List<Entity> near = shooter.getWorld().getEntities();
                         if (!inBlock) {
                             for (Entity e : near) {
                                 if (!e.equals(shooter)) {
                                     if (e instanceof Player) {
-                                        if (((LivingEntity) e).getEyeLocation().distance(loc) < 3) {
-                                            Hitbox hitbox = new Hitbox(e);
-                                            if (hitbox.contains(loc)) {
-                                                playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gunObject.getDamage());
-                                                DamageIndicator.spawnIndicator(gunObject.getDamage(), loc.getWorld(), x, y, z);
-                                                i = 100;
+                                        if (ArenaManager.getManager().isInGame((Player) e)) {
+                                            if (PlayerTeams.getPlayer((Player) e) != PlayerTeams.getPlayer(shooter)) {
+                                                if (isWithinEntityBoundingBox(loc, e)) {
+                                                    if (playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gunObject.getDamage())) {
+                                                        DeathMessage deathMessage = new DeathMessage((Player) e, shooter, gun);
+                                                        deathMessage.sendMessage();
+                                                    }
+                                                    DamageIndicator.spawnIndicator(gunObject.getDamage(), loc.getWorld(), e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+                                                    i = 200;
+                                                }
                                             }
-                                        } else if (e.getLocation().distance(loc) < 3) {
-                                            Hitbox hitbox = new Hitbox(e);
-                                            if (hitbox.contains(loc)) {
-                                                playerHealth.addHealth((Player) e, playerHealth.getHealth((Player) e) - gunObject.getDamage());
-                                                DamageIndicator.spawnIndicator(gunObject.getDamage(), loc.getWorld(), x, y, z);
-                                                i = 100;
-                                            }
+                                        }
+                                    } else if (e instanceof ArmorStand) {
+                                        if (Sentries.isObjectSentry((ArmorStand) e)) {
+                                            Sentry sentry = Sentries.getSentry((ArmorStand) e);
+                                            sentry.setHealth(sentry.getHealth() - (int) gun.getDamage());
                                         }
                                     }
                                 }
@@ -171,15 +200,12 @@ public class Bullet implements Listener {
                     double x = direction.getX() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
                     double y = direction.getY() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
                     double z = direction.getZ() + (random.nextGaussian() / (10 + sentry.getAccuracy() * 3.5)) / 2;
-                    bullet.setBounce(false);
                     bullet.setVelocity(new Vector(x, y, z));
-
-                    bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                    bullet.setCustomName("Sentry-" + Sentries.getSentryId(sentry));
                     bullets.put(bullet.getEntityId(), this);
                 } else {
-                    bullet.setBounce(false);
                     bullet.setVelocity(direction);
-                    bullet.setCustomName(String.valueOf(GunList.getIndexOf(this.getGun())));
+                    bullet.setCustomName("Sentry-" + Sentries.getSentryId(sentry));
                     bullets.put(bullet.getEntityId(), this);
                 }
             }
@@ -190,7 +216,7 @@ public class Bullet implements Listener {
 
     public boolean isBulletFromSentry(String name) {
         try {
-            return gun == null && sentry != null && (name.startsWith("Sentry-"));
+            return name.startsWith("Sentry-");
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
             return false;
@@ -231,5 +257,23 @@ public class Bullet implements Listener {
             new ExceptionReporter(throwable);
             return null;
         }
+    }
+
+    public static boolean isWithinEntityBoundingBox(Location location, Entity entity) {
+
+        AxisAlignedBB bb = ((CraftEntity) entity).getHandle().getBoundingBox();
+
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        return
+                x >= bb.a &&
+                        x <= bb.d &&
+                        y >= bb.b &&
+                        y <= bb.e &&
+                        z >= bb.c &&
+                        z <= bb.f;
+
     }
 }

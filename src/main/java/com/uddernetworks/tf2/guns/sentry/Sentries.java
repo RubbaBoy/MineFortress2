@@ -26,10 +26,19 @@ public class Sentries {
         }
     }
 
-    public static void removeSentry(int id) {
+    public static void removeSentry(Sentry sentry) {
         try {
-            sentries.remove(id);
-            sentry_id.remove(id);
+            sentries.remove(sentry);
+            sentry_id.remove(getSentryId(sentry));
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
+    }
+
+    public static void removeSentryBy(Player player) {
+        try {
+            ArrayList<Sentry> temp = new ArrayList<>(sentries);
+            temp.stream().filter(sentry -> sentry.getPlayer() == player).forEach(Sentry::remove);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -37,11 +46,17 @@ public class Sentries {
 
     public static int getSentryId(Sentry sentry) {
         try {
-            for (int id : sentry_id.keySet()) {
-                if (sentry_id.get(id) == sentry) {
-                    return id;
+            for (int i = 0; i < sentry_id.size(); i++) {
+                if (sentry_id.get(i) == sentry) {
+                    return i;
+                } else {
                 }
             }
+//            for (int id : sentry_id.keySet()) {
+//                if (sentry_id.get(id) == sentry) {
+//                    return id;
+//                }
+//            }
             return -1;
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -120,7 +135,8 @@ public class Sentries {
 
     public static void removeAll() {
         try {
-            sentry_id.values().forEach(Sentry::remove);
+            ArrayList<Sentry> temp = new ArrayList<>(sentries);
+            temp.forEach(Sentry::remove);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

@@ -7,6 +7,7 @@ import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import com.uddernetworks.tf2.utils.HashMap3;
 import com.uddernetworks.tf2.utils.SQLLoadout;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -18,8 +19,6 @@ public class PlayerGuns {
 
     private static ArrayList<GunPersonalized> player_guns = new ArrayList<>();
     private static HashMap<Player, GunObject> curr_gun = new HashMap<>();
-
-    private PlayerHealth playerHealth = new PlayerHealth();
 
     public void addPlayerGun(Player player, GunObject gun) {
         try {
@@ -42,7 +41,9 @@ public class PlayerGuns {
             ItemStack itemgun = new ItemStack(getPlayerGun(player).getItemStack());
             ItemMeta meta = itemgun.getItemMeta();
             meta.setDisplayName(getPlayerGun(player).getName());
-            itemgun.setItemMeta(meta);
+
+            itemgun = setUnbreakable(itemgun, meta);
+
             player.getInventory().setItem(0, itemgun);
             if (gun.showGUI()) {
                 new BulletGUI(player);
@@ -50,6 +51,22 @@ public class PlayerGuns {
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
+    }
+
+    private ItemStack setUnbreakable(ItemStack item, ItemMeta meta) {
+        ItemStack toreturn;
+        net.minecraft.server.v1_10_R1.ItemStack stack = org.bukkit.craftbukkit.v1_10_R1.inventory.CraftItemStack.asNMSCopy(item.clone());
+        net.minecraft.server.v1_10_R1.NBTTagCompound tag = new net.minecraft.server.v1_10_R1.NBTTagCompound();
+        tag.setBoolean("Unbreakable", true);
+        stack.setTag(tag);
+
+        toreturn = org.bukkit.craftbukkit.v1_10_R1.inventory.CraftItemStack.asCraftMirror(stack);
+
+        ItemMeta meta2 = meta.clone();
+        meta2.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+        toreturn.setItemMeta(meta2);
+
+        return toreturn;
     }
 
     public GunObject getPlayerGun(Player player) {
@@ -162,18 +179,18 @@ public class PlayerGuns {
 
     public void reloadGun(Player player) {
         try {
-            if (getAmmo(player) - getClip(player) > 0) {
-                if (getClip(player) <= getAmmo(player)) {
-                    setAmmo(player, getAmmo(player) - (getPlayerGun(player).getMaxClip() - getClip(player)));
-                    setClip(player, getPlayerGun(player).getMaxClip() - getClip(player));
-                } else {
-                    setClip(player, getAmmo(player));
-                    setAmmo(player, 0);
-                }
-                if (getPlayerGun(player).showGUI()) {
-                    new BulletGUI(player);
-                }
+            if (getAmmo(player) - getMaxClip(player) >= 0) {
+                setAmmo(player, getAmmo(player) - getMaxClip(player));
+                setClip(player, getMaxClip(player));
+            } else {
+                setClip(player, getAmmo(player));
+                setAmmo(player, 0);
             }
+
+            if (getPlayerGun(player).showGUI()) {
+                new BulletGUI(player);
+            }
+
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -181,10 +198,17 @@ public class PlayerGuns {
 
     public void fillAll(Player player) {
         try {
-            player_guns.stream().filter(gunPersonalized -> gunPersonalized.getPlayer() == player).forEach(gunPersonalized -> {
-                gunPersonalized.setAmmo(gunPersonalized.getGun().getMaxAmmo());
-                gunPersonalized.setClip(gunPersonalized.getGun().getMaxClip());
-            });
+            ArrayList<GunPersonalized> player_guns_copy = new ArrayList<>(player_guns);
+            for (int i = 0; i < player_guns_copy.size(); i++) {
+                GunPersonalized gunPersonalized = player_guns_copy.get(i);
+                if (gunPersonalized.getPlayer() == player) {
+                    gunPersonalized.setAmmo(gunPersonalized.getGun().getMaxAmmo());
+                    gunPersonalized.setClip(gunPersonalized.getGun().getMaxClip());
+                    player_guns.set(i, gunPersonalized);
+                }
+            }
+
+            new BulletGUI(player);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

@@ -2,9 +2,13 @@ package com.uddernetworks.tf2.inv;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.guns.*;
+import com.uddernetworks.tf2.guns.dispenser.Dispensers;
+import com.uddernetworks.tf2.guns.sentry.Sentries;
+import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
 import com.uddernetworks.tf2.utils.ClassEnum;
+import com.uddernetworks.tf2.utils.data.PlayerSlots;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -78,39 +82,57 @@ public class ClassChooser implements Listener {
                 Loadout loadout = new Loadout(main);
                 switch (event.getSlot()) {
                     case 9:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.SCOUT);
                         loadout.openGUI(player);
                         break;
                     case 10:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.SOLDIER);
                         loadout.openGUI(player);
                         break;
                     case 11:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.PYRO);
                         loadout.openGUI(player);
                         break;
                     case 12:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.DEMOMAN);
                         loadout.openGUI(player);
                         break;
                     case 13:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.HEAVY);
                         loadout.openGUI(player);
                         break;
                     case 14:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.ENGINEER);
                         PlayerMetal.addPlayer(player, 200);
                         loadout.openGUI(player);
                         break;
                     case 15:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.MEDIC);
                         loadout.openGUI(player);
                         break;
                     case 16:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.SNIPER);
                         loadout.openGUI(player);
                         break;
                     case 17:
+                        PlayerSlots.clearPlayer(player);
+                        clearEngi(player);
                         PlayerClasses.setPlayerClass(player, ClassEnum.SPY);
                         loadout.openGUI(player);
                         break;
@@ -118,6 +140,15 @@ public class ClassChooser implements Listener {
                 playerHealth.addPlayer(player, PlayerClasses.getPlayerClass(player).getHealth());
             }
         } catch (Exception ignored) {}
+    }
+
+    private void clearEngi(Player player) {
+        if (PlayerClasses.getPlayerClass(player) != null && PlayerClasses.getPlayerClass(player) == ClassEnum.ENGINEER) {
+            Sentries.removeSentryBy(player);
+            Dispensers.removeDispenserBy(player);
+            Teleporters.removeEntranceBy(player);
+            Teleporters.removeExitBy(player);
+        }
     }
 
     @EventHandler

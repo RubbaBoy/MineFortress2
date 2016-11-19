@@ -5,6 +5,7 @@ import com.uddernetworks.tf2.utils.ClassEnum;
 import com.uddernetworks.tf2.utils.WeaponType;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -162,17 +163,35 @@ public class GunObject {
             ItemStack itemgun = new ItemStack(item);
             ItemMeta meta = itemgun.getItemMeta();
             meta.setDisplayName(name);
+
             if (getLore() != null) {
                 ArrayList<String> Lore = new ArrayList<>();
                 Lore.add(lore);
                 meta.setLore(Lore);
             }
-            itemgun.setItemMeta(meta);
+
+            itemgun = setUnbreakable(itemgun, meta);
             return itemgun;
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
             return null;
         }
+    }
+
+    private ItemStack setUnbreakable(ItemStack item, ItemMeta meta) {
+        ItemStack toreturn;
+        net.minecraft.server.v1_10_R1.ItemStack stack = org.bukkit.craftbukkit.v1_10_R1.inventory.CraftItemStack.asNMSCopy(item.clone());
+        net.minecraft.server.v1_10_R1.NBTTagCompound tag = new net.minecraft.server.v1_10_R1.NBTTagCompound();
+        tag.setBoolean("Unbreakable", true);
+        stack.setTag(tag);
+
+        toreturn = org.bukkit.craftbukkit.v1_10_R1.inventory.CraftItemStack.asCraftMirror(stack);
+
+        ItemMeta meta2 = meta.clone();
+        meta2.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+        toreturn.setItemMeta(meta2);
+
+        return toreturn;
     }
 
 }

@@ -14,11 +14,11 @@ public class Pyro extends Controller {
     }
 
     @Override
-    public void sendStopNotify() {
+    public void sendStopNotify(Player player) {
         try {
             switch (getChildAbilities().get(0)) {
                 case "flamethrower":
-                    new Flamethrower(getGun(), getPlayer(), isHeald()).sendStopNotify();
+                    new Flamethrower(getGun(), getPlayer(), isHeald()).sendStopNotify(player);
                     break;
                 default:
                     System.out.println("Unknown pyro child");

@@ -60,25 +60,27 @@ public class Anvil implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if ((event.getWhoClicked() instanceof Player)) {
-            Player player = (Player) event.getWhoClicked();
-            if (anvils.containsKey(player) && event.getInventory().equals(anvils.get(player))) {
-                event.setCancelled(true);
-                int slot = event.getRawSlot();
-                String name = "";
-                if (slot == 2) {
-                    ItemMeta meta = event.getCurrentItem().getItemMeta();
-                    if (meta.hasDisplayName()) {
-                        name = meta.getDisplayName();
-                        AnvilChooser.setThrow(player, anvils.getT(player));
-                        closing.add(player);
-                        player.closeInventory();
-                        anvils.remove(player);
-                        new AnvilChooser(player, name);
+        try {
+            if ((event.getWhoClicked() instanceof Player)) {
+                Player player = (Player) event.getWhoClicked();
+                if (anvils.containsKey(player) && event.getInventory().equals(anvils.get(player))) {
+                    event.setCancelled(true);
+                    int slot = event.getRawSlot();
+                    String name = "";
+                    if (slot == 2) {
+                        ItemMeta meta = event.getCurrentItem().getItemMeta();
+                        if (meta.hasDisplayName()) {
+                            name = meta.getDisplayName();
+                            AnvilChooser.setThrow(player, anvils.getT(player));
+                            closing.add(player);
+                            player.closeInventory();
+                            anvils.remove(player);
+                            new AnvilChooser(player, name);
+                        }
                     }
                 }
             }
-        }
+        } catch (Exception ignored) {}
     }
 
     @EventHandler

@@ -23,6 +23,8 @@ public class PlayerClasses {
             }
             new MetalGUI(player);
             classes.put(player, classtype);
+
+            player.setWalkSpeed(((classtype.getSpeed() / 100F) * 0.2F));
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
@@ -48,7 +50,11 @@ public class PlayerClasses {
 
     public static ClassEnum getPlayerClass(Player player) {
         try {
-            return classes.get(player);
+            if (classes.containsKey(player)) {
+                return classes.get(player);
+            } else {
+                return null;
+            }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
             return null;
