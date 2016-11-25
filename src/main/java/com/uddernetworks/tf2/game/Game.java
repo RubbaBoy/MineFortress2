@@ -36,7 +36,6 @@ public class Game implements Listener {
 
     public int count = 0;
     private Main main;
-    TeamChooser chooser = new TeamChooser(main);
 
     static World world;
 
@@ -78,7 +77,6 @@ public class Game implements Listener {
                     } else {
                         count = 0;
                         this.cancel();
-//                        start();
                     }
                 }
             }.runTaskTimer(Main.getPlugin(), 20, 20);

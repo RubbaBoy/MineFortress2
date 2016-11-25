@@ -59,8 +59,6 @@ public class Hitbox {
                     double y = 1.95;
                     low = e.getLocation().clone().add(-0.3, 0, -0.3);
                     high = e.getLocation().clone().add(0.3, y, 0.3);
-                } else {
-                    System.out.println("The class hitbox does not support the entity type: " + e.getType().toString());
                 }
             }
         } catch (Throwable throwable) {

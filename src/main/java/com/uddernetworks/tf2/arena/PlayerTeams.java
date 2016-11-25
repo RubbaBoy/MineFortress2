@@ -34,7 +34,7 @@ public class PlayerTeams {
             if (teams.containsKey(player)) {
                 return teams.get(player);
             } else {
-                System.out.println("Tried to get player not in team list");
+                System.out.println("Tried to get player not in team list, reload plugin");
                 return null;
             }
         } catch (Throwable throwable) {

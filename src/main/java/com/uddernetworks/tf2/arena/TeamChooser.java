@@ -91,7 +91,6 @@ public class TeamChooser implements Listener {
                             event.setCancelled(true);
                             if (block.getLocation().serialize().equals(Locations.blueDoor.serialize())) {
                                 if (blueDoor) {
-                                    player.sendMessage("blue door YEA red door is " + redDoor + " blue door is " + blueDoor);
                                     PlayerTeams.addPlayer(player, TeamEnum.BLUE);
                                     reloadAbleDoors();
                                     Entity en = ((CraftPlayer) player).getHandle();
@@ -105,7 +104,6 @@ public class TeamChooser implements Listener {
                                 }
                             } else if (block.getLocation().serialize().equals(Locations.redDoor.serialize())) {
                                 if (redDoor) {
-                                    player.sendMessage("red door YEA red door is " + redDoor + " blue door is " + blueDoor);
                                     PlayerTeams.addPlayer(player, TeamEnum.RED);
                                     reloadAbleDoors();
                                     Entity en = ((CraftPlayer) player).getHandle();
@@ -201,7 +199,7 @@ public class TeamChooser implements Listener {
                 sign.setLine(3, line4);
                 sign.update();
             } else {
-                System.out.println("Location was not a sign!");
+                System.out.println("Location was not a red or blue sign!");
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);

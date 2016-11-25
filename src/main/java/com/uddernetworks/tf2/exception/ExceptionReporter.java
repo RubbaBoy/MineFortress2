@@ -9,7 +9,6 @@ public class ExceptionReporter {
     static long last_reported = 0;
 
     public ExceptionReporter(Throwable e) {
-        e.printStackTrace();
         if (last_reported == 0) {
             last_reported = System.currentTimeMillis();
             Anvil anvil = new Anvil();
