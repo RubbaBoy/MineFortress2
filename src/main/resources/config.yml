@@ -1,9 +1,6 @@
 anonymous-error-messages: true
-silent-error-reports: false
-world: world
-#door-X: -247
-#door-Y: 70
-#door-Z: -140
+silent-error-reports: true
+world: mf2_game
 random-door-X: -286
 random-door-Y: 70
 random-door-Z: -148

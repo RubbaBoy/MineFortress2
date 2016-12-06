@@ -62,6 +62,10 @@ public class GunThreadUtil {
         stahp = true;
     }
 
+    public boolean isRunning() {
+        return !stahp;
+    }
+
     private class Timer extends TimerTask {
 
         java.util.Timer timer;

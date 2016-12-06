@@ -45,6 +45,10 @@ public class SentryThreadUtil {
         stahp = true;
     }
 
+    public boolean isRunning() {
+        return !stahp;
+    }
+
     private class Timer extends TimerTask {
 
         java.util.Timer timer;

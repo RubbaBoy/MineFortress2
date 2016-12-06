@@ -193,14 +193,23 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public void onDisable() {
-        thread.stahp();
-        sentry_thread.stahp();
-        running = false;
+        try {
+            if (thread.isRunning()) {
+                thread.stahp();
+            }
 
-        for (Player player2 : Bukkit.getOnlinePlayers()) {
-            ArenaManager.getManager().removePlayer(player2);
+            if (sentry_thread.isRunning()) {
+                sentry_thread.stahp();
+            }
+            running = false;
+
+            for (Player player2 : Bukkit.getOnlinePlayers()) {
+                ArenaManager.getManager().removePlayer(player2);
+            }
+            ArenaManager.getManager().clearArenas();
+        } catch (Exception e) {
+            new ExceptionReporter(e);
         }
-        ArenaManager.getManager().clearArenas();
 
         plugin = null;
     }
@@ -814,9 +823,9 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                         sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
                     }
                 } else if (args[0].equalsIgnoreCase("config")) {
-                    if (args.length > 0) {
+                    if (args.length > 1) {
                         if (args[1].equalsIgnoreCase("reload")) {
-                            if (args.length == 1) {
+                            if (args.length == 2) {
                                 sender.sendMessage(ChatColor.GOLD + "Reloading config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
                                 reloadConfig();
                             } else {
