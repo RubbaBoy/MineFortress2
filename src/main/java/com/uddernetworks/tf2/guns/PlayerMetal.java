@@ -31,4 +31,10 @@ public class PlayerMetal {
             return -1;
         }
     }
+
+    public static void clearAll() {
+        for (Player player : playerMetal.keySet()) {
+            playerMetal.remove(player);
+        }
+    }
 }

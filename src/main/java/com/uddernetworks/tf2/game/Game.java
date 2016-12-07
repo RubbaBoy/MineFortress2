@@ -99,6 +99,10 @@ public class Game implements Listener {
         return state;
     }
 
+    public static void stopGameState() {
+        state = GameState.NOTHING;
+    }
+
     public static void sendTitle(Player player, String title, String subtitle, int fadeInTime, int staytime, int fadeOutTime) {
         PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
         IChatBaseComponent titleComponent = IChatBaseComponent.ChatSerializer.a("{\"text\": \"" + ChatColor.translateAlternateColorCodes('&', title) + "\"}");

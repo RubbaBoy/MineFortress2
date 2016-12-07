@@ -1,11 +1,9 @@
 package com.uddernetworks.tf2.utils;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.main.Main;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.sql.*;
 
 public class MySQL {
@@ -19,7 +17,7 @@ public class MySQL {
     private Connection connect() {
         String url = "";
         try {
-            url = "jdbc:sqlite:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + "\\MF2\\Loadouts.db";
+            url = "jdbc:sqlite:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + File.separator + "MF2" + File.separator + "Loadouts.db";
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }

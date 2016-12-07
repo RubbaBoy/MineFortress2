@@ -2,7 +2,9 @@ package com.uddernetworks.tf2.arena;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.guns.PlayerGuns;
 import com.uddernetworks.tf2.guns.PlayerHealth;
+import com.uddernetworks.tf2.guns.PlayerMetal;
 import com.uddernetworks.tf2.guns.dispenser.Dispensers;
 import com.uddernetworks.tf2.guns.pickups.Ammo;
 import com.uddernetworks.tf2.guns.pickups.Ammos;
@@ -12,6 +14,7 @@ import com.uddernetworks.tf2.guns.sentry.Sentries;
 import com.uddernetworks.tf2.guns.teleporter.Teleporters;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.playerclass.PlayerClasses;
+import com.uddernetworks.tf2.utils.data.PlayerSlots;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -170,6 +173,11 @@ public class ArenaManager {
         Sentries.removeAll();
         Dispensers.removeAll();
         Teleporters.removeAll();
+
+        PlayerGuns.clearAll();
+        PlayerHealth.clearAll();
+        PlayerMetal.clearAll();
+        PlayerSlots.clearAll();
 
         this.arenas.clear();
         this.arenaSize = 0;

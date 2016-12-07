@@ -42,13 +42,17 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.material.Door;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import sun.awt.shell.ShellFolder;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,61 +80,92 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     private ArrayList<Location> red_barriers = new ArrayList<>();
     public ArrayList<String> worlds = new ArrayList<>();
 
+    private String[] classpaths = {
+            "poi-ooxml-3.15-beta1.jar",
+            "poi-3.15-beta1.jar",
+            "xmlbeans-2.6.0.jar",
+            "ooxml-schemas-1.3.jar",
+            "ErrorReport.jar",
+            "commons-logging-1.2.jar",
+            "httpclient-4.5.2.jar",
+            "httpcore-4.4.5.jar"
+    };
+
     @Override
     public void onEnable() {
         plugin = this;
         try {
-            getConfig().options().copyDefaults(true);
-            saveConfig();
 
+            System.out.println("Checking if libraries are found...");
+            File lib_path = new File(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParent() + File.separator + "libs");
 
+            boolean Continue = true;
 
-            new ArenaManager(this);
-            new Locations(this);
+            for (String path : classpaths) {
+                if (new File(lib_path + File.separator + path).exists()) {
+                    System.out.println("Library " + path + " is present in folder. Adding it to classpath...");
 
-            Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
-            Bukkit.getPluginManager().registerEvents(new Game(this), this);
-            Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
-            Bukkit.getPluginManager().registerEvents(new Anvil(), this);
-            Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
-            Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
-            Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
-            Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
-            Bukkit.getPluginManager().registerEvents(new ConstructionChooser(this), this);
-            Bukkit.getPluginManager().registerEvents(new DestructionChooser(this), this);
-            Bukkit.getPluginManager().registerEvents(this, this);
-
-            MySQL mySQL = new MySQL(this);
-
-            System.out.println("Creating the Loadouts table if it doesn't exist...");
-            mySQL.query("CREATE TABLE IF NOT EXISTS 'Loadouts'(UUID TEXT NOT NULL, CLASS TEXT NOT NULL, TYPE TEXT NOT NULL, ID int(0) NOT NULL, NAME TEXT NOT NULL);");
-
-            worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
-            System.out.println(Arrays.toString(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()).toArray()));
-            for (String world1 : worlds) {
-                World world = Bukkit.getWorld(world1);
-                if (world == null) {
-                    System.out.println("Invalid world name: " + world1);
+                    addFile(lib_path + File.separator + path);
                 } else {
-                    blue_barriers.addAll(getBarrier(TeamEnum.BLUE, world));
-                    red_barriers.addAll(getBarrier(TeamEnum.RED, world));
+                    System.out.println("Library " + path + " not found! Please make sure you follow the installation tutorial correctly.");
+                    Continue = false;
                 }
             }
 
-            thread = new GunThreadUtil(this);
-            sentry_thread = new SentryThreadUtil(this);
+            if (!Continue) {
+                Bukkit.getPluginManager().disablePlugin(Main.plugin);
+            } else {
 
-            try {
-                gun.loadGuns();
-            } catch (Exception e) {
-                e.printStackTrace();
+                getConfig().options().copyDefaults(true);
+                saveConfig();
+
+                new ArenaManager(this);
+                new Locations(this);
+
+                Bukkit.getPluginManager().registerEvents(new TeamChooser(this), this);
+                Bukkit.getPluginManager().registerEvents(new Game(this), this);
+                Bukkit.getPluginManager().registerEvents(new GunListener(this, thread), this);
+                Bukkit.getPluginManager().registerEvents(new Anvil(), this);
+                Bukkit.getPluginManager().registerEvents(new AdminGunList(), this);
+                Bukkit.getPluginManager().registerEvents(new ClassChooser(this), this);
+                Bukkit.getPluginManager().registerEvents(new Loadout(this), this);
+                Bukkit.getPluginManager().registerEvents(new EditLoadout(this), this);
+                Bukkit.getPluginManager().registerEvents(new ConstructionChooser(this), this);
+                Bukkit.getPluginManager().registerEvents(new DestructionChooser(this), this);
+                Bukkit.getPluginManager().registerEvents(this, this);
+
+                MySQL mySQL = new MySQL(this);
+
+                System.out.println("Creating the Loadouts table if it doesn't exist...");
+                mySQL.query("CREATE TABLE IF NOT EXISTS 'Loadouts'(UUID TEXT NOT NULL, CLASS TEXT NOT NULL, TYPE TEXT NOT NULL, ID int(0) NOT NULL, NAME TEXT NOT NULL);");
+
+                worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
+                System.out.println(Arrays.toString(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()).toArray()));
+                for (String world1 : worlds) {
+                    World world = Bukkit.getWorld(world1);
+                    if (world == null) {
+                        System.out.println("Invalid world name: " + world1);
+                    } else {
+                        blue_barriers.addAll(getBarrier(TeamEnum.BLUE, world));
+                        red_barriers.addAll(getBarrier(TeamEnum.RED, world));
+                    }
+                }
+
+                thread = new GunThreadUtil(this);
+                sentry_thread = new SentryThreadUtil(this);
+
+                try {
+                    gun.loadGuns();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                doPlayerEffects();
+                running = true;
+
+                SQLLoadout sqlLoadout = new SQLLoadout(plugin);
+                sqlLoadout.reload();
             }
-
-            doPlayerEffects();
-            running = true;
-
-            SQLLoadout sqlLoadout = new SQLLoadout(plugin);
-            sqlLoadout.reload();
         } catch (Exception e) {
             new ExceptionReporter(e);
         }
@@ -718,17 +753,21 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
         if (cmd.getName().equalsIgnoreCase("mf2")) {
             if (args.length > 0) {
                 if (args[0].equalsIgnoreCase("start")) {
-                    if (Game.getGameState() == GameState.NOTHING) {
-                        sender.sendMessage(ChatColor.GOLD + "Starting game...");
-                        TeamChooser chooser = new TeamChooser(plugin);
-                        try {
-                            chooser.sendPlayers();
-                            ArenaManager.getManager().createArena();
-                        } catch (Throwable throwable) {
-                            new ExceptionReporter(throwable);
+                    if (sender.hasPermission("mf2.start")) {
+                        if (Game.getGameState() == GameState.NOTHING) {
+                            sender.sendMessage(ChatColor.GOLD + "Starting game...");
+                            TeamChooser chooser = new TeamChooser(plugin);
+                            try {
+                                chooser.sendPlayers();
+                                ArenaManager.getManager().createArena();
+                            } catch (Throwable throwable) {
+                                new ExceptionReporter(throwable);
+                            }
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "The game is already running!");
                         }
                     } else {
-                        sender.sendMessage(ChatColor.RED + "The game is already running!");
+                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
                     }
                 } else if (args[0].equalsIgnoreCase("stop")) {
                     if (Game.getGameState() != GameState.NOTHING) {
@@ -736,121 +775,136 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                         for (Player player2 : Bukkit.getOnlinePlayers()) {
                             ArenaManager.getManager().removePlayer(player2);
                         }
+                        ArenaManager.getManager().clearArenas();
+                        Game.stopGameState();
+                        TeamChooser.setBothDoorTrue();
                     } else {
                         sender.sendMessage(ChatColor.RED + "The game must be running for you to do this!");
                     }
                 } else if (args[0].equalsIgnoreCase("class")) {
-                    if (args.length == 1) {
-                        if (sender instanceof Player) {
-                            chooser.openGUI((Player) sender);
+                    if (sender.hasPermission("mf2.class")) {
+                        if (args.length == 1) {
+                            if (sender instanceof Player) {
+                                chooser.openGUI((Player) sender);
+                            } else {
+                                sender.sendMessage(ChatColor.RED + "This command is only to be used by players!");
+                            }
                         } else {
-                            sender.sendMessage(ChatColor.RED + "This command is only to be used by players!");
+                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
                         }
                     } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
+                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
                     }
                 } else if (args[0].equalsIgnoreCase("loadouts")) {
-                    if (args.length > 1) {
-                        if (args[1].equalsIgnoreCase("remove")) {
-                            if (args.length != 4) {
-                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
-                            } else {
-                                UUID uuid = Bukkit.getOfflinePlayer(args[2]).getUniqueId();
-                                if (loadouts.containsPlayer(uuid)) {
-                                    if (args[3].equalsIgnoreCase("all")) {
-                                        loadouts.deletePlayer(uuid);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "all" + ChatColor.GOLD + " classes from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("SCOUT")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.SCOUT);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SCOUT" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("SOLDIER")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.SOLDIER);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SOLDIER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("PYRO")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.PYRO);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "PYRO" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("DEMOMAN")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.DEMOMAN);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "DEMOMAN" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("HEAVY")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.HEAVY);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "HEAVY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("ENGINEER")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.ENGINEER);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "ENGINEER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("MEDIC")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.MEDIC);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "MEDIC" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("SNIPER")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.SNIPER);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SNIPER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                    } else if (args[3].equalsIgnoreCase("SPY")) {
-                                        loadouts.deletePlayer(uuid, ClassEnum.SPY);
-                                        sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SPY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                    if (sender.hasPermission("mf2.loadouts")) {
+                        if (args.length > 1) {
+                            if (args[1].equalsIgnoreCase("remove")) {
+                                if (args.length != 4) {
+                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
+                                } else {
+                                    UUID uuid = Bukkit.getOfflinePlayer(args[2]).getUniqueId();
+                                    if (loadouts.containsPlayer(uuid)) {
+                                        if (args[3].equalsIgnoreCase("all")) {
+                                            loadouts.deletePlayer(uuid);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "all" + ChatColor.GOLD + " classes from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("SCOUT")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.SCOUT);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SCOUT" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("SOLDIER")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.SOLDIER);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SOLDIER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("PYRO")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.PYRO);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "PYRO" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("DEMOMAN")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.DEMOMAN);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "DEMOMAN" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("HEAVY")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.HEAVY);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "HEAVY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("ENGINEER")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.ENGINEER);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "ENGINEER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("MEDIC")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.MEDIC);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "MEDIC" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("SNIPER")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.SNIPER);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SNIPER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else if (args[3].equalsIgnoreCase("SPY")) {
+                                            loadouts.deletePlayer(uuid, ClassEnum.SPY);
+                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SPY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                        } else {
+                                            sender.sendMessage(ChatColor.RED + "Invalid class. Valid classes: all, SCOUT, SOLDIER, PYRO, DEMOMAN, HEAVY, ENGINEER, MEDIC, SNIPER, SPY");
+                                        }
                                     } else {
-                                        sender.sendMessage(ChatColor.RED + "Invalid class. Valid classes: all, SCOUT, SOLDIER, PYRO, DEMOMAN, HEAVY, ENGINEER, MEDIC, SNIPER, SPY");
+                                        sender.sendMessage(ChatColor.RED + "Error: Player is not found registered in the loadout database");
                                     }
-                                } else {
-                                    sender.sendMessage(ChatColor.RED + "Error: Player is not found registered in the loadout database");
                                 }
-                            }
-                        } else if (args[1].equalsIgnoreCase("reset")) {
-                            if (args.length == 3) {
-                                if (args[2].equalsIgnoreCase("confirm")) {
-                                    if (loadout_reset_wait) {
-                                        loadout_reset_wait = false;
-                                        sender.sendMessage(ChatColor.GOLD + "Resetting player loadouts...");
-                                        loadouts.reset();
-                                        sender.sendMessage(ChatColor.GOLD + "Reset " + ChatColor.RED + "all" + ChatColor.GOLD + " player loadouts");
+                            } else if (args[1].equalsIgnoreCase("reset")) {
+                                if (args.length == 3) {
+                                    if (args[2].equalsIgnoreCase("confirm")) {
+                                        if (loadout_reset_wait) {
+                                            loadout_reset_wait = false;
+                                            sender.sendMessage(ChatColor.GOLD + "Resetting player loadouts...");
+                                            loadouts.reset();
+                                            sender.sendMessage(ChatColor.GOLD + "Reset " + ChatColor.RED + "all" + ChatColor.GOLD + " player loadouts");
+                                        }
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
                                     }
+                                } else if (args.length == 2) {
+                                    sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset ALL player's loadout tables? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 loadout reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
+                                    loadout_reset_wait = true;
                                 } else {
-                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
+                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts reset");
                                 }
-                            } else if (args.length == 2) {
-                                sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset ALL player's loadout tables? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 loadout reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
-                                loadout_reset_wait = true;
+                            } else if (args[1].equalsIgnoreCase("reload")) {
+                                sender.sendMessage(ChatColor.GOLD + "Reloading player loadouts...");
+                                loadouts.reload();
+                                sender.sendMessage(ChatColor.GOLD + "Reloaded player loadouts");
                             } else {
-                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts reset");
+                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
                             }
-                        } else if (args[1].equalsIgnoreCase("reload")) {
-                            sender.sendMessage(ChatColor.GOLD + "Reloading player loadouts...");
-                            loadouts.reload();
-                            sender.sendMessage(ChatColor.GOLD + "Reloaded player loadouts");
                         } else {
                             sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
                         }
                     } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
+                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
                     }
                 } else if (args[0].equalsIgnoreCase("config")) {
-                    if (args.length > 1) {
-                        if (args[1].equalsIgnoreCase("reload")) {
-                            if (args.length == 2) {
-                                sender.sendMessage(ChatColor.GOLD + "Reloading config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
-                                reloadConfig();
-                            } else {
-                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
-                            }
-                        } else if (args[1].equalsIgnoreCase("reset")) {
-                            if (args.length == 3) {
-                                if (args[2].equalsIgnoreCase("confirm")) {
-                                    if (config_reset_wait) {
-                                        config_reset_wait = false;
-                                        sender.sendMessage(ChatColor.GOLD + "Resetting config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
-                                        sender.sendMessage(ChatColor.GOLD + "Downloading default config...");
-                                        if (downloadConfig() == 404) {
-                                            sender.sendMessage(ChatColor.RED + "Error: File not found! Please contact " + ChatColor.BOLD + "contact@uddernetworks.com" + ChatColor.RESET + ChatColor.RED + " and tell them to upload the file for version " + ChatColor.GOLD + getDescription().getVersion() + ChatColor.RED + ".");
-                                        } else {
-                                            sender.sendMessage(ChatColor.GOLD + "Successfully download and reset config.yml");
-                                            reloadConfig();
-                                        }
-                                    } else {
-                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
-                                    }
+                    if (sender.hasPermission("mf2.config")) {
+                        if (args.length > 1) {
+                            if (args[1].equalsIgnoreCase("reload")) {
+                                if (args.length == 2) {
+                                    sender.sendMessage(ChatColor.GOLD + "Reloading config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
+                                    reloadConfig();
+                                } else {
+                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                                 }
-                            } else if (args.length == 2) {
-                                sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset your config.yml? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 config reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
-                                config_reset_wait = true;
+                            } else if (args[1].equalsIgnoreCase("reset")) {
+                                if (args.length == 3) {
+                                    if (args[2].equalsIgnoreCase("confirm")) {
+                                        if (config_reset_wait) {
+                                            config_reset_wait = false;
+                                            sender.sendMessage(ChatColor.GOLD + "Resetting config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
+                                            sender.sendMessage(ChatColor.GOLD + "Downloading default config...");
+                                            if (downloadConfig() == 404) {
+                                                sender.sendMessage(ChatColor.RED + "Error: File not found! Please contact " + ChatColor.BOLD + "contact@uddernetworks.com" + ChatColor.RESET + ChatColor.RED + " and tell them to upload the file for version " + ChatColor.GOLD + getDescription().getVersion() + ChatColor.RED + ".");
+                                            } else {
+                                                sender.sendMessage(ChatColor.GOLD + "Successfully download and reset config.yml");
+                                                reloadConfig();
+                                            }
+                                        } else {
+                                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                                        }
+                                    }
+                                } else if (args.length == 2) {
+                                    sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset your config.yml? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 config reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
+                                    config_reset_wait = true;
+                                } else {
+                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                                }
                             } else {
                                 sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                             }
@@ -858,7 +912,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                             sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                         }
                     } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
                     }
                 } else {
                     sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
@@ -867,7 +921,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
+            sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
         }
         return true;
     }
@@ -881,7 +935,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 return 404;
             } else {
                 BufferedInputStream bis = new BufferedInputStream(url.openStream());
-                FileOutputStream fis = new FileOutputStream(getPlugin().getDataFolder().getAbsolutePath() + "\\config.yml");
+                FileOutputStream fis = new FileOutputStream(getPlugin().getDataFolder().getAbsolutePath() + File.separator + "config.yml");
                 byte[] buffer = new byte[1024];
                 int count;
                 while ((count = bis.read(buffer, 0, 1024)) != -1) {
@@ -890,12 +944,41 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 fis.close();
                 bis.close();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
             return -1;
         }
         return 20;
     }
+
+
+    private static final Class[] parameters = new Class[]{URL.class};
+
+    public static void addFile(String s) throws IOException {
+        File f = new File(s);
+        addFile(f);
+    }
+
+    public static void addFile(File f) throws IOException {
+        addURL(f.toURL());
+    }
+
+
+    public static void addURL(URL u) throws IOException {
+
+        URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        Class sysclass = URLClassLoader.class;
+
+        try {
+            Method method = sysclass.getDeclaredMethod("addURL", parameters);
+            method.setAccessible(true);
+            method.invoke(sysloader, new Object[]{u});
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
+
+    }
+
 
     private boolean isValidBlock(int x, int y, int z) {
         return x != -1 && y != -1 && z != -1;

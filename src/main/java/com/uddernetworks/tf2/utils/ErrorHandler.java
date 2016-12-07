@@ -26,7 +26,7 @@ public class ErrorHandler {
             }
         } else {
             player.sendMessage(beginning + "Something happened server-side, please try again later if you encounter the problem again.");
-            System.out.println("Received status code " + report.getStatusCode() + " from server while uploading error. Try again later if the problem occurs.");
+            System.out.println("Received status code " + report.getStatusCode() + " from server while uploading error. Try again later. If the problem occurs, contact rubbaboy@uddernetworks.com");
         }
     }
 

@@ -39,6 +39,11 @@ public class TeamChooser implements Listener {
         this.main = main;
     }
 
+    public static void setBothDoorTrue() {
+        blueDoor = true;
+        redDoor = true;
+    }
+
     public void sendPlayers() {
         try {
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -49,6 +54,9 @@ public class TeamChooser implements Listener {
                 players.add(player);
             }
         } catch (NullPointerException ignored) {}
+        catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public void sendPlayer(Player player) {

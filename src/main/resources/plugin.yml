@@ -1,10 +1,26 @@
 name: MF2
 author: RubbaBoy
 main: com.uddernetworks.tf2.main.Main
-version: 1.1
+version: 1.2
 website: http://www.uddernetworks.com/minefortress-2
 description: A port of the game Team Fortress 2 in minecraft for Uddernetworks!
 commands:
    mf2:
-      description: Runs the MF2 command.
-      usage: /mf2
+      description: The core MF2 command
+      usage: /mf2 <start|stop|loadouts|class|config>
+permissions:
+  mf2.start:
+    description: Allows you to start a game
+    default: op
+  mf2.stop:
+    description: Allows you to stop a game
+    default: op
+  mf2.class:
+    description: Allows you to change your class in MF2
+    default: op
+  mf2.loadouts:
+    description: Allows you to do the /mf2 loadouts command and its subcommands
+    default: op
+  mf2.config:
+    description: Allows you to do the /mf2 config command and its subcommands
+    default: op

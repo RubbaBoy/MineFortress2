@@ -103,4 +103,10 @@ public class PlayerHealth {
         }
     }
 
+    public static void clearAll() {
+        for (Player player : health.keySet()) {
+            health.remove(player);
+        }
+    }
+
 }

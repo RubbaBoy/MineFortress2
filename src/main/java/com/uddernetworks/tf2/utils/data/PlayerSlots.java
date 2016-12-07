@@ -129,4 +129,14 @@ public class PlayerSlots {
         }
     }
 
+    public static void clearAll() {
+        for (Player player : playerslots.keySet()) {
+            playerslots.remove(player);
+        }
+
+        for (Player player : runsecond.keySet()) {
+            runsecond.remove(player);
+        }
+    }
+
 }

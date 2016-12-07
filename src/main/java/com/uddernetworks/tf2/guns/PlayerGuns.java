@@ -53,6 +53,13 @@ public class PlayerGuns {
         }
     }
 
+    public static void clearAll() {
+        for (Player player : curr_gun.keySet()) {
+            curr_gun.remove(player);
+        }
+        player_guns.clear();
+    }
+
     private ItemStack setUnbreakable(ItemStack item, ItemMeta meta) {
         ItemStack toreturn;
         net.minecraft.server.v1_10_R1.ItemStack stack = org.bukkit.craftbukkit.v1_10_R1.inventory.CraftItemStack.asNMSCopy(item.clone());
