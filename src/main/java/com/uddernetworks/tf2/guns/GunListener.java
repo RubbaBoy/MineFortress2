@@ -4,6 +4,8 @@ import com.uddernetworks.tf2.arena.ArenaManager;
 import com.uddernetworks.tf2.arena.PlayerTeams;
 import com.uddernetworks.tf2.arena.TeamChooser;
 import com.uddernetworks.tf2.exception.ExceptionReporter;
+import com.uddernetworks.tf2.game.Game;
+import com.uddernetworks.tf2.game.GameState;
 import com.uddernetworks.tf2.guns.custom.Controller;
 import com.uddernetworks.tf2.guns.custom.demoman.StickyBombPlayers;
 import com.uddernetworks.tf2.guns.dispenser.Dispenser;
@@ -813,9 +815,11 @@ public class GunListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         try {
-            if (!ArenaManager.getManager().isInGame(event.getPlayer())) {
-                TeamChooser chooser = new TeamChooser(main);
-                chooser.sendPlayer(event.getPlayer());
+            if (Game.getGameState() != GameState.NOTHING) {
+                if (!ArenaManager.getManager().isInGame(event.getPlayer())) {
+                    TeamChooser chooser = new TeamChooser(main);
+                    chooser.sendPlayer(event.getPlayer());
+                }
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
@@ -824,9 +828,13 @@ public class GunListener implements Listener {
 
     @EventHandler
     public void onPlayerDisconnect(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        if (ArenaManager.getManager().isInGame(player)) {
-            ArenaManager.getManager().removePlayer(player);
+        try {
+            Player player = event.getPlayer();
+            if (ArenaManager.getManager().isInGame(player)) {
+                ArenaManager.getManager().removePlayer(player);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

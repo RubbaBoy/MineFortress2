@@ -21,6 +21,7 @@ public class AnvilChooser {
 
             message += "Server version: " + Bukkit.getVersion() + "\n";
 
+            message += "\n " + players.get(player).toString();
             for (int i = 0; i < players.get(player).getStackTrace().length; i++) {
                 message += "\n" + players.get(player).getStackTrace()[i];
             }
@@ -49,6 +50,7 @@ public class AnvilChooser {
 
             message += "Server version: " + Bukkit.getVersion() + "\n";
 
+            message += "\n " + players.get(player).toString();
             for (int i = 0; i < players.get(player).getStackTrace().length; i++) {
                 message += "\n" + players.get(player).getStackTrace()[i];
             }

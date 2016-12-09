@@ -50,10 +50,13 @@ public class Game implements Listener {
 
         if (gameType == GameEnum.ARENA) {
 //            world = Bukkit.getWorld(main.worlds.get(random.nextInt(main.worlds.size())));
-            if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
-                try {
-                    world = Bukkit.getWorld(main.worlds.get(0));
-                } catch (NullPointerException ignored) {}
+            if (main.worlds.size() > 0) {
+                if (world == null && Bukkit.getWorld(main.worlds.get(0)) != null) {
+                    try {
+                        world = Bukkit.getWorld(main.worlds.get(0));
+                    } catch (NullPointerException ignored) {
+                    }
+                }
             }
         }
 

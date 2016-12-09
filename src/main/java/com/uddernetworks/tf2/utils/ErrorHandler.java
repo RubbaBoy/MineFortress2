@@ -22,7 +22,11 @@ public class ErrorHandler {
             } else if (report.getFieldStatus() == 3) {
                 player.sendMessage(beginning + "Invalid email");
             } else if (report.getFieldStatus() == 4) {
-                player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "Sucessfully sent error message. Please expect an email shortly stating the error is being looked into.");
+                if (!email.equalsIgnoreCase("anonymous@error.com")) {
+                    player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "Sucessfully sent error report. Please expect an email shortly stating the error is being looked into.");
+                } else {
+                    player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "Sucessfully sent anonymous error report. The error will be looked into, so stay tuned on the spigot website.");
+                }
             }
         } else {
             player.sendMessage(beginning + "Something happened server-side, please try again later if you encounter the problem again.");

@@ -1,7 +1,7 @@
 name: MF2
 author: RubbaBoy
 main: com.uddernetworks.tf2.main.Main
-version: 1.2
+version: 1.3
 website: http://www.uddernetworks.com/minefortress-2
 description: A port of the game Team Fortress 2 in minecraft for Uddernetworks!
 commands:

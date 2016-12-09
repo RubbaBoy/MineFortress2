@@ -39,10 +39,10 @@ public class Loadout implements Listener {
 
             Game game = new Game(main);
             Random random = new Random();
-            try {
+            if (PlayerTeams.getPlayer(p) != null) {
                 p.teleport(main.getSpawnBlocks(game.getWorld(), PlayerTeams.getPlayer(p)).get(random.nextInt(main.getSpawnBlocks(p.getWorld(), PlayerTeams.getPlayer(p)).size())));
-            } catch (NullPointerException e) {
-                e.printStackTrace();
+            } else {
+                System.out.println("You are not in the teams list, please reload/restart the server. If problem persists, contact RubbaBoy with details of what happened.");
             }
 
             inv = Bukkit.createInventory(p, 54, "Loadout");

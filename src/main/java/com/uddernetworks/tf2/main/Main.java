@@ -88,7 +88,8 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
             "ErrorReport.jar",
             "commons-logging-1.2.jar",
             "httpclient-4.5.2.jar",
-            "httpcore-4.4.5.jar"
+            "httpcore-4.4.5.jar",
+            "sqlite-jdbc-3.8.11.2.jar"
     };
 
     @Override
@@ -112,10 +113,17 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 }
             }
 
+            File db = new File(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + File.separator + "MF2" + File.separator + "Loadouts.db");
+            if (db.exists()) {
+                System.out.println("Database file exists.");
+            } else {
+                System.out.println("Database file does NOT exist!");
+                Continue = false;
+            }
+
             if (!Continue) {
                 Bukkit.getPluginManager().disablePlugin(Main.plugin);
             } else {
-
                 getConfig().options().copyDefaults(true);
                 saveConfig();
 
@@ -141,10 +149,12 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
                 worlds.addAll(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()));
                 System.out.println(Arrays.toString(this.getConfig().getConfigurationSection("playworlds").getKeys(false).stream().collect(Collectors.toList()).toArray()));
-                for (String world1 : worlds) {
+                ArrayList<String> temp_world = new ArrayList<>(worlds);
+                for (String world1 : temp_world) {
                     World world = Bukkit.getWorld(world1);
                     if (world == null) {
                         System.out.println("Invalid world name: " + world1);
+                        worlds.remove(world1);
                     } else {
                         blue_barriers.addAll(getBarrier(TeamEnum.BLUE, world));
                         red_barriers.addAll(getBarrier(TeamEnum.RED, world));
@@ -755,13 +765,17 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                 if (args[0].equalsIgnoreCase("start")) {
                     if (sender.hasPermission("mf2.start")) {
                         if (Game.getGameState() == GameState.NOTHING) {
-                            sender.sendMessage(ChatColor.GOLD + "Starting game...");
-                            TeamChooser chooser = new TeamChooser(plugin);
-                            try {
-                                chooser.sendPlayers();
-                                ArenaManager.getManager().createArena();
-                            } catch (Throwable throwable) {
-                                new ExceptionReporter(throwable);
+                            if (worlds.size() != 0) {
+                                sender.sendMessage(ChatColor.GOLD + "Starting game...");
+                                TeamChooser chooser = new TeamChooser(plugin);
+                                try {
+                                    chooser.sendPlayers();
+                                    ArenaManager.getManager().createArena();
+                                } catch (Throwable throwable) {
+                                    new ExceptionReporter(throwable);
+                                }
+                            } else {
+                                sender.sendMessage(ChatColor.RED + "Error: The world must not have been imported correctly, no game world found.");
                             }
                         } else {
                             sender.sendMessage(ChatColor.RED + "The game is already running!");
@@ -785,7 +799,15 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     if (sender.hasPermission("mf2.class")) {
                         if (args.length == 1) {
                             if (sender instanceof Player) {
-                                chooser.openGUI((Player) sender);
+                                if (Game.getGameState() != GameState.NOTHING) {
+                                    if (ArenaManager.getManager().isInGame((Player) sender)) {
+                                        chooser.openGUI((Player) sender);
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "You are not in a game!");
+                                    }
+                                } else {
+                                    sender.sendMessage(ChatColor.RED + "A game must be running for you to change classes.");
+                                }
                             } else {
                                 sender.sendMessage(ChatColor.RED + "This command is only to be used by players!");
                             }

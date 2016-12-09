@@ -2,6 +2,7 @@ package com.uddernetworks.tf2.utils;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.main.Main;
+import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.sql.*;
@@ -15,19 +16,23 @@ public class MySQL {
     }
 
     private Connection connect() {
-        String url = "";
+        String url;
         try {
-            url = "jdbc:sqlite:" + new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + File.separator + "MF2" + File.separator + "Loadouts.db";
+            File file = new File(new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getParentFile() + File.separator + "MF2" + File.separator + "Loadouts.db");
+
+            if (!file.exists()) {
+                System.out.println("The database file doesn't exist!");
+                Bukkit.getPluginManager().disablePlugin(Main.plugin);
+            }
+            Class.forName("org.sqlite.JDBC");
+            url = "jdbc:sqlite:" + file.getPath();
+
+
+            return DriverManager.getConnection(url);
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
+            return null;
         }
-        Connection conn = null;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return conn;
     }
 
     public void query(String query) {

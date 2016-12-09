@@ -23,9 +23,17 @@ public class ExceptionReporter {
                     }
                 }
 
-                AnvilChooser.setThrow(player, e);
+                if (player == null) {
+                    for (Player player_ : Bukkit.getOnlinePlayers()) {
+                        player = player_;
+                    }
+                }
+
                 if (player != null) {
+                    AnvilChooser.setThrow(player, e);
                     new AnvilChooser(player, "");
+                } else {
+                    System.out.println("There needs to be a player on for the plugin to report the error");
                 }
             } else {
                 Anvil anvil = new Anvil();
@@ -36,7 +44,7 @@ public class ExceptionReporter {
                     }
                 }
             }
-        } else if (last_reported + 300000 <= System.currentTimeMillis()) {
+        } else if (last_reported + 10000 <= System.currentTimeMillis()) {
             last_reported = System.currentTimeMillis();
             if (main.silentError()) {
                 Player player = null;
@@ -47,7 +55,10 @@ public class ExceptionReporter {
                 }
 
                 if (player != null) {
+                    AnvilChooser.setThrow(player, e);
                     new AnvilChooser(player, "");
+                } else {
+                    System.out.println("There needs to be a player on for the plugin to report the error");
                 }
             } else {
                 Anvil anvil = new Anvil();
