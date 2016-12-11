@@ -45,22 +45,36 @@ public class StickyBombPlayers {
     public void explode(Player player) {
         try {
             if (players.containsKey(player)) {
-                ArrayList<Integer> toRemove = new ArrayList<>();
+                ArrayList<StickyBomb> toRemove = new ArrayList<>();
                 for (int i = 0; i < players.get(player).size(); i++) {
                     if (System.currentTimeMillis() - player_times.get(player).get(i) >= 700) {
                         StickyBomb stickyBomb = players.get(player).get(i);
                         stickyBomb.explode();
-                        toRemove.add(i);
+                        toRemove.add(stickyBomb);
                     }
                 }
-                for (int i = 0; i < toRemove.size(); i++) {
-                    players.get(player).remove(i);
-                    player_times.get(player).remove(i);
+
+                for (StickyBomb stickyBomb : toRemove) {
+                    if (player_times.get(player).remove(getIdOfObject(players.get(player), stickyBomb)) != -1){
+                        player_times.get(player).remove(getIdOfObject(players.get(player), stickyBomb));
+                        players.get(player).remove(stickyBomb);
+                    }
                 }
                 players.remove(player);
             }
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
+    }
+
+    public int getIdOfObject(ArrayList list, Object object) {
+        int temp = -1;
+        for (Object obj : list) {
+            temp++;
+            if (obj == object) {
+                return temp;
+            }
+        }
+        return -1;
     }
 }

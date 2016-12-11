@@ -1,10 +1,7 @@
 package com.uddernetworks.tf2.guns.custom.demoman;
 
 import com.uddernetworks.tf2.exception.ExceptionReporter;
-import com.uddernetworks.tf2.guns.DamageIndicator;
-import com.uddernetworks.tf2.guns.DeathMessage;
-import com.uddernetworks.tf2.guns.GunObject;
-import com.uddernetworks.tf2.guns.PlayerHealth;
+import com.uddernetworks.tf2.guns.*;
 import com.uddernetworks.tf2.main.Main;
 import com.uddernetworks.tf2.utils.particles.Particles;
 import org.bukkit.Material;
@@ -20,6 +17,7 @@ public class StickyBomb extends Demoman {
     private Item itemdrop;
     private StickyBombPlayers players = new StickyBombPlayers();
     PlayerHealth playerHealth = new PlayerHealth();
+    PlayerGuns playerGuns = new PlayerGuns();
 
     public StickyBomb(GunObject gun, Player player, boolean held) {
         super(gun, player, held);
@@ -32,6 +30,8 @@ public class StickyBomb extends Demoman {
                     itemdrop.setCustomNameVisible(false);
                     itemdrop.setVelocity(player.getLocation().getDirection().normalize().multiply(gun.getPower()));
                     players.setPlayer(getPlayer(), this, System.currentTimeMillis());
+
+                    playerGuns.setClip(player, playerGuns.getClip(player) - 1);
 
                     new BukkitRunnable() {
                         @Override
