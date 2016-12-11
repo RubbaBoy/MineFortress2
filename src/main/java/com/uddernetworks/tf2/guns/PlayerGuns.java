@@ -54,10 +54,15 @@ public class PlayerGuns {
     }
 
     public static void clearAll() {
-        for (Player player : curr_gun.keySet()) {
-            curr_gun.remove(player);
+        try {
+            ArrayList<Player> temp_set = new ArrayList<>(curr_gun.keySet());
+            for (Player player : temp_set) {
+                curr_gun.remove(player);
+            }
+            player_guns.clear();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
-        player_guns.clear();
     }
 
     private ItemStack setUnbreakable(ItemStack item, ItemMeta meta) {

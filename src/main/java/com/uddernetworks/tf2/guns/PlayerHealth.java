@@ -104,8 +104,12 @@ public class PlayerHealth {
     }
 
     public static void clearAll() {
-        for (Player player : health.keySet()) {
-            health.remove(player);
+        try {
+            for (Player player : health.keySet()) {
+                health.remove(player);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 

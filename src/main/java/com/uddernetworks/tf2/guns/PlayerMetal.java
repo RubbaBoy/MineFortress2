@@ -4,6 +4,7 @@ import com.uddernetworks.tf2.exception.ExceptionReporter;
 import com.uddernetworks.tf2.gui.MetalGUI;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PlayerMetal {
@@ -33,8 +34,13 @@ public class PlayerMetal {
     }
 
     public static void clearAll() {
-        for (Player player : playerMetal.keySet()) {
-            playerMetal.remove(player);
+        try {
+            ArrayList<Player> temp_set = new ArrayList<>(playerMetal.keySet());
+            for (Player player : temp_set) {
+                playerMetal.remove(player);
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 }
