@@ -183,47 +183,52 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     public HashSet<Location> getBarrier(TeamEnum team, World world) {
-        ArrayList<String> numbs = new ArrayList<>();
-        HashSet<Location> locs = new HashSet<>();
+        try {
+            ArrayList<String> numbs = new ArrayList<>();
+            HashSet<Location> locs = new HashSet<>();
 
-        int barrier1_x;
-        int barrier1_y;
-        int barrier1_z;
-        int barrier2_x;
-        int barrier2_y;
-        int barrier2_z;
+            int barrier1_x;
+            int barrier1_y;
+            int barrier1_z;
+            int barrier2_x;
+            int barrier2_y;
+            int barrier2_z;
 
-        String team_str = team == TeamEnum.BLUE ? "blue" : "red";
+            String team_str = team == TeamEnum.BLUE ? "blue" : "red";
 
-        reloadConfig();
-        numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + "." + team_str + ".barriers").getKeys(false).stream().collect(Collectors.toList()));
-        for (int i = 1; i < numbs.size() + 1; i++) {
-            barrier1_x = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-X");
-            barrier1_y = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-Y");
-            barrier1_z = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-Z");
-            barrier2_x = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-X");
-            barrier2_y = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-Y");
-            barrier2_z = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-Z");
+            reloadConfig();
+            numbs.addAll(this.getConfig().getConfigurationSection("playworlds." + world.getName() + "." + team_str + ".barriers").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i = 1; i < numbs.size() + 1; i++) {
+                barrier1_x = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-X");
+                barrier1_y = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-Y");
+                barrier1_z = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".1-Z");
+                barrier2_x = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-X");
+                barrier2_y = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-Y");
+                barrier2_z = getConfig().getInt("playworlds." + world.getName() + "." + team_str + ".barriers.barrier-" + i + ".2-Z");
 
-            int topBlockX = (barrier1_x < barrier2_x ? barrier2_x : barrier1_x);
-            int bottomBlockX = (barrier1_x > barrier2_x ? barrier2_x : barrier1_x);
+                int topBlockX = (barrier1_x < barrier2_x ? barrier2_x : barrier1_x);
+                int bottomBlockX = (barrier1_x > barrier2_x ? barrier2_x : barrier1_x);
 
-            int topBlockY = (barrier1_y < barrier2_y ? barrier2_y : barrier1_y);
-            int bottomBlockY = (barrier1_y > barrier2_y ? barrier2_y : barrier1_y);
+                int topBlockY = (barrier1_y < barrier2_y ? barrier2_y : barrier1_y);
+                int bottomBlockY = (barrier1_y > barrier2_y ? barrier2_y : barrier1_y);
 
-            int topBlockZ = (barrier1_z < barrier2_z ? barrier2_z : barrier1_z);
-            int bottomBlockZ = (barrier1_z > barrier2_z ? barrier2_z : barrier1_z);
+                int topBlockZ = (barrier1_z < barrier2_z ? barrier2_z : barrier1_z);
+                int bottomBlockZ = (barrier1_z > barrier2_z ? barrier2_z : barrier1_z);
 
-            for(int x = bottomBlockX; x <= topBlockX; x++) {
-                for(int y = bottomBlockY; y <= topBlockY; y++) {
-                    for(int z = bottomBlockZ; z <= topBlockZ; z++) {
-                        locs.add(new Location(world, x, y, z));
+                for (int x = bottomBlockX; x <= topBlockX; x++) {
+                    for (int y = bottomBlockY; y <= topBlockY; y++) {
+                        for (int z = bottomBlockZ; z <= topBlockZ; z++) {
+                            locs.add(new Location(world, x, y, z));
+                        }
                     }
                 }
             }
-        }
 
-        return locs;
+            return locs;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return new HashSet<>();
+        }
     }
 
     public boolean anonError() {
@@ -260,25 +265,35 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     public ArrayList<Location> getHealthPackLocs(World world) {
-        reloadConfig();
-        ArrayList<Location> locs = new ArrayList<>();
-        ArrayList<String> numbs = new ArrayList<>();
-        numbs.addAll(getConfig().getConfigurationSection("playworlds." + world.getName() + ".healths").getKeys(false).stream().collect(Collectors.toList()));
-        for (int i = 0; i < numbs.size(); i++) {
-            locs.add(new Location(world, getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".X"), getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".Y"), getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".Z")));
+        try {
+            reloadConfig();
+            ArrayList<Location> locs = new ArrayList<>();
+            ArrayList<String> numbs = new ArrayList<>();
+            numbs.addAll(getConfig().getConfigurationSection("playworlds." + world.getName() + ".healths").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i = 0; i < numbs.size(); i++) {
+                locs.add(new Location(world, getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".X"), getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".Y"), getConfig().getDouble("playworlds." + world.getName() + ".healths.health-" + i + ".Z")));
+            }
+            return locs;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return new ArrayList<>();
         }
-        return locs;
     }
 
     public ArrayList<Location> getAmmoPackLocs(World world) {
-        reloadConfig();
-        ArrayList<Location> locs = new ArrayList<>();
-        ArrayList<String> numbs = new ArrayList<>();
-        numbs.addAll(getConfig().getConfigurationSection("playworlds." + world.getName() + ".ammos").getKeys(false).stream().collect(Collectors.toList()));
-        for (int i = 0; i < numbs.size(); i++) {
-            locs.add(new Location(world, getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".X"), getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".Y"), getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".Z")));
+        try {
+            reloadConfig();
+            ArrayList<Location> locs = new ArrayList<>();
+            ArrayList<String> numbs = new ArrayList<>();
+            numbs.addAll(getConfig().getConfigurationSection("playworlds." + world.getName() + ".ammos").getKeys(false).stream().collect(Collectors.toList()));
+            for (int i = 0; i < numbs.size(); i++) {
+                locs.add(new Location(world, getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".X"), getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".Y"), getConfig().getDouble("playworlds." + world.getName() + ".ammos.ammo-" + i + ".Z")));
+            }
+            return locs;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return new ArrayList<>();
         }
-        return locs;
     }
 
     public ArrayList<Location> getRefillDoorBlocks(TeamEnum team, World world) {
@@ -432,64 +447,68 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                 } else if (i2 == 1) {
                                     team = TeamEnum.RED;
                                 }
-                                if (getRefillDoorBlocks(team, world).get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                        && getRefillDoorBlocks(team, world).get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                        && getRefillDoorBlocks(team, world).get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                    if (!players.get(event.getPlayer())) {
-                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        playerGuns.fillAll(event.getPlayer());
-                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                if (getRefillDoorBlocks(team, world).size() != 0) {
+                                    if (getRefillDoorBlocks(team, world).get(0).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                            && getRefillDoorBlocks(team, world).get(0).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                            && getRefillDoorBlocks(team, world).get(0).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                        if (!players.get(event.getPlayer())) {
+                                            toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                            toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                            playerGuns.fillAll(event.getPlayer());
+                                            if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                            }
+                                            players.put(event.getPlayer(), true);
                                         }
-                                        players.put(event.getPlayer(), true);
-                                    }
-                                } else if (getRefillDoorBlocks(team, world).get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                        && getRefillDoorBlocks(team, world).get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                        && getRefillDoorBlocks(team, world).get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                    if (!players.get(event.getPlayer())) {
-                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        playerGuns.fillAll(event.getPlayer());
-                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                    } else if (getRefillDoorBlocks(team, world).get(1).getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                            && getRefillDoorBlocks(team, world).get(1).getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                            && getRefillDoorBlocks(team, world).get(1).getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                        if (!players.get(event.getPlayer())) {
+                                            toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                            toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                            playerGuns.fillAll(event.getPlayer());
+                                            if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                            }
+                                            players.put(event.getPlayer(), true);
                                         }
-                                        players.put(event.getPlayer(), true);
-                                    }
-                                } else if (Locations.firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                        && Locations.firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                        && Locations.firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                    if (!players.get(event.getPlayer())) {
-                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        playerGuns.fillAll(event.getPlayer());
-                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                    } else if (Locations.firstDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                            && Locations.firstDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                            && Locations.firstDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                        if (!players.get(event.getPlayer())) {
+                                            toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                            toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                            playerGuns.fillAll(event.getPlayer());
+                                            if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                            }
+                                            players.put(event.getPlayer(), true);
                                         }
-                                        players.put(event.getPlayer(), true);
-                                    }
-                                } else if (Locations.secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
-                                        && Locations.secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
-                                        && Locations.secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
-                                    if (!players.get(event.getPlayer())) {
-                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                        playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
-                                        playerGuns.fillAll(event.getPlayer());
-                                        if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
-                                            PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                    } else if (Locations.secondDoorLoc.getBlockX() == event.getPlayer().getLocation().getBlockX()
+                                            && Locations.secondDoorLoc.getBlockY() == event.getPlayer().getLocation().getBlockY()
+                                            && Locations.secondDoorLoc.getBlockZ() == event.getPlayer().getLocation().getBlockZ()) {
+                                        if (!players.get(event.getPlayer())) {
+                                            toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                            toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                            playerHealth.addHealth(event.getPlayer(), playerHealth.getMaxHealth(event.getPlayer()));
+                                            playerGuns.fillAll(event.getPlayer());
+                                            if (PlayerClasses.getPlayerClass(event.getPlayer()) == ClassEnum.ENGINEER) {
+                                                PlayerMetal.addPlayer(event.getPlayer(), 200);
+                                            }
+                                            players.put(event.getPlayer(), true);
                                         }
-                                        players.put(event.getPlayer(), true);
+                                    } else {
+                                        if (players.get(event.getPlayer())) {
+                                            toggleDoorState(Locations.firstDoorLoc.getBlock());
+                                            toggleDoorState(Locations.secondDoorLoc.getBlock());
+                                            players.put(event.getPlayer(), false);
+                                        }
                                     }
                                 } else {
-                                    if (players.get(event.getPlayer())) {
-                                        toggleDoorState(Locations.firstDoorLoc.getBlock());
-                                        toggleDoorState(Locations.secondDoorLoc.getBlock());
-                                        players.put(event.getPlayer(), false);
-                                    }
+                                    System.out.println("The refill doors are not set.");
                                 }
                             }
                             if (Teleporters.isEntrance(event.getTo())) {
@@ -653,37 +672,40 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     }
                 }
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
     }
 
     @EventHandler
     public void onProjectileHit(final ProjectileHitEvent e) {
-        if(e.getEntityType() == EntityType.ARROW) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
-                try {
-                    EntityArrow e1 = ((CraftArrow) e.getEntity()).getHandle();
-                    Field fieldX = EntityArrow.class.getDeclaredField("h");
-                    Field fieldY = EntityArrow.class.getDeclaredField("au");
-                    Field fieldZ = EntityArrow.class.getDeclaredField("av");
-                    fieldX.setAccessible(true);
-                    fieldY.setAccessible(true);
-                    fieldZ.setAccessible(true);
-                    int x = fieldX.getInt(e1);
-                    int y = fieldY.getInt(e1);
-                    int z = fieldZ.getInt(e1);
-                    if (isValidBlock(x, y, z)) {
-                        Block block = e.getEntity().getWorld().getBlockAt(x, y, z);
-                        Bukkit.getServer().getPluginManager().callEvent(new ArrowHitBlockEvent((Arrow) e.getEntity(), block));
+        try {
+            if (e.getEntityType() == EntityType.ARROW) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+                    try {
+                        EntityArrow e1 = ((CraftArrow) e.getEntity()).getHandle();
+                        Field fieldX = EntityArrow.class.getDeclaredField("h");
+                        Field fieldY = EntityArrow.class.getDeclaredField("au");
+                        Field fieldZ = EntityArrow.class.getDeclaredField("av");
+                        fieldX.setAccessible(true);
+                        fieldY.setAccessible(true);
+                        fieldZ.setAccessible(true);
+                        int x = fieldX.getInt(e1);
+                        int y = fieldY.getInt(e1);
+                        int z = fieldZ.getInt(e1);
+                        if (isValidBlock(x, y, z)) {
+                            Block block = e.getEntity().getWorld().getBlockAt(x, y, z);
+                            Bukkit.getServer().getPluginManager().callEvent(new ArrowHitBlockEvent((Arrow) e.getEntity(), block));
+                        }
+                    } catch (Throwable throwable) {
+                        new ExceptionReporter(throwable);
                     }
-                } catch (Throwable throwable) {
-                    new ExceptionReporter(throwable);
-                }
 
-            });
+                });
+            }
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
         }
-
     }
 
     public void toggleDoorState(Block block) {
@@ -760,170 +782,177 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("mf2")) {
-            if (args.length > 0) {
-                if (args[0].equalsIgnoreCase("start")) {
-                    if (sender.hasPermission("mf2.start")) {
-                        if (Game.getGameState() == GameState.NOTHING) {
-                            if (worlds.size() != 0) {
-                                sender.sendMessage(ChatColor.GOLD + "Starting game...");
-                                TeamChooser chooser = new TeamChooser(plugin);
-                                try {
-                                    chooser.sendPlayers();
-                                    ArenaManager.getManager().createArena();
-                                } catch (Throwable throwable) {
-                                    new ExceptionReporter(throwable);
-                                }
-                            } else {
-                                sender.sendMessage(ChatColor.RED + "Error: The world must not have been imported correctly, no game world found.");
-                            }
-                        } else {
-                            sender.sendMessage(ChatColor.RED + "The game is already running!");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
-                    }
-                } else if (args[0].equalsIgnoreCase("stop")) {
-                    if (Game.getGameState() != GameState.NOTHING) {
-                        sender.sendMessage(ChatColor.GOLD + "Stopping game...");
-                        for (Player player2 : Bukkit.getOnlinePlayers()) {
-                            ArenaManager.getManager().removePlayer(player2);
-                        }
-                        ArenaManager.getManager().clearArenas();
-                        Game.stopGameState();
-                        TeamChooser.setBothDoorTrue();
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "The game must be running for you to do this!");
-                    }
-                } else if (args[0].equalsIgnoreCase("class")) {
-                    if (sender.hasPermission("mf2.class")) {
-                        if (args.length == 1) {
-                            if (sender instanceof Player) {
-                                if (Game.getGameState() != GameState.NOTHING) {
-                                    if (ArenaManager.getManager().isInGame((Player) sender)) {
-                                        chooser.openGUI((Player) sender);
-                                    } else {
-                                        sender.sendMessage(ChatColor.RED + "You are not in a game!");
+        try {
+            if (cmd.getName().equalsIgnoreCase("mf2")) {
+                if (args.length > 0) {
+                    if (args[0].equalsIgnoreCase("start")) {
+                        if (sender.hasPermission("mf2.start")) {
+                            if (Game.getGameState() == GameState.NOTHING) {
+                                if (worlds.size() != 0) {
+                                    sender.sendMessage(ChatColor.GOLD + "Starting game...");
+                                    TeamChooser chooser = new TeamChooser(plugin);
+                                    try {
+                                        chooser.sendPlayers();
+                                        ArenaManager.getManager().createArena();
+                                    } catch (Throwable throwable) {
+                                        new ExceptionReporter(throwable);
                                     }
                                 } else {
-                                    sender.sendMessage(ChatColor.RED + "A game must be running for you to change classes.");
+                                    sender.sendMessage(ChatColor.RED + "Error: The world must not have been imported correctly, no game world found.");
                                 }
                             } else {
-                                sender.sendMessage(ChatColor.RED + "This command is only to be used by players!");
+                                sender.sendMessage(ChatColor.RED + "The game is already running!");
                             }
                         } else {
-                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
+                            sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
                         }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
-                    }
-                } else if (args[0].equalsIgnoreCase("loadouts")) {
-                    if (sender.hasPermission("mf2.loadouts")) {
-                        if (args.length > 1) {
-                            if (args[1].equalsIgnoreCase("remove")) {
-                                if (args.length != 4) {
-                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
-                                } else {
-                                    UUID uuid = Bukkit.getOfflinePlayer(args[2]).getUniqueId();
-                                    if (loadouts.containsPlayer(uuid)) {
-                                        if (args[3].equalsIgnoreCase("all")) {
-                                            loadouts.deletePlayer(uuid);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "all" + ChatColor.GOLD + " classes from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("SCOUT")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.SCOUT);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SCOUT" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("SOLDIER")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.SOLDIER);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SOLDIER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("PYRO")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.PYRO);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "PYRO" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("DEMOMAN")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.DEMOMAN);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "DEMOMAN" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("HEAVY")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.HEAVY);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "HEAVY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("ENGINEER")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.ENGINEER);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "ENGINEER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("MEDIC")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.MEDIC);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "MEDIC" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("SNIPER")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.SNIPER);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SNIPER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
-                                        } else if (args[3].equalsIgnoreCase("SPY")) {
-                                            loadouts.deletePlayer(uuid, ClassEnum.SPY);
-                                            sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SPY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                    } else if (args[0].equalsIgnoreCase("stop")) {
+                        if (Game.getGameState() != GameState.NOTHING) {
+                            sender.sendMessage(ChatColor.GOLD + "Stopping game...");
+                            for (Player player2 : Bukkit.getOnlinePlayers()) {
+                                if (ArenaManager.getManager().isInGame(player2)) {
+                                    ArenaManager.getManager().removePlayer(player2);
+                                }
+                            }
+
+                            ArenaManager.getManager().clearArenas();
+                            Game.stopGameState();
+                            TeamChooser.setBothDoorTrue();
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "The game must be running for you to do this!");
+                        }
+                    } else if (args[0].equalsIgnoreCase("class")) {
+                        if (sender.hasPermission("mf2.class")) {
+                            if (args.length == 1) {
+                                if (sender instanceof Player) {
+                                    if (Game.getGameState() != GameState.NOTHING) {
+                                        if (ArenaManager.getManager().isInGame((Player) sender)) {
+                                            chooser.openGUI((Player) sender);
                                         } else {
-                                            sender.sendMessage(ChatColor.RED + "Invalid class. Valid classes: all, SCOUT, SOLDIER, PYRO, DEMOMAN, HEAVY, ENGINEER, MEDIC, SNIPER, SPY");
+                                            sender.sendMessage(ChatColor.RED + "You are not in a game!");
                                         }
                                     } else {
-                                        sender.sendMessage(ChatColor.RED + "Error: Player is not found registered in the loadout database");
+                                        sender.sendMessage(ChatColor.RED + "A game must be running for you to change classes.");
                                     }
-                                }
-                            } else if (args[1].equalsIgnoreCase("reset")) {
-                                if (args.length == 3) {
-                                    if (args[2].equalsIgnoreCase("confirm")) {
-                                        if (loadout_reset_wait) {
-                                            loadout_reset_wait = false;
-                                            sender.sendMessage(ChatColor.GOLD + "Resetting player loadouts...");
-                                            loadouts.reset();
-                                            sender.sendMessage(ChatColor.GOLD + "Reset " + ChatColor.RED + "all" + ChatColor.GOLD + " player loadouts");
-                                        }
-                                    } else {
-                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
-                                    }
-                                } else if (args.length == 2) {
-                                    sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset ALL player's loadout tables? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 loadout reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
-                                    loadout_reset_wait = true;
                                 } else {
-                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts reset");
+                                    sender.sendMessage(ChatColor.RED + "This command is only to be used by players!");
                                 }
-                            } else if (args[1].equalsIgnoreCase("reload")) {
-                                sender.sendMessage(ChatColor.GOLD + "Reloading player loadouts...");
-                                loadouts.reload();
-                                sender.sendMessage(ChatColor.GOLD + "Reloaded player loadouts");
+                            } else {
+                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
+                            }
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
+                        }
+                    } else if (args[0].equalsIgnoreCase("loadouts")) {
+                        if (sender.hasPermission("mf2.loadouts")) {
+                            if (args.length > 1) {
+                                if (args[1].equalsIgnoreCase("remove")) {
+                                    if (args.length != 4) {
+                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts remove <Player> <Class>");
+                                    } else {
+                                        UUID uuid = Bukkit.getOfflinePlayer(args[2]).getUniqueId();
+                                        if (loadouts.containsPlayer(uuid)) {
+                                            if (args[3].equalsIgnoreCase("all")) {
+                                                loadouts.deletePlayer(uuid);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "all" + ChatColor.GOLD + " classes from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("SCOUT")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.SCOUT);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SCOUT" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("SOLDIER")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.SOLDIER);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SOLDIER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("PYRO")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.PYRO);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "PYRO" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("DEMOMAN")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.DEMOMAN);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "DEMOMAN" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("HEAVY")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.HEAVY);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "HEAVY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("ENGINEER")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.ENGINEER);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "ENGINEER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("MEDIC")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.MEDIC);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "MEDIC" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("SNIPER")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.SNIPER);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SNIPER" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else if (args[3].equalsIgnoreCase("SPY")) {
+                                                loadouts.deletePlayer(uuid, ClassEnum.SPY);
+                                                sender.sendMessage(ChatColor.GOLD + "Deleted " + ChatColor.RED + "SPY" + ChatColor.GOLD + " class from " + ChatColor.RED + args[2] + ChatColor.GOLD + "'s loadout table");
+                                            } else {
+                                                sender.sendMessage(ChatColor.RED + "Invalid class. Valid classes: all, SCOUT, SOLDIER, PYRO, DEMOMAN, HEAVY, ENGINEER, MEDIC, SNIPER, SPY");
+                                            }
+                                        } else {
+                                            sender.sendMessage(ChatColor.RED + "Error: Player is not found registered in the loadout database");
+                                        }
+                                    }
+                                } else if (args[1].equalsIgnoreCase("reset")) {
+                                    if (args.length == 3) {
+                                        if (args[2].equalsIgnoreCase("confirm")) {
+                                            if (loadout_reset_wait) {
+                                                loadout_reset_wait = false;
+                                                sender.sendMessage(ChatColor.GOLD + "Resetting player loadouts...");
+                                                loadouts.reset();
+                                                sender.sendMessage(ChatColor.GOLD + "Reset " + ChatColor.RED + "all" + ChatColor.GOLD + " player loadouts");
+                                            }
+                                        } else {
+                                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
+                                        }
+                                    } else if (args.length == 2) {
+                                        sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset ALL player's loadout tables? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 loadout reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
+                                        loadout_reset_wait = true;
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts reset");
+                                    }
+                                } else if (args[1].equalsIgnoreCase("reload")) {
+                                    sender.sendMessage(ChatColor.GOLD + "Reloading player loadouts...");
+                                    loadouts.reload();
+                                    sender.sendMessage(ChatColor.GOLD + "Reloaded player loadouts");
+                                } else {
+                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
+                                }
                             } else {
                                 sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
                             }
                         } else {
-                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 loadouts <remove|reset|reload>");
+                            sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
                         }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
-                    }
-                } else if (args[0].equalsIgnoreCase("config")) {
-                    if (sender.hasPermission("mf2.config")) {
-                        if (args.length > 1) {
-                            if (args[1].equalsIgnoreCase("reload")) {
-                                if (args.length == 2) {
-                                    sender.sendMessage(ChatColor.GOLD + "Reloading config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
-                                    reloadConfig();
-                                } else {
-                                    sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
-                                }
-                            } else if (args[1].equalsIgnoreCase("reset")) {
-                                if (args.length == 3) {
-                                    if (args[2].equalsIgnoreCase("confirm")) {
-                                        if (config_reset_wait) {
-                                            config_reset_wait = false;
-                                            sender.sendMessage(ChatColor.GOLD + "Resetting config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
-                                            sender.sendMessage(ChatColor.GOLD + "Downloading default config...");
-                                            if (downloadConfig() == 404) {
-                                                sender.sendMessage(ChatColor.RED + "Error: File not found! Please contact " + ChatColor.BOLD + "contact@uddernetworks.com" + ChatColor.RESET + ChatColor.RED + " and tell them to upload the file for version " + ChatColor.GOLD + getDescription().getVersion() + ChatColor.RED + ".");
-                                            } else {
-                                                sender.sendMessage(ChatColor.GOLD + "Successfully download and reset config.yml");
-                                                reloadConfig();
-                                            }
-                                        } else {
-                                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
-                                        }
+                    } else if (args[0].equalsIgnoreCase("config")) {
+                        if (sender.hasPermission("mf2.config")) {
+                            if (args.length > 1) {
+                                if (args[1].equalsIgnoreCase("reload")) {
+                                    if (args.length == 2) {
+                                        sender.sendMessage(ChatColor.GOLD + "Reloading config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
+                                        reloadConfig();
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                                     }
-                                } else if (args.length == 2) {
-                                    sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset your config.yml? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 config reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
-                                    config_reset_wait = true;
+                                } else if (args[1].equalsIgnoreCase("reset")) {
+                                    if (args.length == 3) {
+                                        if (args[2].equalsIgnoreCase("confirm")) {
+                                            if (config_reset_wait) {
+                                                config_reset_wait = false;
+                                                sender.sendMessage(ChatColor.GOLD + "Resetting config.yml for Mine Fortress 2 version " + getDescription().getVersion() + "...");
+                                                sender.sendMessage(ChatColor.GOLD + "Downloading default config...");
+                                                if (downloadConfig() == 404) {
+                                                    sender.sendMessage(ChatColor.RED + "Error: File not found! Please contact " + ChatColor.BOLD + "contact@uddernetworks.com" + ChatColor.RESET + ChatColor.RED + " and tell them to upload the file for version " + ChatColor.GOLD + getDescription().getVersion() + ChatColor.RED + ".");
+                                                } else {
+                                                    sender.sendMessage(ChatColor.GOLD + "Successfully download and reset config.yml");
+                                                    reloadConfig();
+                                                }
+                                            } else {
+                                                sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                                            }
+                                        }
+                                    } else if (args.length == 2) {
+                                        sender.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "Are you SURE you want to reset your config.yml? This can NOT be undone! Type " + ChatColor.ITALIC + "/mf2 config reset confirm" + ChatColor.RESET + ChatColor.RED + ChatColor.BOLD + " to continue.");
+                                        config_reset_wait = true;
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                                    }
                                 } else {
                                     sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                                 }
@@ -931,7 +960,7 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                                 sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
                             }
                         } else {
-                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 config <reload|reset>");
+                            sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
                         }
                     } else {
                         sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
@@ -940,12 +969,13 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
                     sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
                 }
             } else {
-                sender.sendMessage(ChatColor.RED + "Usage: /mf2 <start|stop|class|loadouts|config>");
+                sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
             }
-        } else {
-            sender.sendMessage(ChatColor.RED + "Error: Insufficient permissions");
+            return true;
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+            return false;
         }
-        return true;
     }
 
     public int downloadConfig() {
@@ -977,24 +1007,32 @@ public class Main extends JavaPlugin implements Listener, CommandExecutor {
     private static final Class[] parameters = new Class[]{URL.class};
 
     public static void addFile(String s) throws IOException {
-        File f = new File(s);
-        addFile(f);
+        try {
+            File f = new File(s);
+            addFile(f);
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
     public static void addFile(File f) throws IOException {
-        addURL(f.toURL());
+        try {
+            addURL(f.toURL());
+        } catch (Throwable throwable) {
+            new ExceptionReporter(throwable);
+        }
     }
 
 
     public static void addURL(URL u) throws IOException {
-
-        URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-        Class sysclass = URLClassLoader.class;
-
         try {
+            URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+            Class sysclass = URLClassLoader.class;
+
             Method method = sysclass.getDeclaredMethod("addURL", parameters);
             method.setAccessible(true);
             method.invoke(sysloader, new Object[]{u});
+
         } catch (Throwable throwable) {
             new ExceptionReporter(throwable);
         }
